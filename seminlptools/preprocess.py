@@ -1,7 +1,7 @@
 from stanfordnlp.server import CoreNLPClient
 import re
 import functools
-from seminlpclassify import global_options
+import global_options
 
 
 class preprocessor(object):

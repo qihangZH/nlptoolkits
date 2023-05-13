@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm as tqdm
 
 import global_options
-from culture import culture_dictionary, file_util
+from seminlptools import culture_dictionary, file_util
 
 # @TODO: The scoring functions are not memory friendly. The entire pocessed corpus needs to fit in the RAM. Rewrite a memory friendly version.
 

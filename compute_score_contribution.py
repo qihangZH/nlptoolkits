@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 
 import global_options
 import score
-from culture import culture_dictionary
+from seminlptools import culture_dictionary
 
 
 def recalculate_contribution(

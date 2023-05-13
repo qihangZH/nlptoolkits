@@ -1,6 +1,6 @@
 import global_options
 import gensim
-from culture import culture_dictionary
+from seminlptools import culture_dictionary
 from pathlib import Path
 
 

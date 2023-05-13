@@ -6,7 +6,7 @@ from pathlib import Path
 
 import global_options
 import parse
-from culture import culture_models, file_util, preprocess
+from seminlptools import culture_models, file_util, preprocess
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 

@@ -1,7 +1,6 @@
 """Implementation of preprocess.py that supports multiprocess
 """
 
-
 from stanfordnlp.server import CoreNLPClient
 
 
@@ -41,7 +40,7 @@ def process_document(doc, doc_id=None):
 
 
 def sentence_mwe_finder(
-    sentence_ann, dep_types=set(["mwe", "compound", "compound:prt"])
+        sentence_ann, dep_types=set(["mwe", "compound", "compound:prt"])
 ):
     """Find the edges between words that are MWEs
 

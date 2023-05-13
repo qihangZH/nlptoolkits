@@ -111,13 +111,13 @@ def write_dict_to_csv(culture_dict, file_name):
 
 
 def read_dict_from_csv(file_name):
-    """Read culture dict from a csv file
+    """Read seminlptools dict from a csv file
 
     Arguments:
         file_name {str} -- expanded dictionary file
     
     Returns:
-        culture_dict {dict{str: set(str)}} -- a culture dict, dim name as key, set of expanded words as value
+        culture_dict {dict{str: set(str)}} -- a seminlptools dict, dim name as key, set of expanded words as value
         all_dict_words {set(str)} -- a set of all words in the dict
     """
     print("Importing dict: {}".format(file_name))
