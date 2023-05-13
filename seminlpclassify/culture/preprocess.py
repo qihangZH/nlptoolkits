@@ -1,9 +1,7 @@
 from stanfordnlp.server import CoreNLPClient
-import os
 import re
 import functools
-from . import file_util
-import global_options
+from seminlpclassify import global_options
 
 
 class preprocessor(object):
@@ -193,8 +191,8 @@ class text_cleaner(object):
         tokens = [re.sub("\[pos:.*?\]", "", t) for t in tokens]
         # these are tagged bracket and parenthesises
         puncts_stops = (
-            set(["-lrb-", "-rrb-", "-lsb-", "-rsb-", "'s"])
-            | global_options.STOPWORDS
+                set(["-lrb-", "-rrb-", "-lsb-", "-rsb-", "'s"])
+                | global_options.STOPWORDS
         )
         # filter out numerics and 1-letter words as recommend by
         # https://sraf.nd.edu/textual-analysis/resources/#StopWords

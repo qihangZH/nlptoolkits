@@ -1,14 +1,11 @@
 import sys
 
-sys.path.append("..")
-import concurrent.futures
+sys.path.append("../..")
 import datetime
-from functools import partial
-from multiprocessing import Pool, freeze_support
 from pathlib import Path
 
 import gensim
-import global_options
+from .. import global_options
 import tqdm
 from gensim import models
 

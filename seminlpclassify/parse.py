@@ -39,7 +39,9 @@ def process_largefile(
     chunk_size=100,
     start_index=None,
 ):
-    """ A helper function that transforms an input file + a list of IDs of each line (documents + document_IDs) to two output files (processed documents + processed document IDs) by calling function_name on chunks of the input files. Each document can be decomposed into multiple processed documents (e.g. sentences). 
+    """ A helper function that transforms an input file + a list of IDs of each line (documents + document_IDs) to two
+     output files (processed documents + processed document IDs) by calling function_name on chunks of the input files.
+      Each document can be decomposed into multiple processed documents (e.g. sentences).
     Supports parallel with Pool.
 
     Arguments:
@@ -47,7 +49,8 @@ def process_largefile(
         ouput_file {str or Path} -- processed linesentence file (remove if exists)
         input_file_ids {str]} -- a list of input line ids
         output_index_file {str or Path} -- path to the index file of the output
-        function_name {callable} -- A function that processes a list of strings, list of ids and return a list of processed strings and ids.
+        function_name {callable} -- A function that processes a list of strings, list of ids and return a list of
+        processed strings and ids.
         chunk_size {int} -- number of lines to process each time, increasing the default may increase performance
         start_index {int} -- line number to start from (index starts with 0)
 
@@ -94,7 +97,7 @@ def process_largefile(
                 output_line_ids.append(output_line_id)
             output_lines = "\n".join(output_lines) + "\n"
             output_line_ids = "\n".join(output_line_ids) + "\n"
-            with open(output_file, "a", newline="\n") as f_out:
+            with open(output_file, "a", newline="\n", encoding='utf-8') as f_out:
                 f_out.write(output_lines)
             if output_index_file is not None:
                 with open(output_index_file, "a", newline="\n") as f_out:
@@ -103,6 +106,7 @@ def process_largefile(
 
 if __name__ == "__main__":
     with CoreNLPClient(
+        endpoint='http://localhost:' + str(9001),
         properties={
             "ner.applyFineGrained": "false",
             "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",

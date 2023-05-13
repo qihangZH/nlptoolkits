@@ -1,9 +1,4 @@
 import global_options
-import pandas as pd
-import pickle
-from collections import OrderedDict, Counter
-import itertools
-from pprint import pprint
 import gensim
 from culture import culture_dictionary
 from pathlib import Path

@@ -4,8 +4,6 @@ import logging
 import sys
 from pathlib import Path
 
-import pandas as pd
-
 import global_options
 import parse
 from culture import culture_models, file_util, preprocess

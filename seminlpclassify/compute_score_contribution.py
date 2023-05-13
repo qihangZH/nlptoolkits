@@ -1,6 +1,5 @@
 # Compute contribution of each words (for TF, TFIDF, WFIDF)
 import math
-import os
 import pickle
 from collections import Counter, defaultdict
 from pathlib import Path
