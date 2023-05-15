@@ -2,14 +2,16 @@
 """
 
 from stanfordnlp.server import CoreNLPClient
+from . import _qihang_funcs
 
 
-def process_document(doc, doc_id=None):
+def process_document(doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
     """Main method: Annotate a document using CoreNLP client
 
     Arguments:
         doc {str} -- raw string of a document
         doc_id {str} -- raw string of a document ID
+        corenlp_endpoint {str} -- core nlp port to deal with data, like 9001, 9002...
 
     Returns:
         sentences_processed {[str]} -- a list of processed sentences with NER tagged
@@ -29,7 +31,10 @@ def process_document(doc, doc_id=None):
     Note:
         When the doc is empty, both doc_id and sentences processed will be too. (@TODO: fix for consistensy)
     """
-    with CoreNLPClient(endpoint="http://localhost:9002", start_server=False, timeout=120000000) as client:
+    if not _qihang_funcs.check_server(corenlp_endpoint):
+        raise ValueError(f'{corenlp_endpoint} is not running, reset the port and try again.')
+
+    with CoreNLPClient(endpoint=corenlp_endpoint, start_server=False, timeout=120000000) as client:
         doc_ann = client.annotate(doc)
     sentences_processed = []
     doc_sent_ids = []
