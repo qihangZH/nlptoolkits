@@ -1,8 +1,6 @@
 """initialize the project and insure the project can run"""
 import global_options
 from pathlib import Path
-import os
-import shutil
 import seminlpclassify
 
 if __name__ == '__main__':

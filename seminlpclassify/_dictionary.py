@@ -1,12 +1,15 @@
 import math
 from collections import Counter, OrderedDict, defaultdict
 from functools import partial
-from multiprocessing import Pool
+import pathos
 from operator import itemgetter
 import numpy as np
 import pandas as pd
 import tqdm
 from sklearn import preprocessing
+
+# import basic funcs
+from . import qihangfuncs
 
 
 def expand_words_dimension_mean(
@@ -213,12 +216,16 @@ def score_tf(documents, document_ids, expanded_words, n_core=1):
         pandas.DataFrame -- a dataframe with columns: Doc_ID, dim1, dim2, ..., document_length
     """
     if n_core > 1:
-        pool = Pool(n_core)  # number of processes
         count_one_document_partial = partial(
             score_one_document_tf, expanded_words=expanded_words, list_of_list=False
         )
-        results = list(pool.map(count_one_document_partial, documents))
-        pool.close()
+
+        with pathos.multiprocessing.Pool(processes=n_core,
+                                         initializer=qihangfuncs.threads_interrupt_initiator
+                                         ) as pool:
+
+            results = list(pool.map(count_one_document_partial, documents))
+
     else:
         results = []
         for i, doc in enumerate(documents):

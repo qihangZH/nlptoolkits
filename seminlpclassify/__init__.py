@@ -1,9 +1,11 @@
+import seminlpclassify.qihangfuncs
 from . import _dictionary
 from . import nlp_models
 from . import _file_util
 from . import preprocess
 from . import preprocess_parallel
-# from . import score
+from . import scorer
+from . import qihangfuncs
 # out source pack
 import functools
 import datetime
@@ -174,7 +176,7 @@ def mp_process_largefile(
             output_lines = []
             output_line_ids = []
             with pathos.multiprocessing.Pool(processes=multiprocess_threads,
-                                             initializer=_file_util.threads_interrupt_initiator
+                                             initializer=qihangfuncs.threads_interrupt_initiator
                                              ) as pool:
                 for output_line, output_line_id in pool.starmap(
                         process_line_func, zip(next_n_lines, next_n_line_ids)
@@ -381,7 +383,7 @@ def auto_bigram_fit_transform_txt(path_input_clean_txt,
 """word2vec model function"""
 
 
-@_file_util.timer_wrapper
+@seminlpclassify.qihangfuncs.timer_wrapper
 def train_w2v_model(path_input_cleaned_txt, path_output_model, *args, **kwargs):
     """ Train a word2vec model using the LineSentence file in input_path,
     save the model to model_path.count
