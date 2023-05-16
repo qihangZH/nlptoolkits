@@ -3,15 +3,13 @@ from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
-from tqdm import tqdm as tqdm
-
-import global_options
-from seminlptools import culture_dictionary, file_util
-
-# @TODO: The scoring functions are not memory friendly. The entire pocessed corpus needs to fit in the RAM. Rewrite a memory friendly version.
+import tqdm
+from . import _dictionary
+from . import _file_util
 
 
-def construct_doc_level_corpus(sent_corpus_file, sent_id_file):
+
+def construct_doc_level_corpus(sent_corpus_file, sent_id_file, dir_output_corpus):
     """Construct document level corpus from sentence level corpus and write to disk.
     Dump "corpus_doc_level.pickle" and "doc_ids.pickle" to Path(global_options.OUTPUT_FOLDER, "scores", "temp"). 
     
@@ -24,8 +22,8 @@ def construct_doc_level_corpus(sent_corpus_file, sent_id_file):
     """
     print("Constructing doc level corpus")
     # sentence level corpus
-    sent_corpus = file_util.file_to_list(sent_corpus_file)
-    sent_IDs = file_util.file_to_list(sent_id_file)
+    sent_corpus = _file_util.file_to_list(sent_corpus_file)
+    sent_IDs = _file_util.file_to_list(sent_id_file)
     assert len(sent_IDs) == len(sent_corpus)
     # doc id for each sentence
     doc_ids = [x.split("_")[0] for x in sent_IDs]
@@ -38,12 +36,12 @@ def construct_doc_level_corpus(sent_corpus_file, sent_id_file):
     doc_ids = list(id_doc_dict.keys())
     assert len(corpus) == len(doc_ids)
     with open(
-        Path(global_options.OUTPUT_FOLDER, "scores", "temp", "corpus_doc_level.pickle"),
+        Path(dir_output_corpus, "corpus_doc_level.pickle"),
         "wb",
     ) as out_f:
         pickle.dump(corpus, out_f)
     with open(
-        Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_ids.pickle"), "wb"
+        Path(dir_output_corpus, "doc_ids.pickle"), "wb"
     ) as out_f:
         pickle.dump(doc_ids, out_f)
     N_doc = len(corpus)
@@ -62,7 +60,7 @@ def calculate_df(corpus):
     print("Calculating document frequencies.")
     # document frequency
     df_dict = defaultdict(int)
-    for doc in tqdm(corpus):
+    for doc in tqdm.tqdm(corpus):
         doc_splited = doc.split()
         words_in_doc = set(doc_splited)
         for word in words_in_doc:
@@ -75,7 +73,7 @@ def calculate_df(corpus):
     return df_dict
 
 
-def load_doc_level_corpus():
+def load_doc_level_corpus(path_input_corpus, path_input_corpus_ids):
     """load the corpus constructed by construct_doc_level_corpus()
     
     Returns:
@@ -83,12 +81,12 @@ def load_doc_level_corpus():
     """
     print("Loading document level corpus.")
     with open(
-        Path(global_options.OUTPUT_FOLDER, "scores", "temp", "corpus_doc_level.pickle"),
+        Path(path_input_corpus),
         "rb",
     ) as in_f:
         corpus = pickle.load(in_f)
     with open(
-        Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_ids.pickle"), "rb"
+        Path(dir_output_corpus, "doc_ids.pickle"), "rb"
     ) as in_f:
         doc_ids = pickle.load(in_f)
     assert len(corpus) == len(doc_ids)
@@ -101,7 +99,7 @@ def score_tf(documents, doc_ids, expanded_dict):
     Score documents using term freq. 
     """
     print("Scoring using Term-freq (tf).")
-    score = culture_dictionary.score_tf(
+    score = _dictionary.score_tf(
         documents=documents,
         document_ids=doc_ids,
         expanded_words=expanded_dict,
@@ -135,7 +133,7 @@ def score_tf_idf(documents, doc_ids, N_doc, method, expanded_dict, **kwargs):
             Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_freq.pickle")
         )
         # score tf-idf
-        score, contribution = culture_dictionary.score_tf_idf(
+        score, contribution = _dictionary.score_tf_idf(
             documents=documents,
             document_ids=doc_ids,
             expanded_words=expanded_dict,
@@ -170,20 +168,20 @@ if __name__ == "__main__":
     current_dict_path = str(
         str(Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv"))
     )
-    culture_dict, all_dict_words = culture_dictionary.read_dict_from_csv(
+    culture_dict, all_dict_words = _dictionary.read_dict_from_csv(
         current_dict_path
     )
     # words weighted by similarity rank (optional)
-    word_sim_weights = culture_dictionary.compute_word_sim_weights(current_dict_path)
+    word_sim_weights = _dictionary.compute_word_sim_weights(current_dict_path)
 
     ## Pre-score ===========================
-    # aggregate processed sentences to documents
+    # aggregate processed_data sentences to documents
     corpus, doc_ids, N_doc = construct_doc_level_corpus(
         sent_corpus_file=Path(
-            global_options.DATA_FOLDER, "processed", "trigram", "documents.txt"
+            global_options.PROCESSED_DATA_FOLDER, "processed_data", "trigram", "documents.txt"
         ),
         sent_id_file=Path(
-            global_options.DATA_FOLDER, "processed", "parsed", "document_sent_ids.txt"
+            global_options.PROCESSED_DATA_FOLDER, "processed_data", "parsed", "document_sent_ids.txt"
         ),
     )
     word_doc_freq = calculate_df(corpus)
