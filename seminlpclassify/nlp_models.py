@@ -1,28 +1,27 @@
 import datetime
-from pathlib import Path
 import gensim
 import tqdm
 from gensim import models
-from . import file_util
+from . import _file_util
 
 
 def train_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
     """ Train a phrase model and save it to the disk. 
     
     Arguments:
-        input_path {str or Path} -- input corpus
+        input_path {str or Path} -- input_data corpus
         model_path {str or Path} -- where to save the trained phrase model?
     
     Returns:
         gensim.models.phrases.Phrases -- the trained phrase model
     """
-    Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+    # Path(model_path).parent.mkdir(parents=True, exist_ok=True)
     print(datetime.datetime.now())
     print("Training phraser...")
     corpus = gensim.models.word2vec.PathLineSentences(
         str(input_path), max_sentence_length=10000000
     )
-    n_lines = file_util.line_counter(input_path)
+    n_lines = _file_util.line_counter(input_path)
     bigram_model = models.phrases.Phrases(
         tqdm.tqdm(corpus, total=n_lines),
         min_count=phrase_min_length,
@@ -47,15 +46,15 @@ def bigram_transform(line, bigram_phraser):
 
 
 def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=None):
-    """ Transform an input text file into a file with 2-word phrases. 
+    """ Transform an input_data text file into a file with 2-word phrases.
     Apply again to learn 3-word phrases. 
 
     Arguments:
         input_path {str}: Each line is a sentence
         ouput_file {str}: Each line is a sentence with 2-word phraes concatenated
     """
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+    # Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    # Path(model_path).parent.mkdir(parents=True, exist_ok=True)
     bigram_model = gensim.models.phrases.Phrases.load(str(model_path))
     if scoring is not None:
         bigram_model.scoring = getattr(gensim.models.phrases, scoring)
@@ -67,7 +66,4 @@ def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=N
     data_bigram = [bigram_transform(l, bigram_model) for l in tqdm.tqdm(input_data)]
     with open(output_path, "w", encoding='utf-8') as f:
         f.write("\n".join(data_bigram) + "\n")
-    assert len(input_data) == file_util.line_counter(output_path)
-
-
-
+    assert len(input_data) == _file_util.line_counter(output_path)

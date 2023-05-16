@@ -2,20 +2,27 @@
 """
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 # Hardware options
-N_CORES: int = 12  # max number of CPU cores to use
-RAM_CORENLP: str = "48G"  # max RAM allocated for parsing using CoreNLP; increase to speed up parsing
-PARSE_CHUNK_SIZE: int = 100 # number of lines in the input file to process uing CoreNLP at once. Increase on workstations with larger RAM (e.g. to 1000 if RAM is 64G)  
-
+N_CORES: int = os.cpu_count()  # max number of CPU cores to use
+RAM_CORENLP: str = "50G"  # max RAM allocated for parsing using CoreNLP; increase to speed up parsing
+PARSE_CHUNK_SIZE: int = 100
+# number of lines in the input_data file to process uing CoreNLP at once.
+# Increase on workstations with larger RAM (e.g. to 1000 if RAM is 64G)
+ADDRESS_CORENLP: str = "http://localhost:9002"
 # Directory locations
 os.environ[
     "CORENLP_HOME"
 ] = "C:/stanford-corenlp-full-2018-10-05"  # location of the CoreNLP models; use / to seperate folders
-DATA_FOLDER: str = "data/"
-MODEL_FOLDER: str = "models/" # will be created if does not exist
-OUTPUT_FOLDER: str = "outputs/" # will be created if does not exist; !!! WARNING: existing files will be removed !!!
+
+PROJ_FOLDER = os.path.abspath(os.path.dirname(__file__)) + '/'
+
+# result/processed data folder, should be cleaned before run
+INPUT_DATA_FOLDER: str = PROJ_FOLDER + "input_data"
+PROCESSED_DATA_FOLDER: str = PROJ_FOLDER + "processed_data/"
+MODEL_FOLDER: str = PROJ_FOLDER + "models/"
+OUTPUT_FOLDER: str = PROJ_FOLDER + "outputs/"
 
 # Parsing and analysis options
 STOPWORDS: Set[str] = set(
@@ -27,7 +34,8 @@ W2V_DIM: int = 300  # dimension of word2vec vectors
 W2V_WINDOW: int = 5  # window size in word2vec
 W2V_ITER: int = 20  # number of iterations in word2vec
 N_WORDS_DIM: int = 500  # max number of words in each dimension of the dictionary
-DICT_RESTRICT_VOCAB = None # change to a fraction number (e.g. 0.2) to restrict the dictionary vocab in the top 20% of most frequent vocab
+DICT_RESTRICT_VOCAB = None
+# change to a fraction number (e.g. 0.2) to restrict the dictionary vocab in the top 20% of most frequent vocab
 
 # Inputs for constructing the expanded dictionary
 DIMS: List[str] = ["integrity", "teamwork", "innovation", "respect", "quality"]
@@ -92,15 +100,4 @@ SEED_WORDS: Dict[str, List[str]] = {
 }
 
 
-# Create directories if not exist
-Path(DATA_FOLDER, "processed", "parsed").mkdir(parents=True, exist_ok=True)
-Path(DATA_FOLDER, "processed", "unigram").mkdir(parents=True, exist_ok=True)
-Path(DATA_FOLDER, "processed", "bigram").mkdir(parents=True, exist_ok=True)
-Path(DATA_FOLDER, "processed", "trigram").mkdir(parents=True, exist_ok=True)
-Path(MODEL_FOLDER, "phrases").mkdir(parents=True, exist_ok=True)
-Path(MODEL_FOLDER, "phrases").mkdir(parents=True, exist_ok=True)
-Path(MODEL_FOLDER, "w2v").mkdir(parents=True, exist_ok=True)
-Path(OUTPUT_FOLDER, "dict").mkdir(parents=True, exist_ok=True)
-Path(OUTPUT_FOLDER, "scores").mkdir(parents=True, exist_ok=True)
-Path(OUTPUT_FOLDER, "scores", "temp").mkdir(parents=True, exist_ok=True)
-Path(OUTPUT_FOLDER, "scores", "word_contributions").mkdir(parents=True, exist_ok=True)
+

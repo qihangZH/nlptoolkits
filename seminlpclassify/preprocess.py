@@ -16,22 +16,24 @@ class preprocessor(object):
             doc_id {str} -- raw string of a document ID
 
         Returns:
-            sentences_processed {[str]} -- a list of processed sentences with NER tagged
+            sentences_processed {[str]} -- a list of processed_data sentences with NER tagged
                 and MWEs concatenated
-            doc_ids {[str]} -- a list of processed sentence IDs [docID1_1, docID1_2...]
+            doc_ids {[str]} -- a list of processed_data sentence IDs [docID1_1, docID1_2...]
             Example:
-                Input: "When I was a child in Ohio, I always wanted to go to Stanford University with respect to higher education.
+                Input: "When I was a child in Ohio,
+                I always wanted to go to Stanford University with respect to higher education.
                 But I had to go along with my parents."
                 Output: 
                 
-                'when I be a child in ['when I be a child in [NER:LOCATION]Ohio , I always want to go to [NER:ORGANIZATION]Stanford_University with_respect_to higher education . 
+                'when I be a child in ['when I be a child in [NER:LOCATION]Ohio ,
+                'I always want to go to [NER:ORGANIZATION]Stanford_University with_respect_to higher education .'
                 'but I have to go_along with my parent . '
 
                 doc1_1
                 doc1_2
         
         Note:
-            When the doc is empty, both doc_id and sentences processed will be too. (@TODO: fix for consistensy)
+            When the doc is empty, both doc_id and sentences processed_data will be too.
         """
         doc_ann = self.client.annotate(doc)
         sentences_processed = []
@@ -168,7 +170,7 @@ class text_cleaner(object):
         """Remove the named entity and only leave the tag
         
         Arguments:
-            line {str} -- text processed by the preprocessor
+            line {str} -- text processed_data by the preprocessor
         
         Returns:
             str -- text with NE replaced by NE tags, 
@@ -182,7 +184,7 @@ class text_cleaner(object):
         """Remove tokens that are only numerics and puctuation marks
 
         Arguments:
-            line {str} -- text processed by the preprocessor
+            line {str} -- text processed_data by the preprocessor
         
         Returns:
             str -- text with stopwords, numerics, 1-letter words removed
@@ -227,6 +229,7 @@ if __name__ == "__main__":
         memory=global_options.RAM_CORENLP,
         threads=1,
     ) as client:
-        doc = "When I was a child in Ohio, I always wanted to go to Stanford University with respect to higher education. But I went along with my parents."
+        doc = "When I was a child in Ohio, I always wanted to go to Stanford University with respect to higher " \
+              "education. But I went along with my parents."
         EC_preprocessor = preprocessor(client)
         print(EC_preprocessor.process_document(doc))

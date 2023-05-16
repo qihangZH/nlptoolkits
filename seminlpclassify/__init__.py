@@ -1,19 +1,28 @@
-import functools
-
-from . import nlp_dictionary, preprocess, file_util
+from . import _dictionary
 from . import nlp_models
-from . import file_util
+from . import _file_util
 from . import preprocess
 from . import preprocess_parallel
-from . import _qihang_funcs
+# from . import score
 # out source pack
+import functools
 import datetime
 import itertools
 import os
 import pathos
 import stanfordnlp.server
 import gensim
-import pathlib
+import typing
+import shutil
+
+"""Other functions"""
+
+
+def delete_whole_dir(directory):
+    """delete the whole dir..."""
+    if os.path.exists(directory) and os.path.isdir(directory):
+        shutil.rmtree(directory)
+
 
 """Process file"""
 
@@ -27,19 +36,20 @@ def process_largefile(
         chunk_size=100,
         start_iloc=None,
 ):
-    """ A helper function that transforms an input file + a list of IDs of each line (documents + document_IDs) to two
-     output files (processed documents + processed document IDs) by calling function_name on chunks of the input files.
-      Each document can be decomposed into multiple processed documents (e.g. sentences).
+    """ A helper function that transforms an input_data file + a list of IDs of each line (documents + document_IDs)
+    to two output files (processed_data documents + processed_data document IDs)
+    by calling function_name on chunks of the input_data files.
+      Each document can be decomposed into multiple processed_data documents (e.g. sentences).
       Not support Multiprocessor
 
 
     Arguments:
     :param path_input_txt:  {str or Path} path to a text file, each line is a document
-    :param path_output_txt: {str or Path} processed linesentence file (remove if exists)
-    :param input_index_list: {str} -- a list of input line ids
+    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
+    :param input_index_list: {str} -- a list of input_data line ids
     :param path_output_index: {str or Path} -- path to the index file of the output
     :param process_line_func: {callable} -- A function that processes a list of strings, list of ids and return
-        a list of processed strings and ids. func(line_text, line_ids)
+        a list of processed_data strings and ids. func(line_text, line_ids)
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
     :param start_iloc: {int} -- line number to start from (index starts with 0)
 
@@ -59,9 +69,9 @@ def process_largefile(
             os.remove(str(path_output_index))
     except OSError:
         pass
-    assert file_util.line_counter(path_input_txt) == len(
+    assert _file_util.line_counter(path_input_txt) == len(
         input_index_list
-    ), "Make sure the input file has the same number of rows as the input ID file. "
+    ), "Make sure the input_data file has the same number of rows as the input_data ID file. "
 
     with open(path_input_txt, newline="\n", encoding="utf-8", errors="ignore") as f_in:
         line_i = 0
@@ -109,19 +119,20 @@ def mp_process_largefile(
         start_iloc=None,
 
 ):
-    """ A helper function that transforms an input file + a list of IDs of each line (documents + document_IDs) to two
-     output files (processed documents + processed document IDs) by calling function_name on chunks of the input files.
-      Each document can be decomposed into multiple processed documents (e.g. sentences).
+    """ A helper function that transforms an input_data file + a list of IDs of each line (documents + document_IDs)
+    to two output files (processed_data documents + processed_data document IDs)
+    by calling function_name on chunks of the input_data files.
+      Each document can be decomposed into multiple processed_data documents (e.g. sentences).
 
 
 
     Arguments:
     :param path_input_txt:  {str or Path} path to a text file, each line is a document
-    :param path_output_txt: {str or Path} processed linesentence file (remove if exists)
-    :param input_index_list: {str} -- a list of input line ids
+    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
+    :param input_index_list: {str} -- a list of input_data line ids
     :param path_output_index: {str or Path} -- path to the index file of the output
     :param process_line_func: {callable} -- A function that processes a list of strings, list of ids and return
-        a list of processed strings and ids. func(line_text, line_ids)
+        a list of processed_data strings and ids. func(line_text, line_ids)
     :param multiprocess_threads: {int} -- the core to use, should be same as the argument of your project,
         like globaloption.NCORES
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
@@ -138,9 +149,9 @@ def mp_process_largefile(
             os.remove(str(path_output_index))
     except OSError:
         pass
-    assert file_util.line_counter(path_input_txt) == len(
+    assert _file_util.line_counter(path_input_txt) == len(
         input_index_list
-    ), "Make sure the input file has the same number of rows as the input ID file. "
+    ), "Make sure the input_data file has the same number of rows as the input_data ID file. "
 
     with open(path_input_txt, newline="\n", encoding="utf-8", errors="ignore") as f_in:
         line_i = 0
@@ -163,7 +174,7 @@ def mp_process_largefile(
             output_lines = []
             output_line_ids = []
             with pathos.multiprocessing.Pool(processes=multiprocess_threads,
-                                             initializer=_qihang_funcs.threads_interrupt_initiator
+                                             initializer=_file_util.threads_interrupt_initiator
                                              ) as pool:
                 for output_line, output_line_id in pool.starmap(
                         process_line_func, zip(next_n_lines, next_n_line_ids)
@@ -195,10 +206,12 @@ def l1_auto_parser(
         use_multicores: bool = True,
         **kwargs):
     """
+    :param memory: memory using, should be str like "\d+G"
+    :param nlp_threads: how much threads does nlp use.
     :param endpoint: endpoint in stanfordnlp.server.CoreNLPClient, should be address of port
     :param path_input_txt:  {str or Path} path to a text file, each line is a document
-    :param path_output_txt: {str or Path} processed linesentence file (remove if exists)
-    :param input_index_list: {str} -- a list of input line ids
+    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
+    :param input_index_list: {str} -- a list of input_data line ids
     :param path_output_index: {str or Path} -- path to the index file of the output
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
     :param start_iloc: {int} -- line number to start from (index starts with 0)
@@ -224,7 +237,7 @@ def l1_auto_parser(
             lineID {str} -- the document ID
 
         Returns:
-            str, str -- processed document with each sentence in a line,
+            str, str -- processed_data document with each sentence in a line,
                         sentence IDs with each in its own line: lineID_0 lineID_1 ...
         """
         try:
@@ -276,7 +289,7 @@ def l1_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt):
     """clean the entire corpus (output from CoreNLP) like l1_auto_parser
 
     Arguments:
-        in_file {str or Path} -- input corpus, each line is a sentence
+        in_file {str or Path} -- input_data corpus, each line is a sentence
         out_file {str or Path} -- output corpus
     """
     a_text_clearner = preprocess.text_cleaner()
@@ -284,7 +297,7 @@ def l1_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt):
         path_input_txt=path_in_parsed_txt,
         path_output_txt=path_out_cleaned_txt,
         input_index_list=[
-            str(i) for i in range(file_util.line_counter(path_in_parsed_txt))
+            str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
         ],  # fake IDs (do not need IDs for this function).
         path_output_index=None,
         process_line_func=functools.partial(a_text_clearner.clean),
@@ -298,7 +311,7 @@ def l1_mp_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, mp_threads=
     could use "multiprocessing"
 
     Arguments:
-        in_file {str or Path} -- input corpus, each line is a sentence
+        in_file {str or Path} -- input_data corpus, each line is a sentence
         out_file {str or Path} -- output corpus
     """
     a_text_clearner = preprocess.text_cleaner()
@@ -306,7 +319,7 @@ def l1_mp_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, mp_threads=
         path_input_txt=path_in_parsed_txt,
         path_output_txt=path_out_cleaned_txt,
         input_index_list=[
-            str(i) for i in range(file_util.line_counter(path_in_parsed_txt))
+            str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
         ],  # fake IDs (do not need IDs for this function).
         path_output_index=None,
         process_line_func=functools.partial(a_text_clearner.clean),
@@ -368,8 +381,8 @@ def auto_bigram_fit_transform_txt(path_input_clean_txt,
 """word2vec model function"""
 
 
-@_qihang_funcs.timer_wrapper
-def train_w2v_model(input_path, model_path, *args, **kwargs):
+@_file_util.timer_wrapper
+def train_w2v_model(path_input_cleaned_txt, path_output_model, *args, **kwargs):
     """ Train a word2vec model using the LineSentence file in input_path,
     save the model to model_path.count
 
@@ -377,9 +390,48 @@ def train_w2v_model(input_path, model_path, *args, **kwargs):
         input_path {str} -- Corpus for training, each line is a sentence
         model_path {str} -- Where to save the model?
     """
-    pathlib.Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+    # pathlib.Path(path_output_model).parent.mkdir(parents=True, exist_ok=True)
     corpus_confcall = gensim.models.word2vec.PathLineSentences(
-        str(input_path), max_sentence_length=10000000
+        str(path_input_cleaned_txt), max_sentence_length=10000000
     )
     model = gensim.models.Word2Vec(corpus_confcall, *args, **kwargs)
-    model.save(str(model_path))
+    model.save(str(path_output_model))
+
+
+"""word dictionary semi-supervised under word2vec model, auto function"""
+
+
+def auto_w2v_semisup_dict(
+        path_input_w2v_model,
+        seed_words_dict,
+        restrict_vocab_per: typing.Optional[float],
+        model_dims: int,
+
+):
+    model = gensim.models.Word2Vec.load(path_input_w2v_model)
+
+    vocab_number = len(model.wv.vocab)
+
+    print("Vocab size in the w2v model: {}".format(vocab_number))
+
+    # expand dictionary
+    expanded_words_dict = _dictionary.expand_words_dimension_mean(
+        word2vec_model=model,
+        seed_words=seed_words_dict,
+        restrict=restrict_vocab_per,
+        n=model_dims,
+    )
+
+    # make sure that one word only loads to one dimension
+    expanded_words_dict = _dictionary.deduplicate_keywords(
+        word2vec_model=model,
+        expanded_words=expanded_words_dict,
+        seed_words=seed_words_dict,
+    )
+
+    # rank the words under each dimension by similarity to the seed words
+    expanded_words_dict = _dictionary.rank_by_sim(
+        expanded_words_dict, seed_words_dict, model
+    )
+    # output the dictionary
+    return expanded_words_dict

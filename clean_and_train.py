@@ -1,6 +1,4 @@
 import datetime
-import logging
-import sys
 from pathlib import Path
 import global_options
 import seminlpclassify
@@ -9,19 +7,21 @@ import seminlpclassify
 
 
 if __name__ == '__main__':
+    # check make directory if exist.
+
     # clean the parsed text (remove POS tags, stopwords, etc.) ----------------
     seminlpclassify.l1_mp_clean_parsed_txt(
-        path_in_parsed_txt=Path(global_options.DATA_FOLDER, "processed", "parsed", "documents.txt"),
-        path_out_cleaned_txt=Path(global_options.DATA_FOLDER, "processed", "unigram", "documents.txt"),
+        path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
+        path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
     )
 
     # train and apply a phrase model to detect 2-word phrases ----------------
     seminlpclassify.auto_bigram_fit_transform_txt(
         path_input_clean_txt=Path(
-            global_options.DATA_FOLDER, "processed", "unigram", "documents.txt"
+            global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"
         ),
         path_output_transformed_txt=Path(
-            global_options.DATA_FOLDER, "processed", "bigram", "documents.txt"
+            global_options.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"
         ),
         path_output_model_mod=Path(global_options.MODEL_FOLDER, "phrases", "bigram.mod"),
         phrase_min_length=global_options.PHRASE_MIN_COUNT,
@@ -33,9 +33,9 @@ if __name__ == '__main__':
     # train and apply a phrase model to detect 3-word phrases ----------------
 
     seminlpclassify.auto_bigram_fit_transform_txt(
-        path_input_clean_txt=Path(global_options.DATA_FOLDER, "processed", "bigram", "documents.txt"),
+        path_input_clean_txt=Path(global_options.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"),
         path_output_transformed_txt=Path(
-            global_options.DATA_FOLDER, "processed", "trigram", "documents.txt"
+            global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
         path_output_model_mod=Path(global_options.MODEL_FOLDER, "phrases", "trigram.mod"),
         phrase_min_length=global_options.PHRASE_MIN_COUNT,
@@ -48,10 +48,10 @@ if __name__ == '__main__':
     print(datetime.datetime.now())
     print("Training w2v model...")
     seminlpclassify.train_w2v_model(
-        input_path=Path(
-            global_options.DATA_FOLDER, "processed", "trigram", "documents.txt"
+        path_input_cleaned_txt=Path(
+            global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
-        model_path=Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod"),
+        path_output_model=Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod"),
         size=global_options.W2V_DIM,
         window=global_options.W2V_WINDOW,
         workers=global_options.N_CORES,

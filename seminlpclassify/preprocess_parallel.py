@@ -1,8 +1,7 @@
 """Implementation of preprocess.py that supports multiprocess
 """
-
 from stanfordnlp.server import CoreNLPClient
-from . import _qihang_funcs
+from . import _file_util
 
 
 def process_document(doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
@@ -14,24 +13,26 @@ def process_document(doc, doc_id=None, corenlp_endpoint: str = "http://localhost
         corenlp_endpoint {str} -- core nlp port to deal with data, like 9001, 9002...
 
     Returns:
-        sentences_processed {[str]} -- a list of processed sentences with NER tagged
+        sentences_processed {[str]} -- a list of processed_data sentences with NER tagged
             and MWEs concatenated
-        doc_ids {[str]} -- a list of processed sentence IDs [docID1_1, docID1_2...]
+        doc_ids {[str]} -- a list of processed_data sentence IDs [docID1_1, docID1_2...]
         Example:
-            Input: "When I was a child in Ohio, I always wanted to go to Stanford University with respect to higher education.
+            Input: "When I was a child in Ohio,
+            I always wanted to go to Stanford University with respect to higher education.
             But I had to go along with my parents."
             Output: 
             
-            'when I be a child in ['when I be a child in [NER:LOCATION]Ohio , I always want to go to [NER:ORGANIZATION]Stanford_University with_respect_to higher education . 
+            'when I be a child in ['when I be a child in [NER:LOCATION]Ohio ,
+            I always want to go to [NER:ORGANIZATION]Stanford_University with_respect_to higher education .
             'but I have to go_along with my parent . '
 
             doc1_1
             doc1_2
     
     Note:
-        When the doc is empty, both doc_id and sentences processed will be too. (@TODO: fix for consistensy)
+        When the doc is empty, both doc_id and sentences processed_data will be too.
     """
-    if not _qihang_funcs.check_server(corenlp_endpoint):
+    if not _file_util.check_server(corenlp_endpoint):
         raise ValueError(f'{corenlp_endpoint} is not running, reset the port and try again.')
 
     with CoreNLPClient(endpoint=corenlp_endpoint, start_server=False, timeout=120000000) as client:

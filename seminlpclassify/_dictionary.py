@@ -1,15 +1,8 @@
-import itertools
 import math
-import os
-import pickle
-import statistics as s
 from collections import Counter, OrderedDict, defaultdict
 from functools import partial
-from itertools import repeat
 from multiprocessing import Pool
 from operator import itemgetter
-
-import gensim
 import numpy as np
 import pandas as pd
 import tqdm
@@ -17,12 +10,12 @@ from sklearn import preprocessing
 
 
 def expand_words_dimension_mean(
-    word2vec_model,
-    seed_words,
-    n=50,
-    restrict=None,
-    min_similarity=0,
-    filter_word_set=None,
+        word2vec_model,
+        seed_words,
+        n=50,
+        restrict=None,
+        min_similarity=0,
+        filter_word_set=None,
 ):
     """For each dimensional mean vector, search for the closest n words
 
@@ -111,13 +104,13 @@ def write_dict_to_csv(culture_dict, file_name):
 
 
 def read_dict_from_csv(file_name):
-    """Read seminlptools dict from a csv file
+    """Read seminlpclassify dict from a csv file
 
     Arguments:
         file_name {str} -- expanded dictionary file
     
     Returns:
-        culture_dict {dict{str: set(str)}} -- a seminlptools dict, dim name as key, set of expanded words as value
+        culture_dict {dict{str: set(str)}} -- a seminlpclassify dict, dim name as key, set of expanded words as value
         all_dict_words {set(str)} -- a set of all words in the dict
     """
     print("Importing dict: {}".format(file_name))
@@ -240,14 +233,14 @@ def score_tf(documents, document_ids, expanded_words, n_core=1):
 
 
 def score_tf_idf(
-    documents,
-    document_ids,
-    expanded_words,
-    df_dict,
-    N_doc,
-    method="TFIDF",
-    word_weights=None,
-    normalize=False,
+        documents,
+        document_ids,
+        expanded_words,
+        df_dict,
+        N_doc,
+        method="TFIDF",
+        word_weights=None,
+        normalize=False,
 ):
     """Calculate tf-idf score for documents
 
@@ -291,15 +284,15 @@ def score_tf_idf(
                         w_ij = pair[1] * math.log(N_doc / df_dict[pair[0]])
                     elif method == "TFIDF+SIMWEIGHT":
                         w_ij = (
-                            pair[1]
-                            * word_weights[pair[0]]
-                            * math.log(N_doc / df_dict[pair[0]])
+                                pair[1]
+                                * word_weights[pair[0]]
+                                * math.log(N_doc / df_dict[pair[0]])
                         )
                     elif method == "WFIDF+SIMWEIGHT":
                         w_ij = (
-                            (1 + math.log(pair[1]))
-                            * word_weights[pair[0]]
-                            * math.log(N_doc / df_dict[pair[0]])
+                                (1 + math.log(pair[1]))
+                                * word_weights[pair[0]]
+                                * math.log(N_doc / df_dict[pair[0]])
                         )
                     else:
                         raise Exception(
