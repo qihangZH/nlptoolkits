@@ -14,18 +14,20 @@ def threads_interrupt_initiator():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def check_server(url):
+def check_server(url, timeout: int):
     parsed_url = urlparse(url)
     host = parsed_url.hostname
     port = parsed_url.port
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(5)  # You can adjust timeout as needed
+    sock.settimeout(timeout)  # You can adjust timeout as needed
     try:
         result = sock.connect_ex((host, port))
-        sock.close()
         return result == 0
     except socket.gaierror:
         return False
+    finally:
+        # close what ever happens
+        sock.close()
 
 
 def timer_wrapper(func):

@@ -259,12 +259,14 @@ def l1_auto_parser(
     ) as client:
 
         if use_multicores:
+            """you must make corenlp and mp.Pool's port are same!!!"""
             mp_process_largefile(
                 path_input_txt=path_input_txt,
                 path_output_txt=path_output_txt,
                 input_index_list=input_index_list,
                 path_output_index=path_output_index,
                 process_line_func=lambda x, y:
+                # you must make corenlp and mp.Pool's port are same
                 preprocess_parallel.process_document(x, y, endpoint),
                 multiprocess_threads=nlp_threads,
                 chunk_size=chunk_size,

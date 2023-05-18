@@ -1,8 +1,11 @@
-from collections import defaultdict
+import re
+from collections import defaultdict, Counter
 import tqdm
 import pandas as pd
 import copy
 import pickle
+import math
+import warnings
 from . import _dictionary
 from . import _file_util
 
@@ -22,8 +25,14 @@ def construct_doc_level_corpus(sent_corpus_file, sent_id_file):
     sent_corpus = _file_util.file_to_list(sent_corpus_file)
     sent_IDs = _file_util.file_to_list(sent_id_file)
     assert len(sent_IDs) == len(sent_corpus)
+
     # doc id for each sentence
-    doc_ids = [x.split("_")[0] for x in sent_IDs]
+    """old-version:"""
+    # doc_ids = [x.split("_")[0] for x in sent_IDs]
+    """new-version:"""
+    doc_ids = pd.Series(sent_IDs).str.extract(pat=r'^(.*)_[^_]*$',  # pick the group which before the last underscore
+                                              expand=False, flags=re.IGNORECASE).to_list()
+
     # concat all text from the same doc
     id_doc_dict = defaultdict(lambda: "")
     for i, id in enumerate(doc_ids):
@@ -172,3 +181,81 @@ class DocScorer:
             word_contributions_df = pd.DataFrame.from_dict(contribution_dict, orient="index")
 
             return score_df, word_contributions_df
+
+    """score contribution"""
+
+    def score_contribution_df(self):
+        """output contribution dict to Excel file
+        Arguments:
+            contribution_dict {word:contribution} -- a pre-calculated contribution dict for each word in expanded dictionary
+            out_file {str} -- file name (Excel)
+        """
+
+        warnings.warn('score_contribution_df IS a unstable function, its result is unknown and not explainable',
+                      FutureWarning
+                      )
+
+        # PART1-> count for conrtibution_dict
+
+        contribution_TF = defaultdict(int)
+        contribution_WFIDF = defaultdict(int)
+        contribution_TFIDF = defaultdict(int)
+        contribution_TFIDF_SIMWEIGHT = defaultdict(int)
+        contribution_WFIDF_SIMWEIGHT = defaultdict(int)
+        for i, doc in enumerate(tqdm.tqdm(self.doc_corpus)):
+            document = doc.split()
+            c = Counter(document)
+            for pair in c.items():
+                if pair[0] in self.all_dict_words:
+                    contribution_TF[pair[0]] += pair[1]
+                    w_ij = (1 + math.log(pair[1])) * math.log(self.N_doc / self.doc_freq_dict[pair[0]])
+                    contribution_WFIDF[pair[0]] += w_ij
+                    w_ij = pair[1] * math.log(self.N_doc / self.doc_freq_dict[pair[0]])
+                    contribution_TFIDF[pair[0]] += w_ij
+                    w_ij = (
+                            pair[1] * self.word_sim_weights[pair[0]] * math.log(
+                        self.N_doc / self.doc_freq_dict[pair[0]])
+                    )
+                    contribution_TFIDF_SIMWEIGHT[pair[0]] += w_ij
+                    w_ij = (
+                            (1 + math.log(pair[1]))
+                            * self.word_sim_weights[pair[0]]
+                            * math.log(self.N_doc / self.doc_freq_dict[pair[0]])
+                    )
+                    contribution_WFIDF_SIMWEIGHT[pair[0]] += w_ij
+        contribution_dict = {
+            "TF": contribution_TF,
+            "TFIDF": contribution_TFIDF,
+            "WFIDF": contribution_WFIDF,
+            "TFIDF+SIMWEIGHT": contribution_TFIDF_SIMWEIGHT,
+            "WFIDF+SIMWEIGHT": contribution_WFIDF_SIMWEIGHT,
+        }
+
+        # PART2 -> output contribution dict to Excel file
+
+        contribution_lst = []
+        for dim in self.current_dict:
+            for w in self.current_dict[dim]:
+                w_dict = {}
+                w_dict["dim"] = dim
+                w_dict["word"] = w
+                w_dict["contribution"] = contribution_dict[w]
+                contribution_lst.append(w_dict)
+
+        contribution_df = pd.DataFrame(contribution_lst)
+        dim_dfs = []
+        for dim in sorted(self.current_dict.keys()):
+            dim_df = (
+                contribution_df[contribution_df.dim == dim]
+                .sort_values(by="contribution", ascending=False)
+                .reset_index(drop=True)
+            )
+            dim_df["total_contribution"] = dim_df["contribution"].sum()
+            dim_df["relative_contribuion"] = dim_df["contribution"].div(
+                dim_df["total_contribution"]
+            )
+            dim_df["cumulative_contribution"] = dim_df["relative_contribuion"].cumsum()
+            dim_df = dim_df.drop(["total_contribution"], axis=1)
+            dim_dfs.append(dim_df)
+
+        return pd.concat(dim_dfs, axis=1)

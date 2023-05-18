@@ -1,5 +1,7 @@
 """Implementation of preprocess.py that supports multiprocess
 """
+import time
+
 from stanfordnlp.server import CoreNLPClient
 
 import seminlpclassify.qihangfuncs
@@ -34,11 +36,23 @@ def process_document(doc, doc_id=None, corenlp_endpoint: str = "http://localhost
     Note:
         When the doc is empty, both doc_id and sentences processed_data will be too.
     """
-    if not seminlpclassify.qihangfuncs.check_server(corenlp_endpoint):
-        raise ValueError(f'{corenlp_endpoint} is not running, reset the port and try again.')
+    # if not seminlpclassify.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
+    #     raise ConnectionError(f'{corenlp_endpoint} is not running, reset the port and try again.')
+    wait_seconds = 10
+    while True:
+        try:
+            with CoreNLPClient(
+                    endpoint=corenlp_endpoint, start_server=False, timeout=120000000
+            ) as client:
+                doc_ann = client.annotate(doc)
 
-    with CoreNLPClient(endpoint=corenlp_endpoint, start_server=False, timeout=120000000) as client:
-        doc_ann = client.annotate(doc)
+                break
+
+        except Exception as e:
+            print(e, f'occurs, \nwait for {wait_seconds} seconds')
+            time.sleep(wait_seconds)
+            wait_seconds = wait_seconds * 1.2
+
     sentences_processed = []
     doc_sent_ids = []
     for i, sentence in enumerate(doc_ann.sentence):

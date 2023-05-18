@@ -6,15 +6,16 @@ from typing import Dict, List, Set
 
 # Hardware options
 N_CORES: int = os.cpu_count()  # max number of CPU cores to use
-RAM_CORENLP: str = "50G"  # max RAM allocated for parsing using CoreNLP; increase to speed up parsing
-PARSE_CHUNK_SIZE: int = 100
+RAM_CORENLP: str = "60G"  # max RAM allocated for parsing using CoreNLP; increase to speed up parsing
+PARSE_CHUNK_SIZE: int = 2000
 # number of lines in the input_data file to process uing CoreNLP at once.
 # Increase on workstations with larger RAM (e.g. to 1000 if RAM is 64G)
-ADDRESS_CORENLP: str = "http://localhost:9002"
+ADDRESS_CORENLP: str = "http://localhost:9010"
 # Directory locations
-os.environ[
-    "CORENLP_HOME"
-] = "C:/stanford-corenlp-full-2018-10-05"  # location of the CoreNLP models; use / to seperate folders
+# os.environ[
+#     "CORENLP_HOME"
+# ] = "F:/stanford-corenlp-4.5.4"  # location of the CoreNLP models; use / to seperate folders
+
 
 PROJ_FOLDER = os.path.abspath(os.path.dirname(__file__)) + '/'
 
@@ -39,65 +40,75 @@ DICT_RESTRICT_VOCAB = None
 
 # Inputs for constructing the expanded dictionary
 DIMS: List[str] = ["integrity", "teamwork", "innovation", "respect", "quality"]
-SEED_WORDS: Dict[str, List[str]] = {
-    "integrity": [
-        "integrity",
-        "ethic",
-        "ethical",
-        "accountable",
-        "accountability",
-        "trust",
-        "honesty",
-        "honest",
-        "honestly",
-        "fairness",
-        "responsibility",
-        "responsible",
-        "transparency",
-        "transparent",
+
+SEED_WORDS = {
+    "risk": [
+         'run', 'withdraw', 'deposit', 'insured', 'uninsured','risk'
     ],
-    "teamwork": [
-        "teamwork",
-        "collaboration",
-        "collaborate",
-        "collaborative",
-        "cooperation",
-        "cooperate",
-        "cooperative",
-    ],
-    "innovation": [
-        "innovation",
-        "innovate",
-        "innovative",
-        "creativity",
-        "creative",
-        "create",
-        "passion",
-        "passionate",
-        "efficiency",
-        "efficient",
-        "excellence",
-        "pride",
-    ],
-    "respect": [
-        "respectful",
-        "talent",
-        "talented",
-        "employee",
-        "dignity",
-        "empowerment",
-        "empower",
-    ],
-    "quality": [
-        "quality",
-        "customer",
-        "customer_commitment",
-        "dedication",
-        "dedicated",
-        "dedicate",
-        "customer_expectation",
-    ],
+    "contagion":[
+        'contagion','systemic', 'spillover', 'fed', 'contagion', 'whole_system', 'spread', 'meltfown'
+    ]
 }
+
+# SEED_WORDS: Dict[str, List[str]] = {
+#     "integrity": [
+#         "integrity",
+#         "ethic",
+#         "ethical",
+#         "accountable",
+#         "accountability",
+#         "trust",
+#         "honesty",
+#         "honest",
+#         "honestly",
+#         "fairness",
+#         "responsibility",
+#         "responsible",
+#         "transparency",
+#         "transparent",
+#     ],
+#     "teamwork": [
+#         "teamwork",
+#         "collaboration",
+#         "collaborate",
+#         "collaborative",
+#         "cooperation",
+#         "cooperate",
+#         "cooperative",
+#     ],
+#     "innovation": [
+#         "innovation",
+#         "innovate",
+#         "innovative",
+#         "creativity",
+#         "creative",
+#         "create",
+#         "passion",
+#         "passionate",
+#         "efficiency",
+#         "efficient",
+#         "excellence",
+#         "pride",
+#     ],
+#     "respect": [
+#         "respectful",
+#         "talent",
+#         "talented",
+#         "employee",
+#         "dignity",
+#         "empowerment",
+#         "empower",
+#     ],
+#     "quality": [
+#         "quality",
+#         "customer",
+#         "customer_commitment",
+#         "dedication",
+#         "dedicated",
+#         "dedicate",
+#         "customer_expectation",
+#     ],
+# }
 
 
 
