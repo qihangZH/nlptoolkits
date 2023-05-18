@@ -218,6 +218,7 @@ def l1_auto_parser(
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
     :param start_iloc: {int} -- line number to start from (index starts with 0)
     :param use_multicores: do you use multicores?
+    :param kwargs: the other arguments of stanfordnlp.server.CoreNLPClient
 
     Writes:
         Write the ouput_file and output_index_file
@@ -265,9 +266,8 @@ def l1_auto_parser(
                 path_output_txt=path_output_txt,
                 input_index_list=input_index_list,
                 path_output_index_txt=path_output_index_txt,
-                process_line_func=lambda x, y:
                 # you must make corenlp and mp.Pool's port are same
-                preprocess_parallel.process_document(x, y, endpoint),
+                process_line_func=lambda x, y: preprocess_parallel.process_document(x, y, endpoint),
                 multiprocess_threads=nlp_threads,
                 chunk_size=chunk_size,
                 start_iloc=start_iloc
