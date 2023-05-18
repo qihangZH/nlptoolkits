@@ -15,7 +15,7 @@ if __name__ == "__main__":
         path_output_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"
         ),
-        path_output_index=Path(
+        path_output_index_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
         ),
         use_multicores=True,

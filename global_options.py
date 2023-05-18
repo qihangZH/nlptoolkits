@@ -41,7 +41,7 @@ DICT_RESTRICT_VOCAB = None
 # Inputs for constructing the expanded dictionary
 DIMS: List[str] = ["integrity", "teamwork", "innovation", "respect", "quality"]
 
-SEED_WORDS = {
+SEED_WORDS: Dict[str, List[str]] = {
     "risk": [
          'run', 'withdraw', 'deposit', 'insured', 'uninsured','risk'
     ],

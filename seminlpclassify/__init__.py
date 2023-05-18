@@ -33,7 +33,7 @@ def process_largefile(
         path_input_txt,
         path_output_txt,
         input_index_list,
-        path_output_index,
+        path_output_index_txt,
         process_line_func,
         chunk_size=100,
         start_iloc=None,
@@ -49,7 +49,7 @@ def process_largefile(
     :param path_input_txt:  {str or Path} path to a text file, each line is a document
     :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
     :param input_index_list: {str} -- a list of input_data line ids
-    :param path_output_index: {str or Path} -- path to the index file of the output
+    :param path_output_index_txt: {str or Path} -- path to the index file of the output
     :param process_line_func: {callable} -- A function that processes a list of strings, list of ids and return
         a list of processed_data strings and ids. func(line_text, line_ids)
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
@@ -68,7 +68,7 @@ def process_largefile(
             # if start from the first line, remove existing output file
             # else append to existing output file
             os.remove(str(path_output_txt))
-            os.remove(str(path_output_index))
+            os.remove(str(path_output_index_txt))
     except OSError:
         pass
     assert _file_util.line_counter(path_input_txt) == len(
@@ -105,8 +105,8 @@ def process_largefile(
             output_line_ids = "\n".join(output_line_ids) + "\n"
             with open(path_output_txt, "a", newline="\n", encoding='utf-8') as f_out:
                 f_out.write(output_lines)
-            if path_output_index is not None:
-                with open(path_output_index, "a", newline="\n", encoding="utf-8") as f_out:
+            if path_output_index_txt is not None:
+                with open(path_output_index_txt, "a", newline="\n", encoding="utf-8") as f_out:
                     f_out.write(output_line_ids)
 
 
@@ -114,7 +114,7 @@ def mp_process_largefile(
         path_input_txt,
         path_output_txt,
         input_index_list,
-        path_output_index,
+        path_output_index_txt,
         process_line_func,
         multiprocess_threads,
         chunk_size=100,
@@ -132,7 +132,7 @@ def mp_process_largefile(
     :param path_input_txt:  {str or Path} path to a text file, each line is a document
     :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
     :param input_index_list: {str} -- a list of input_data line ids
-    :param path_output_index: {str or Path} -- path to the index file of the output
+    :param path_output_index_txt: {str or Path} -- path to the index file of the output
     :param process_line_func: {callable} -- A function that processes a list of strings, list of ids and return
         a list of processed_data strings and ids. func(line_text, line_ids)
     :param multiprocess_threads: {int} -- the core to use, should be same as the argument of your project,
@@ -148,7 +148,7 @@ def mp_process_largefile(
             # if start from the first line, remove existing output file
             # else append to existing output file
             os.remove(str(path_output_txt))
-            os.remove(str(path_output_index))
+            os.remove(str(path_output_index_txt))
     except OSError:
         pass
     assert _file_util.line_counter(path_input_txt) == len(
@@ -187,8 +187,8 @@ def mp_process_largefile(
             output_line_ids = "\n".join(output_line_ids) + "\n"
             with open(path_output_txt, "a", newline="\n", encoding='utf-8') as f_out:
                 f_out.write(output_lines)
-            if path_output_index is not None:
-                with open(path_output_index, "a", newline="\n", encoding='utf-8') as f_out:
+            if path_output_index_txt is not None:
+                with open(path_output_index_txt, "a", newline="\n", encoding='utf-8') as f_out:
                     f_out.write(output_line_ids)
 
 
@@ -202,7 +202,7 @@ def l1_auto_parser(
         path_input_txt,
         path_output_txt,
         input_index_list,
-        path_output_index,
+        path_output_index_txt,
         chunk_size=100,
         start_iloc=None,
         use_multicores: bool = True,
@@ -214,7 +214,7 @@ def l1_auto_parser(
     :param path_input_txt:  {str or Path} path to a text file, each line is a document
     :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
     :param input_index_list: {str} -- a list of input_data line ids
-    :param path_output_index: {str or Path} -- path to the index file of the output
+    :param path_output_index_txt: {str or Path} -- path to the index file of the output
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
     :param start_iloc: {int} -- line number to start from (index starts with 0)
     :param use_multicores: do you use multicores?
@@ -264,7 +264,7 @@ def l1_auto_parser(
                 path_input_txt=path_input_txt,
                 path_output_txt=path_output_txt,
                 input_index_list=input_index_list,
-                path_output_index=path_output_index,
+                path_output_index_txt=path_output_index_txt,
                 process_line_func=lambda x, y:
                 # you must make corenlp and mp.Pool's port are same
                 preprocess_parallel.process_document(x, y, endpoint),
@@ -279,7 +279,7 @@ def l1_auto_parser(
                 path_input_txt=path_input_txt,
                 path_output_txt=path_output_txt,
                 input_index_list=input_index_list,
-                path_output_index=path_output_index,
+                path_output_index_txt=path_output_index_txt,
                 process_line_func=lambda x, y: _lambda_process_line(x, y, corpus_preprocessor),
                 chunk_size=chunk_size,
                 start_iloc=start_iloc
@@ -303,7 +303,7 @@ def l1_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt):
         input_index_list=[
             str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
         ],  # fake IDs (do not need IDs for this function).
-        path_output_index=None,
+        path_output_index_txt=None,
         process_line_func=functools.partial(a_text_clearner.clean),
         chunk_size=200000,
     )
@@ -325,7 +325,7 @@ def l1_mp_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, mp_threads=
         input_index_list=[
             str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
         ],  # fake IDs (do not need IDs for this function).
-        path_output_index=None,
+        path_output_index_txt=None,
         process_line_func=functools.partial(a_text_clearner.clean),
         multiprocess_threads=mp_threads,
         chunk_size=200000,
