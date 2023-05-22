@@ -1,6 +1,6 @@
 import global_options
 import pathlib
-from seminlpclassify.scorer import DocScorer
+from seminlpscorer.scorer import DocScorer
 
 if __name__ == "__main__":
     scorer_class = DocScorer(

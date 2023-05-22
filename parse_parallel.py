@@ -1,7 +1,7 @@
 # %%
 from pathlib import Path
 import global_options
-import seminlpclassify
+import seminlpscorer
 import pandas as pd
 import os
 
@@ -23,12 +23,12 @@ if __name__ == "__main__":
         )
 
     """Arguments"""
-    seminlpclassify.l1_auto_parser(
+    seminlpscorer.l1_auto_parser(
         endpoint=global_options.ADDRESS_CORENLP,
         memory=global_options.RAM_CORENLP,
         nlp_threads=global_options.N_CORES,
         path_input_txt=Path(global_options.INPUT_DATA_FOLDER, "tweets_origin.txt"),
-        input_index_list=seminlpclassify._file_util.file_to_list(
+        input_index_list=seminlpscorer._file_util.file_to_list(
             Path(global_options.INPUT_DATA_FOLDER, "ids_origin.txt")
         ),
         path_output_txt=Path(

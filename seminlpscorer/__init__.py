@@ -1,4 +1,4 @@
-import seminlpclassify.qihangfuncs
+import seminlpscorer.qihangfuncs
 from . import _dictionary
 from . import nlp_models
 from . import _file_util
@@ -385,7 +385,7 @@ def auto_bigram_fit_transform_txt(path_input_clean_txt,
 """word2vec model function"""
 
 
-@seminlpclassify.qihangfuncs.timer_wrapper
+@seminlpscorer.qihangfuncs.timer_wrapper
 def train_w2v_model(path_input_cleaned_txt, path_output_model, *args, **kwargs):
     """ Train a word2vec model using the LineSentence file in input_path,
     save the model to model_path.count

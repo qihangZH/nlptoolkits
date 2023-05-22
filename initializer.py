@@ -1,7 +1,7 @@
 """initialize the project and insure the project can run"""
 import global_options
 from pathlib import Path
-import seminlpclassify
+import seminlpscorer
 
 if __name__ == '__main__':
     print("""REFRESHING THE PROJECT FOLDERS,PLEASE WAIT...""")
@@ -11,7 +11,7 @@ if __name__ == '__main__':
                       global_options.OUTPUT_FOLDER
 
                       ]:
-        seminlpclassify.delete_whole_dir(directory=outputdir)
+        seminlpscorer.delete_whole_dir(directory=outputdir)
 
     """root level dir make"""
     Path(global_options.PROCESSED_DATA_FOLDER).mkdir(parents=False, exist_ok=True)

@@ -4,7 +4,7 @@ import time
 
 from stanfordnlp.server import CoreNLPClient
 
-import seminlpclassify.qihangfuncs
+import seminlpscorer.qihangfuncs
 from . import _file_util
 
 
@@ -36,7 +36,7 @@ def process_document(doc, doc_id=None, corenlp_endpoint: str = "http://localhost
     Note:
         When the doc is empty, both doc_id and sentences processed_data will be too.
     """
-    # if not seminlpclassify.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
+    # if not seminlpscorer.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
     #     raise ConnectionError(f'{corenlp_endpoint} is not running, reset the port and try again.')
     wait_seconds = 10
     while True:
