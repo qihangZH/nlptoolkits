@@ -2,18 +2,19 @@ import datetime
 import itertools
 import os
 import pathos
+import pandas as pd
 from . import qihangfuncs
 
 
 # --------------------------------------------------------------------------
-# l0 level functions/classes
+# l(-1) level functions/classes
 # --------------------------------------------------------------------------
-def line_counter(a_file):
+def _line_counter(a_file):
     """Count the number of lines in a text file
-    
+
     Arguments:
         a_file {str or Path} -- input_data text file
-    
+
     Returns:
         int -- number of lines in the file
     """
@@ -22,6 +23,10 @@ def line_counter(a_file):
         n_lines = sum(1 for _ in f)
     return n_lines
 
+
+# --------------------------------------------------------------------------
+# l0 level functions/classes
+# --------------------------------------------------------------------------
 
 def file_to_list(a_file):
     """Read a text file to a list, each line is an element
@@ -52,7 +57,7 @@ def list_to_file(list, a_file, validate=True):
             e = str(e).replace("\n", " ").replace("\r", " ")
             f.write("{}\n".format(e))
     if validate:
-        assert line_counter(a_file) == len(list)
+        assert _line_counter(a_file) == len(list)
 
 
 def read_large_file(a_file, block_size=10000):
@@ -77,6 +82,44 @@ def read_large_file(a_file, block_size=10000):
     # yield the last block
     if block:
         yield block
+
+
+def write_dict_to_csv(culture_dict, file_name):
+    """write the expanded dictionary to a csv file, each dimension is a column, the header includes dimension names
+
+    Arguments:
+        culture_dict {dict[str, list[str]]} -- an expanded dictionary {dimension: [words]}
+        file_name {str} -- where to save the csv file?
+    """
+    pd.DataFrame.from_dict(culture_dict, orient="index").transpose().to_csv(
+        file_name, index=None
+    )
+
+
+def read_dict_from_csv(file_name):
+    """Read seminlpscorer dict from a csv file
+
+    Arguments:
+        file_name {str} -- expanded dictionary file
+
+    Returns:
+        culture_dict {dict{str: set(str)}} -- a seminlpscorer dict, dim name as key, set of expanded words as value
+        all_dict_words {set(str)} -- a set of all words in the dict
+    """
+    print("Importing dict: {}".format(file_name))
+    culture_dict_df = pd.read_csv(file_name, index_col=None)
+    culture_dict = culture_dict_df.to_dict("list")
+    for k in culture_dict.keys():
+        culture_dict[k] = set([x for x in culture_dict[k] if x == x])  # remove nan
+
+    all_dict_words = set()
+    for key in culture_dict:
+        all_dict_words |= culture_dict[key]
+
+    for dim in culture_dict.keys():
+        print("Number of words in {} dimension: {}".format(dim, len(culture_dict[dim])))
+
+    return culture_dict, all_dict_words
 
 
 # --------------------------------------------------------------------------
@@ -128,7 +171,7 @@ def l1_process_largefile(
             os.remove(str(path_output_index_txt))
     except OSError:
         pass
-    assert line_counter(path_input_txt) == len(
+    assert _line_counter(path_input_txt) == len(
         input_index_list
     ), "Make sure the input_data file has the same number of rows as the input_data ID file. "
 
@@ -208,7 +251,7 @@ def l1_mp_process_largefile(
             os.remove(str(path_output_index_txt))
     except OSError:
         pass
-    assert line_counter(path_input_txt) == len(
+    assert _line_counter(path_input_txt) == len(
         input_index_list
     ), "Make sure the input_data file has the same number of rows as the input_data ID file. "
 

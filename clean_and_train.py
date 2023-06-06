@@ -1,4 +1,3 @@
-import datetime
 import os
 from pathlib import Path
 import global_options
@@ -11,7 +10,7 @@ if __name__ == '__main__':
     # check make directory if exist.
 
     # clean the parsed text (remove POS tags, stopwords, etc.) ----------------
-    seminlpscorer.l1_clean_parsed_txt(
+    seminlpscorer.auto_clean_parsed_txt(
         path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
         path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
         stopwords=global_options.STOPWORDS,
@@ -45,18 +44,4 @@ if __name__ == '__main__':
         stopwords_set=global_options.STOPWORDS,
         threshold=global_options.PHRASE_THRESHOLD,
         scoring="original_scorer"
-    )
-
-    # # train the word2vec model ----------------
-    print(datetime.datetime.now())
-    print("Training w2v model...")
-    seminlpscorer.train_w2v_model(
-        path_input_cleaned_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
-        ),
-        path_output_model=Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod"),
-        size=global_options.W2V_DIM,
-        window=global_options.W2V_WINDOW,
-        workers=global_options.N_CORES,
-        iter=global_options.W2V_ITER,
     )

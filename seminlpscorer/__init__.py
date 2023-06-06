@@ -1,14 +1,17 @@
-from . import _dictionary
-from . import nlp_models
-from . import _file_util
-from . import preprocess
-from . import scorer
+from . import _BasicT
+from . import PreprocessT
+from . import Wrd2vScorerT
 from . import qihangfuncs
 # out source pack
+
 import os
-import gensim
-import typing
+import stanfordnlp.server
 import shutil
+import functools
+
+# --------------------------------------------------------------------------
+# l0 level functions
+# --------------------------------------------------------------------------
 
 """Other functions"""
 
@@ -19,11 +22,162 @@ def delete_whole_dir(directory):
         shutil.rmtree(directory)
 
 
-def alias_file_to_list(a_file):
-    return _file_util.file_to_list(a_file=a_file)
+"""function aliases"""
 
 
-"""train and transform the model"""
+def alias_file_to_list(*args, **kwargs):
+    """alias to _BasicT.file_to_list"""
+    return _BasicT.file_to_list(*args, **kwargs)
+
+
+def alias_write_dict_to_csv(*args, **kwargs):
+    """alias to _BasicT.write_dict_to_csv"""
+    return _BasicT.write_dict_to_csv(*args, **kwargs)
+
+
+# --------------------------------------------------------------------------
+# L0 Preprocessing AUTO functions
+# --------------------------------------------------------------------------
+
+
+"""Preprocessing: parser"""
+
+
+def auto_parser(
+        endpoint,
+        memory,
+        processes: int,
+        path_input_txt,
+        path_output_txt,
+        input_index_list,
+        path_output_index_txt,
+        chunk_size=100,
+        start_iloc=None,
+        mwe_dep_types: set = set(["mwe", "compound", "compound:prt"]),
+        **kwargs):
+    """
+    :param memory: memory using, should be str like "\d+G"
+    :param processes: how much processes does nlp use.
+    :param endpoint: endpoint in stanfordnlp.server.CoreNLPClient, should be address of port
+    :param path_input_txt:  {str or Path} path to a text file, each line is a document
+    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
+    :param input_index_list: {str} -- a list of input_data line ids
+    :param path_output_index_txt: {str or Path} -- path to the index file of the output
+    :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
+    :param start_iloc: {int} -- line number to start from (index starts with 0)
+    :param kwargs: the other arguments of stanfordnlp.server.CoreNLPClient
+    :param mwe_dep_types: the set of mwe dep types a list of MWEs in Universal Dependencies v1
+            (default: s{set(["mwe", "compound", "compound:prt"])})
+            see: http://universaldependencies.org/docsv1/u/dep/compound.html
+            and http://universaldependencies.org/docsv1/u/dep/mwe.html
+
+    Writes:
+        Write the ouput_file and output_index_file
+
+    """
+    # supply for arguments
+    kwargs['properties'] = kwargs['properties'] if 'properties' in kwargs else {
+        "ner.applyFineGrained": "false",
+        "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",
+    }
+    kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 12000000
+    kwargs['max_char_length'] = kwargs['max_char_length'] if 'max_char_length' in kwargs else 1000000
+
+    def _lambda_process_line(line, lineID, corpus_processor):
+        """Process each line and return a tuple of sentences, sentence_IDs,
+
+        Arguments:
+            line {str} -- a document
+            lineID {str} -- the document ID
+
+        Returns:
+            str, str -- processed_data document with each sentence in a line,
+                        sentence IDs with each in its own line: lineID_0 lineID_1 ...
+        """
+        try:
+            sentences_processed, doc_sent_ids = corpus_processor.process_document(
+                line, lineID
+            )
+            return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
+        except Exception as e:
+            print(e)
+            print("Exception in line: {}".format(lineID))
+
+    with stanfordnlp.server.CoreNLPClient(
+            memory=memory,
+            threads=processes,
+            endpoint=endpoint,  # must type in
+            **kwargs
+    ) as client:
+
+        if processes > 1:
+            """you must make corenlp and mp.Pool's port are same!!!"""
+            corpus_preprocessor = PreprocessT.DocParserParallel(mwe_dep_types=mwe_dep_types)
+            _BasicT.l1_mp_process_largefile(
+                path_input_txt=path_input_txt,
+                path_output_txt=path_output_txt,
+                input_index_list=input_index_list,
+                path_output_index_txt=path_output_index_txt,
+                # you must make corenlp and mp.Pool's port are same
+                process_line_func=lambda x, y: corpus_preprocessor.process_document(x, y, endpoint),
+                processes=processes,
+                chunk_size=chunk_size,
+                start_iloc=start_iloc
+            )
+        else:
+            corpus_preprocessor = PreprocessT.DocParser(client=client, mwe_dep_types=mwe_dep_types)
+
+            _BasicT.l1_process_largefile(
+                path_input_txt=path_input_txt,
+                path_output_txt=path_output_txt,
+                input_index_list=input_index_list,
+                path_output_index_txt=path_output_index_txt,
+                process_line_func=lambda x, y: _lambda_process_line(x, y, corpus_preprocessor),
+                chunk_size=chunk_size,
+                start_iloc=start_iloc
+            )
+
+
+"""Preprocessing: clean the parsed file"""
+
+
+def auto_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords, processes: int):
+    """clean the entire corpus (output from CoreNLP)
+    :param path_in_parsed_txt: the parsed file(txt) which has be dealed by stanford corenlp
+    :param path_out_cleaned_txt: the path of cleaned file to be output, will be tagged and some words are removed
+    :param processes: how much processes to be used
+    Arguments:
+        in_file {str or Path} -- input_data corpus, each line is a sentence
+        out_file {str or Path} -- output corpus
+    """
+    a_text_clearner = PreprocessT.TextCleaner(stopwords)
+    if processes > 1:
+        _BasicT.l1_process_largefile(
+            path_input_txt=path_in_parsed_txt,
+            path_output_txt=path_out_cleaned_txt,
+            input_index_list=[
+                str(i) for i in range(_BasicT._line_counter(path_in_parsed_txt))
+            ],  # fake IDs (do not need IDs for this function).
+            path_output_index_txt=None,
+            process_line_func=functools.partial(a_text_clearner.clean),
+            chunk_size=200000,
+        )
+
+    else:
+        _BasicT.l1_mp_process_largefile(
+            path_input_txt=path_in_parsed_txt,
+            path_output_txt=path_out_cleaned_txt,
+            input_index_list=[
+                str(i) for i in range(_BasicT._line_counter(path_in_parsed_txt))
+            ],  # fake IDs (do not need IDs for this function).
+            path_output_index_txt=None,
+            process_line_func=functools.partial(a_text_clearner.clean),
+            processes=processes,
+            chunk_size=200000,
+        )
+
+
+"""Preprocessing: train and transform the bigram model, concat two words into one"""
 
 
 def auto_bigram_fit_transform_txt(path_input_clean_txt,
@@ -38,7 +192,7 @@ def auto_bigram_fit_transform_txt(path_input_clean_txt,
     transform the sep two length words to concat in a word which join by '_'
     which means uni-gram -> bi-gram words.
     you can recursive this function to get the target tri-gram or bigger phrases.
-    
+
     Args:
         path_input_clean_txt:
         path_output_transformed_txt:
@@ -57,76 +211,17 @@ def auto_bigram_fit_transform_txt(path_input_clean_txt,
         raise ValueError('Model must end with .mod')
 
     # train and apply a phrase model to detect 3-word phrases ----------------
-    nlp_models.train_bigram_model(
+    PreprocessT.train_bigram_model(
         input_path=path_input_clean_txt,
         model_path=path_output_model_mod,
         phrase_min_length=phrase_min_length,
         phrase_threshold=threshold,
         stopwords_set=stopwords_set
     )
-    nlp_models.file_bigramer(
+    PreprocessT.file_bigramer(
         input_path=path_input_clean_txt,
         output_path=path_output_transformed_txt,
         model_path=path_output_model_mod,
         scoring=scoring,
         threshold=threshold,
     )
-
-
-"""word2vec model function"""
-
-
-@qihangfuncs.timer_wrapper
-def train_w2v_model(path_input_cleaned_txt, path_output_model, *args, **kwargs):
-    """ Train a word2vec model using the LineSentence file in input_path,
-    save the model to model_path.count
-
-    Arguments:
-        input_path {str} -- Corpus for training, each line is a sentence
-        model_path {str} -- Where to save the model?
-    """
-    # pathlib.Path(path_output_model).parent.mkdir(parents=True, exist_ok=True)
-    corpus_confcall = gensim.models.word2vec.PathLineSentences(
-        str(path_input_cleaned_txt), max_sentence_length=10000000
-    )
-    model = gensim.models.Word2Vec(corpus_confcall, *args, **kwargs)
-    model.save(str(path_output_model))
-
-
-"""word dictionary semi-supervised under word2vec model, auto function"""
-
-
-def auto_w2v_semisup_dict(
-        path_input_w2v_model,
-        seed_words_dict,
-        restrict_vocab_per: typing.Optional[float],
-        model_dims: int,
-
-):
-    model = gensim.models.Word2Vec.load(path_input_w2v_model)
-
-    vocab_number = len(model.wv.vocab)
-
-    print("Vocab size in the w2v model: {}".format(vocab_number))
-
-    # expand dictionary
-    expanded_words_dict = _dictionary.expand_words_dimension_mean(
-        word2vec_model=model,
-        seed_words=seed_words_dict,
-        restrict=restrict_vocab_per,
-        n=model_dims,
-    )
-
-    # make sure that one word only loads to one dimension
-    expanded_words_dict = _dictionary.deduplicate_keywords(
-        word2vec_model=model,
-        expanded_words=expanded_words_dict,
-        seed_words=seed_words_dict,
-    )
-
-    # rank the words under each dimension by similarity to the seed words
-    expanded_words_dict = _dictionary.rank_by_sim(
-        expanded_words_dict, seed_words_dict, model
-    )
-    # output the dictionary
-    return expanded_words_dict

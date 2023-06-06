@@ -2,19 +2,21 @@ from stanfordnlp.server import CoreNLPClient
 import re
 import time
 import functools
-import os
-import stanfordnlp.server
-from . import _file_util
+
+import gensim
+import tqdm
+from gensim import models
+import datetime
+from . import _BasicT
 
 
 # Qihang Zhang modified in 6/6/2023, National university of singapore
 # Modification for better usage, and for its flexible using
-
 # --------------------------------------------------------------------------
-# l (-2) level functions/classes, this basic class is only for inheritance
+# l (-1) level classes, this basic class is only for inheritance
 # --------------------------------------------------------------------------
 
-class __ParserBasic:
+class _ParserBasic:
 
     def __init__(self, mwe_dep_types: set):
         """
@@ -140,11 +142,83 @@ class __ParserBasic:
         return "".join(sentence_parsed)
 
 
+"""New script likely in next part->"""
 # --------------------------------------------------------------------------
-# l0 level functions/classes
+# l0 level functions
 # --------------------------------------------------------------------------
 
-class DocParser(__ParserBasic):
+"""bigram models to make seperate words to one word concat with _"""
+
+
+def train_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
+    """ Train a phrase model and save it to the disk.
+
+    Arguments:
+        input_path {str or Path} -- input_data corpus
+        model_path {str or Path} -- where to save the trained phrase model?
+
+    Returns:
+        gensim.models.phrases.Phrases -- the trained phrase model
+    """
+    # Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+    print(datetime.datetime.now())
+    print("Training phraser...")
+    corpus = gensim.models.word2vec.PathLineSentences(
+        str(input_path), max_sentence_length=10000000
+    )
+    n_lines = _BasicT._line_counter(input_path)
+    bigram_model = models.phrases.Phrases(
+        tqdm.tqdm(corpus, total=n_lines),
+        min_count=phrase_min_length,
+        scoring="default",
+        threshold=phrase_threshold,
+        common_terms=stopwords_set,
+    )
+    bigram_model.save(str(model_path))
+    return bigram_model
+
+
+def bigram_transform(line, bigram_phraser):
+    """ Helper file fore file_bigramer
+    Note: Needs a phraser object or phrase model.
+
+    Arguments:
+        line {str}: a line
+
+    return: a line with phrases joined using "_"
+    """
+    return " ".join(bigram_phraser[line.split()])
+
+
+def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=None):
+    """ Transform an input_data text file into a file with 2-word phrases.
+    Apply again to learn 3-word phrases.
+
+    Arguments:
+        input_path {str}: Each line is a sentence
+        ouput_file {str}: Each line is a sentence with 2-word phraes concatenated
+    """
+    # Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    # Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+    bigram_model = gensim.models.phrases.Phrases.load(str(model_path))
+    if scoring is not None:
+        bigram_model.scoring = getattr(gensim.models.phrases, scoring)
+    if threshold is not None:
+        bigram_model.threshold = threshold
+    # bigram_phraser = models.phrases.Phraser(bigram_model)
+    with open(input_path, "r", encoding='utf-8') as f:
+        input_data = f.readlines()
+    data_bigram = [bigram_transform(l, bigram_model) for l in tqdm.tqdm(input_data)]
+    with open(output_path, "w", encoding='utf-8') as f:
+        f.write("\n".join(data_bigram) + "\n")
+    assert len(input_data) == _BasicT._line_counter(output_path)
+
+
+# --------------------------------------------------------------------------
+# l0 level classes
+# --------------------------------------------------------------------------
+
+class DocParser(_ParserBasic):
     def __init__(self, client, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
         self.client = client
@@ -185,7 +259,7 @@ class DocParser(__ParserBasic):
         return sentences_processed, doc_ids
 
 
-class DocParserParallel(__ParserBasic):
+class DocParserParallel(_ParserBasic):
     def __init__(self, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
 
@@ -304,145 +378,4 @@ class TextCleaner:
                 line,
             ),
             id,
-        )
-
-
-# --------------------------------------------------------------------------
-# l1 level functions/classes
-# --------------------------------------------------------------------------
-
-"""parser"""
-
-
-def l1_auto_parser(
-        endpoint,
-        memory,
-        processes: int,
-        path_input_txt,
-        path_output_txt,
-        input_index_list,
-        path_output_index_txt,
-        chunk_size=100,
-        start_iloc=None,
-        mwe_dep_types: set = set(["mwe", "compound", "compound:prt"]),
-        **kwargs):
-    """
-    :param memory: memory using, should be str like "\d+G"
-    :param processes: how much processes does nlp use.
-    :param endpoint: endpoint in stanfordnlp.server.CoreNLPClient, should be address of port
-    :param path_input_txt:  {str or Path} path to a text file, each line is a document
-    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
-    :param input_index_list: {str} -- a list of input_data line ids
-    :param path_output_index_txt: {str or Path} -- path to the index file of the output
-    :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
-    :param start_iloc: {int} -- line number to start from (index starts with 0)
-    :param kwargs: the other arguments of stanfordnlp.server.CoreNLPClient
-    :param mwe_dep_types: the set of mwe dep types a list of MWEs in Universal Dependencies v1
-            (default: s{set(["mwe", "compound", "compound:prt"])})
-            see: http://universaldependencies.org/docsv1/u/dep/compound.html
-            and http://universaldependencies.org/docsv1/u/dep/mwe.html
-
-    Writes:
-        Write the ouput_file and output_index_file
-
-    """
-    # supply for arguments
-    kwargs['properties'] = kwargs['properties'] if 'properties' in kwargs else {
-        "ner.applyFineGrained": "false",
-        "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",
-    }
-    kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 12000000
-    kwargs['max_char_length'] = kwargs['max_char_length'] if 'max_char_length' in kwargs else 1000000
-
-    def _lambda_process_line(line, lineID, corpus_processor):
-        """Process each line and return a tuple of sentences, sentence_IDs,
-
-        Arguments:
-            line {str} -- a document
-            lineID {str} -- the document ID
-
-        Returns:
-            str, str -- processed_data document with each sentence in a line,
-                        sentence IDs with each in its own line: lineID_0 lineID_1 ...
-        """
-        try:
-            sentences_processed, doc_sent_ids = corpus_processor.process_document(
-                line, lineID
-            )
-            return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
-        except Exception as e:
-            print(e)
-            print("Exception in line: {}".format(lineID))
-
-    with stanfordnlp.server.CoreNLPClient(
-            memory=memory,
-            threads=processes,
-            endpoint=endpoint,  # must type in
-            **kwargs
-    ) as client:
-
-        if processes > 1:
-            """you must make corenlp and mp.Pool's port are same!!!"""
-            corpus_preprocessor = DocParserParallel(mwe_dep_types=mwe_dep_types)
-            _file_util.l1_mp_process_largefile(
-                path_input_txt=path_input_txt,
-                path_output_txt=path_output_txt,
-                input_index_list=input_index_list,
-                path_output_index_txt=path_output_index_txt,
-                # you must make corenlp and mp.Pool's port are same
-                process_line_func=lambda x, y: corpus_preprocessor.process_document(x, y, endpoint),
-                processes=processes,
-                chunk_size=chunk_size,
-                start_iloc=start_iloc
-            )
-        else:
-            corpus_preprocessor = DocParser(client=client, mwe_dep_types=mwe_dep_types)
-
-            _file_util.l1_process_largefile(
-                path_input_txt=path_input_txt,
-                path_output_txt=path_output_txt,
-                input_index_list=input_index_list,
-                path_output_index_txt=path_output_index_txt,
-                process_line_func=lambda x, y: _lambda_process_line(x, y, corpus_preprocessor),
-                chunk_size=chunk_size,
-                start_iloc=start_iloc
-            )
-
-
-"""clean the parsed file"""
-
-
-def l1_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords, processes=os.cpu_count()):
-    """clean the entire corpus (output from CoreNLP)
-    :param path_in_parsed_txt: the parsed file(txt) which has be dealed by stanford corenlp
-    :param path_out_cleaned_txt: the path of cleaned file to be output, will be tagged and some words are removed
-    :param processes: how much processes to be used
-    Arguments:
-        in_file {str or Path} -- input_data corpus, each line is a sentence
-        out_file {str or Path} -- output corpus
-    """
-    a_text_clearner = TextCleaner(stopwords)
-    if processes > 1:
-        _file_util.l1_process_largefile(
-            path_input_txt=path_in_parsed_txt,
-            path_output_txt=path_out_cleaned_txt,
-            input_index_list=[
-                str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
-            ],  # fake IDs (do not need IDs for this function).
-            path_output_index_txt=None,
-            process_line_func=functools.partial(a_text_clearner.clean),
-            chunk_size=200000,
-        )
-
-    else:
-        _file_util.l1_mp_process_largefile(
-            path_input_txt=path_in_parsed_txt,
-            path_output_txt=path_out_cleaned_txt,
-            input_index_list=[
-                str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
-            ],  # fake IDs (do not need IDs for this function).
-            path_output_index_txt=None,
-            process_line_func=functools.partial(a_text_clearner.clean),
-            processes=processes,
-            chunk_size=200000,
         )
