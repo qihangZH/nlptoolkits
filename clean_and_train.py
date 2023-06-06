@@ -1,4 +1,5 @@
 import datetime
+import os
 from pathlib import Path
 import global_options
 import seminlpscorer
@@ -10,9 +11,11 @@ if __name__ == '__main__':
     # check make directory if exist.
 
     # clean the parsed text (remove POS tags, stopwords, etc.) ----------------
-    seminlpscorer.l1_mp_clean_parsed_txt(
+    seminlpscorer.l1_clean_parsed_txt(
         path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
         path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
+        stopwords=global_options.STOPWORDS,
+        processes=os.cpu_count()
     )
 
     # train and apply a phrase model to detect 2-word phrases ----------------

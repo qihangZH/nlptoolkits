@@ -1,51 +1,22 @@
 from stanfordnlp.server import CoreNLPClient
 import re
 import functools
-import global_options
+import time
 
 
-class preprocessor(object):
-    def __init__(self, client):
-        self.client = client
+# Qihang Zhang modified in 6/6/2023, National university of singapore
+# Modification for better usage, and for its flexible using
+class __PreprocessBasic:
 
-    def process_document(self, doc, doc_id=None):
-        """Main method: Annotate a document using CoreNLP client
-
-        Arguments:
-            doc {str} -- raw string of a document
-            doc_id {str} -- raw string of a document ID
-
-        Returns:
-            sentences_processed {[str]} -- a list of processed_data sentences with NER tagged
-                and MWEs concatenated
-            doc_ids {[str]} -- a list of processed_data sentence IDs [docID1_1, docID1_2...]
-            Example:
-                Input: "When I was a child in Ohio,
-                I always wanted to go to Stanford University with respect to higher education.
-                But I had to go along with my parents."
-                Output: 
-                
-                'when I be a child in ['when I be a child in [NER:LOCATION]Ohio ,
-                'I always want to go to [NER:ORGANIZATION]Stanford_University with_respect_to higher education .'
-                'but I have to go_along with my parent . '
-
-                doc1_1
-                doc1_2
-        
-        Note:
-            When the doc is empty, both doc_id and sentences processed_data will be too.
+    def __init__(self, mwe_dep_types: set):
         """
-        doc_ann = self.client.annotate(doc)
-        sentences_processed = []
-        doc_ids = []
-        for i, sentence in enumerate(doc_ann.sentence):
-            sentences_processed.append(self.process_sentence(sentence))
-            doc_ids.append(str(doc_id) + "_" + str(i))
-        return sentences_processed, doc_ids
+        :param mwe_dep_types: a list of MWEs in Universal Dependencies v1: set(["mwe", "compound", "compound:prt"])
+        """
+        self.mwe_dep_types = mwe_dep_types
+        if not isinstance(mwe_dep_types, set):
+            raise ValueError('mwe dep types must be set!')
 
-    def sentence_mwe_finder(
-        self, sentence_ann, dep_types=set(["mwe", "compound", "compound:prt"])
-    ):
+    def sentence_mwe_finder(self, sentence_ann):
         """Find the edges between words that are MWEs
 
         Arguments:
@@ -55,14 +26,14 @@ class preprocessor(object):
             dep_types {[str]} -- a list of MWEs in Universal Dependencies v1
             (default: s{set(["mwe", "compound", "compound:prt"])})
             see: http://universaldependencies.org/docsv1/u/dep/compound.html
-            and http://universaldependencies.org/docsv1/u/dep/mwe.html 
+            and http://universaldependencies.org/docsv1/u/dep/mwe.html
         Returns:
             A list of edges: e.g. [(1, 2), (4, 5)]
         """
         WMEs = [
             x
             for x in sentence_ann.enhancedPlusPlusDependencies.edge
-            if x.dep in dep_types
+            if x.dep in self.mwe_dep_types
         ]
         wme_edges = []
         for wme in WMEs:
@@ -75,7 +46,8 @@ class preprocessor(object):
             )
         return wme_edges
 
-    def sentence_NE_finder(self, sentence_ann):
+    @staticmethod
+    def sentence_NE_finder(sentence_ann):
         """Find the edges between wordxs that are a named entity
 
         Arguments:
@@ -101,7 +73,8 @@ class preprocessor(object):
             #                         for field in m.ListFields()][1:3]))
         return NE_edges, NE_types
 
-    def edge_simplifier(self, edges):
+    @staticmethod
+    def edge_simplifier(edges):
         """Simplify list of edges to a set of edge sources. Edges always points to the next word.
         Self-pointing edges are removed
 
@@ -159,12 +132,116 @@ class preprocessor(object):
         return "".join(sentence_parsed)
 
 
-class text_cleaner(object):
+class Preprocessor(__PreprocessBasic):
+    def __init__(self, client, mwe_dep_types: set):
+        super().__init__(mwe_dep_types=mwe_dep_types)
+        self.client = client
+
+    def process_document(self, doc, doc_id=None):
+        """Main method: Annotate a document using CoreNLP client
+
+        Arguments:
+            doc {str} -- raw string of a document
+            doc_id {str} -- raw string of a document ID
+
+        Returns:
+            sentences_processed {[str]} -- a list of processed_data sentences with NER tagged
+                and MWEs concatenated
+            doc_ids {[str]} -- a list of processed_data sentence IDs [docID1_1, docID1_2...]
+            Example:
+                Input: "When I was a child in Ohio,
+                I always wanted to go to Stanford University with respect to higher education.
+                But I had to go along with my parents."
+                Output: 
+                
+                'when I be a child in ['when I be a child in [NER:LOCATION]Ohio ,
+                'I always want to go to [NER:ORGANIZATION]Stanford_University with_respect_to higher education .'
+                'but I have to go_along with my parent . '
+
+                doc1_1
+                doc1_2
+        
+        Note:
+            When the doc is empty, both doc_id and sentences processed_data will be too.
+        """
+        doc_ann = self.client.annotate(doc)
+        sentences_processed = []
+        doc_ids = []
+        for i, sentence in enumerate(doc_ann.sentence):
+            sentences_processed.append(self.process_sentence(sentence))
+            doc_ids.append(str(doc_id) + "_" + str(i))
+        return sentences_processed, doc_ids
+
+
+class PreprocessorParallel(__PreprocessBasic):
+    def __init__(self, mwe_dep_types: set):
+        super().__init__(mwe_dep_types=mwe_dep_types)
+
+    def process_document(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
+        """Main method: Annotate a document using CoreNLP client
+
+        Arguments:
+            doc {str} -- raw string of a document
+            doc_id {str} -- raw string of a document ID
+            corenlp_endpoint {str} -- core nlp port to deal with data, like 9001, 9002...
+
+        Returns:
+            sentences_processed {[str]} -- a list of processed_data sentences with NER tagged
+                and MWEs concatenated
+            doc_ids {[str]} -- a list of processed_data sentence IDs [docID1_1, docID1_2...]
+            Example:
+                Input: "When I was a child in Ohio,
+                I always wanted to go to Stanford University with respect to higher education.
+                But I had to go along with my parents."
+                Output:
+
+                'when I be a child in ['when I be a child in [NER:LOCATION]Ohio ,
+                I always want to go to [NER:ORGANIZATION]Stanford_University with_respect_to higher education .
+                'but I have to go_along with my parent . '
+
+                doc1_1
+                doc1_2
+
+        Note:
+            When the doc is empty, both doc_id and sentences processed_data will be too.
+        """
+        # if not seminlpscorer.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
+        #     raise ConnectionError(f'{corenlp_endpoint} is not running, reset the port and try again.')
+        wait_seconds = 10
+        while True:
+            try:
+                with CoreNLPClient(
+                        endpoint=corenlp_endpoint, start_server=False, timeout=120000000
+                ) as client:
+                    doc_ann = client.annotate(doc)
+
+                    break
+
+            except Exception as e:
+                print(e, f'occurs, \nwait for {wait_seconds} seconds')
+                time.sleep(wait_seconds)
+                wait_seconds = wait_seconds * 1.2
+
+        sentences_processed = []
+        doc_sent_ids = []
+        for i, sentence in enumerate(doc_ann.sentence):
+            sentences_processed.append(self.process_sentence(sentence))
+            doc_sent_ids.append(str(doc_id) + "_" + str(i))
+        return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
+
+
+class TextCleaner(object):
     """Clean the text parsed by CoreNLP (preprocessor)
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, stopwords: set):
+        """
+        :param stopwords: stop word set to be remove
+        """
+        self.stopwords = stopwords
+        if not isinstance(self.stopwords, set):
+            raise ValueError("stopwords must be set")
+
 
     def remove_NER(self, line):
         """Remove the named entity and only leave the tag
@@ -194,14 +271,14 @@ class text_cleaner(object):
         # these are tagged bracket and parenthesises
         puncts_stops = (
                 set(["-lrb-", "-rrb-", "-lsb-", "-rsb-", "'s"])
-                | global_options.STOPWORDS
+                | self.stopwords
         )
         # filter out numerics and 1-letter words as recommend by
         # https://sraf.nd.edu/textual-analysis/resources/#StopWords
         tokens = filter(
             lambda t: any(c.isalpha() for c in t)
-            and t not in puncts_stops
-            and len(t) > 1,
+                      and t not in puncts_stops
+                      and len(t) > 1,
             tokens,
         )
         return " ".join(tokens)
@@ -217,19 +294,3 @@ class text_cleaner(object):
             ),
             id,
         )
-
-
-if __name__ == "__main__":
-    # test if CoreNLP is set up correctly
-    with CoreNLPClient(
-        properties={
-            "ner.applyFineGrained": "false",
-            "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",
-        },
-        memory=global_options.RAM_CORENLP,
-        threads=1,
-    ) as client:
-        doc = "When I was a child in Ohio, I always wanted to go to Stanford University with respect to higher " \
-              "education. But I went along with my parents."
-        EC_preprocessor = preprocessor(client)
-        print(EC_preprocessor.process_document(doc))

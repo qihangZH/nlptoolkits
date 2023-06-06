@@ -3,7 +3,6 @@ from . import _dictionary
 from . import nlp_models
 from . import _file_util
 from . import preprocess
-from . import preprocess_parallel
 from . import scorer
 from . import qihangfuncs
 # out source pack
@@ -116,7 +115,7 @@ def mp_process_largefile(
         input_index_list,
         path_output_index_txt,
         process_line_func,
-        multiprocess_threads,
+        processes: int,
         chunk_size=100,
         start_iloc=None,
 
@@ -135,7 +134,7 @@ def mp_process_largefile(
     :param path_output_index_txt: {str or Path} -- path to the index file of the output
     :param process_line_func: {callable} -- A function that processes a list of strings, list of ids and return
         a list of processed_data strings and ids. func(line_text, line_ids)
-    :param multiprocess_threads: {int} -- the core to use, should be same as the argument of your project,
+    :param processes: {int} -- the core to use, should be same as the argument of your project,
         like globaloption.NCORES
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
     :param start_iloc: {int} -- line number to start from (index starts with 0)
@@ -175,7 +174,7 @@ def mp_process_largefile(
             next_n_line_ids = list(filter(None.__ne__, next_n_line_ids))
             output_lines = []
             output_line_ids = []
-            with pathos.multiprocessing.Pool(processes=multiprocess_threads,
+            with pathos.multiprocessing.Pool(processes=processes,
                                              initializer=qihangfuncs.threads_interrupt_initiator
                                              ) as pool:
                 for output_line, output_line_id in pool.starmap(
@@ -198,18 +197,18 @@ def mp_process_largefile(
 def l1_auto_parser(
         endpoint,
         memory,
-        nlp_threads,
+        processes: int,
         path_input_txt,
         path_output_txt,
         input_index_list,
         path_output_index_txt,
         chunk_size=100,
         start_iloc=None,
-        use_multicores: bool = True,
+        mwe_dep_types: set = set(["mwe", "compound", "compound:prt"]),
         **kwargs):
     """
     :param memory: memory using, should be str like "\d+G"
-    :param nlp_threads: how much threads does nlp use.
+    :param processes: how much processes does nlp use.
     :param endpoint: endpoint in stanfordnlp.server.CoreNLPClient, should be address of port
     :param path_input_txt:  {str or Path} path to a text file, each line is a document
     :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
@@ -217,8 +216,11 @@ def l1_auto_parser(
     :param path_output_index_txt: {str or Path} -- path to the index file of the output
     :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
     :param start_iloc: {int} -- line number to start from (index starts with 0)
-    :param use_multicores: do you use multicores?
     :param kwargs: the other arguments of stanfordnlp.server.CoreNLPClient
+    :param mwe_dep_types: the set of mwe dep types a list of MWEs in Universal Dependencies v1
+            (default: s{set(["mwe", "compound", "compound:prt"])})
+            see: http://universaldependencies.org/docsv1/u/dep/compound.html
+            and http://universaldependencies.org/docsv1/u/dep/mwe.html
 
     Writes:
         Write the ouput_file and output_index_file
@@ -254,26 +256,27 @@ def l1_auto_parser(
 
     with stanfordnlp.server.CoreNLPClient(
             memory=memory,
-            threads=nlp_threads,
+            threads=processes,
             endpoint=endpoint,  # must type in
             **kwargs
     ) as client:
 
-        if use_multicores:
+        if processes > 1:
             """you must make corenlp and mp.Pool's port are same!!!"""
+            corpus_preprocessor = preprocess.PreprocessorParallel(mwe_dep_types=mwe_dep_types)
             mp_process_largefile(
                 path_input_txt=path_input_txt,
                 path_output_txt=path_output_txt,
                 input_index_list=input_index_list,
                 path_output_index_txt=path_output_index_txt,
                 # you must make corenlp and mp.Pool's port are same
-                process_line_func=lambda x, y: preprocess_parallel.process_document(x, y, endpoint),
-                multiprocess_threads=nlp_threads,
+                process_line_func=lambda x, y: corpus_preprocessor.process_document(x, y, endpoint),
+                processes=processes,
                 chunk_size=chunk_size,
                 start_iloc=start_iloc
             )
         else:
-            corpus_preprocessor = preprocess.preprocessor(client)
+            corpus_preprocessor = preprocess.Preprocessor(client=client, mwe_dep_types=mwe_dep_types)
 
             process_largefile(
                 path_input_txt=path_input_txt,
@@ -289,47 +292,39 @@ def l1_auto_parser(
 """clean the parsed file"""
 
 
-def l1_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt):
-    """clean the entire corpus (output from CoreNLP) like l1_auto_parser
-
+def l1_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords, processes=os.cpu_count()):
+    """clean the entire corpus (output from CoreNLP)
+    :param path_in_parsed_txt: the parsed file(txt) which has be dealed by stanford corenlp
+    :param path_out_cleaned_txt: the path of cleaned file to be output, will be tagged and some words are removed
+    :param processes: how much processes to be used
     Arguments:
         in_file {str or Path} -- input_data corpus, each line is a sentence
         out_file {str or Path} -- output corpus
     """
-    a_text_clearner = preprocess.text_cleaner()
-    process_largefile(
-        path_input_txt=path_in_parsed_txt,
-        path_output_txt=path_out_cleaned_txt,
-        input_index_list=[
-            str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
-        ],  # fake IDs (do not need IDs for this function).
-        path_output_index_txt=None,
-        process_line_func=functools.partial(a_text_clearner.clean),
-        chunk_size=200000,
-    )
-
-
-def l1_mp_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, mp_threads=os.cpu_count()):
-    """
-    clean the entire corpus (output from CoreNLP), like l1_auto_parser
-    could use "multiprocessing"
-
-    Arguments:
-        in_file {str or Path} -- input_data corpus, each line is a sentence
-        out_file {str or Path} -- output corpus
-    """
-    a_text_clearner = preprocess.text_cleaner()
-    mp_process_largefile(
-        path_input_txt=path_in_parsed_txt,
-        path_output_txt=path_out_cleaned_txt,
-        input_index_list=[
-            str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
-        ],  # fake IDs (do not need IDs for this function).
-        path_output_index_txt=None,
-        process_line_func=functools.partial(a_text_clearner.clean),
-        multiprocess_threads=mp_threads,
-        chunk_size=200000,
-    )
+    a_text_clearner = preprocess.TextCleaner(stopwords)
+    if processes <= 1:
+        mp_process_largefile(
+            path_input_txt=path_in_parsed_txt,
+            path_output_txt=path_out_cleaned_txt,
+            input_index_list=[
+                str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
+            ],  # fake IDs (do not need IDs for this function).
+            path_output_index_txt=None,
+            process_line_func=functools.partial(a_text_clearner.clean),
+            processes=processes,
+            chunk_size=200000,
+        )
+    else:
+        process_largefile(
+            path_input_txt=path_in_parsed_txt,
+            path_output_txt=path_out_cleaned_txt,
+            input_index_list=[
+                str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
+            ],  # fake IDs (do not need IDs for this function).
+            path_output_index_txt=None,
+            process_line_func=functools.partial(a_text_clearner.clean),
+            chunk_size=200000,
+        )
 
 
 """train and transform the model"""

@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Dict, List, Set
 
 # Hardware options
-N_CORES: int = os.cpu_count()  # max number of CPU cores to use
-RAM_CORENLP: str = "60G"  # max RAM allocated for parsing using CoreNLP; increase to speed up parsing
+N_CORES: int = 12  # max number of CPU cores to use
+RAM_CORENLP: str = "40G"  # max RAM allocated for parsing using CoreNLP; increase to speed up parsing
 PARSE_CHUNK_SIZE: int = 500
 # number of lines in the input_data file to process uing CoreNLP at once.
 # Increase on workstations with larger RAM (e.g. to 1000 if RAM is 64G)
