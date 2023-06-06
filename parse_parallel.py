@@ -23,7 +23,7 @@ if __name__ == "__main__":
         )
 
     """Arguments"""
-    seminlpscorer.l1_auto_parser(
+    seminlpscorer.preprocess.l1_auto_parser(
         endpoint=global_options.ADDRESS_CORENLP,
         memory=global_options.RAM_CORENLP,
         processes=global_options.N_CORES,

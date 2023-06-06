@@ -1,12 +1,20 @@
 from stanfordnlp.server import CoreNLPClient
 import re
-import functools
 import time
+import functools
+import os
+import stanfordnlp.server
+from . import _file_util
 
 
 # Qihang Zhang modified in 6/6/2023, National university of singapore
 # Modification for better usage, and for its flexible using
-class __PreprocessBasic:
+
+# --------------------------------------------------------------------------
+# l (-2) level functions/classes, this basic class is only for inheritance
+# --------------------------------------------------------------------------
+
+class __ParserBasic:
 
     def __init__(self, mwe_dep_types: set):
         """
@@ -132,7 +140,11 @@ class __PreprocessBasic:
         return "".join(sentence_parsed)
 
 
-class Preprocessor(__PreprocessBasic):
+# --------------------------------------------------------------------------
+# l0 level functions/classes
+# --------------------------------------------------------------------------
+
+class DocParser(__ParserBasic):
     def __init__(self, client, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
         self.client = client
@@ -173,7 +185,7 @@ class Preprocessor(__PreprocessBasic):
         return sentences_processed, doc_ids
 
 
-class PreprocessorParallel(__PreprocessBasic):
+class DocParserParallel(__ParserBasic):
     def __init__(self, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
 
@@ -230,7 +242,7 @@ class PreprocessorParallel(__PreprocessBasic):
         return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
 
 
-class TextCleaner(object):
+class TextCleaner:
     """Clean the text parsed by CoreNLP (preprocessor)
     """
 
@@ -241,7 +253,6 @@ class TextCleaner(object):
         self.stopwords = stopwords
         if not isinstance(self.stopwords, set):
             raise ValueError("stopwords must be set")
-
 
     def remove_NER(self, line):
         """Remove the named entity and only leave the tag
@@ -293,4 +304,145 @@ class TextCleaner(object):
                 line,
             ),
             id,
+        )
+
+
+# --------------------------------------------------------------------------
+# l1 level functions/classes
+# --------------------------------------------------------------------------
+
+"""parser"""
+
+
+def l1_auto_parser(
+        endpoint,
+        memory,
+        processes: int,
+        path_input_txt,
+        path_output_txt,
+        input_index_list,
+        path_output_index_txt,
+        chunk_size=100,
+        start_iloc=None,
+        mwe_dep_types: set = set(["mwe", "compound", "compound:prt"]),
+        **kwargs):
+    """
+    :param memory: memory using, should be str like "\d+G"
+    :param processes: how much processes does nlp use.
+    :param endpoint: endpoint in stanfordnlp.server.CoreNLPClient, should be address of port
+    :param path_input_txt:  {str or Path} path to a text file, each line is a document
+    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
+    :param input_index_list: {str} -- a list of input_data line ids
+    :param path_output_index_txt: {str or Path} -- path to the index file of the output
+    :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
+    :param start_iloc: {int} -- line number to start from (index starts with 0)
+    :param kwargs: the other arguments of stanfordnlp.server.CoreNLPClient
+    :param mwe_dep_types: the set of mwe dep types a list of MWEs in Universal Dependencies v1
+            (default: s{set(["mwe", "compound", "compound:prt"])})
+            see: http://universaldependencies.org/docsv1/u/dep/compound.html
+            and http://universaldependencies.org/docsv1/u/dep/mwe.html
+
+    Writes:
+        Write the ouput_file and output_index_file
+
+    """
+    # supply for arguments
+    kwargs['properties'] = kwargs['properties'] if 'properties' in kwargs else {
+        "ner.applyFineGrained": "false",
+        "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",
+    }
+    kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 12000000
+    kwargs['max_char_length'] = kwargs['max_char_length'] if 'max_char_length' in kwargs else 1000000
+
+    def _lambda_process_line(line, lineID, corpus_processor):
+        """Process each line and return a tuple of sentences, sentence_IDs,
+
+        Arguments:
+            line {str} -- a document
+            lineID {str} -- the document ID
+
+        Returns:
+            str, str -- processed_data document with each sentence in a line,
+                        sentence IDs with each in its own line: lineID_0 lineID_1 ...
+        """
+        try:
+            sentences_processed, doc_sent_ids = corpus_processor.process_document(
+                line, lineID
+            )
+            return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
+        except Exception as e:
+            print(e)
+            print("Exception in line: {}".format(lineID))
+
+    with stanfordnlp.server.CoreNLPClient(
+            memory=memory,
+            threads=processes,
+            endpoint=endpoint,  # must type in
+            **kwargs
+    ) as client:
+
+        if processes > 1:
+            """you must make corenlp and mp.Pool's port are same!!!"""
+            corpus_preprocessor = DocParserParallel(mwe_dep_types=mwe_dep_types)
+            _file_util.l1_mp_process_largefile(
+                path_input_txt=path_input_txt,
+                path_output_txt=path_output_txt,
+                input_index_list=input_index_list,
+                path_output_index_txt=path_output_index_txt,
+                # you must make corenlp and mp.Pool's port are same
+                process_line_func=lambda x, y: corpus_preprocessor.process_document(x, y, endpoint),
+                processes=processes,
+                chunk_size=chunk_size,
+                start_iloc=start_iloc
+            )
+        else:
+            corpus_preprocessor = DocParser(client=client, mwe_dep_types=mwe_dep_types)
+
+            _file_util.l1_process_largefile(
+                path_input_txt=path_input_txt,
+                path_output_txt=path_output_txt,
+                input_index_list=input_index_list,
+                path_output_index_txt=path_output_index_txt,
+                process_line_func=lambda x, y: _lambda_process_line(x, y, corpus_preprocessor),
+                chunk_size=chunk_size,
+                start_iloc=start_iloc
+            )
+
+
+"""clean the parsed file"""
+
+
+def l1_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords, processes=os.cpu_count()):
+    """clean the entire corpus (output from CoreNLP)
+    :param path_in_parsed_txt: the parsed file(txt) which has be dealed by stanford corenlp
+    :param path_out_cleaned_txt: the path of cleaned file to be output, will be tagged and some words are removed
+    :param processes: how much processes to be used
+    Arguments:
+        in_file {str or Path} -- input_data corpus, each line is a sentence
+        out_file {str or Path} -- output corpus
+    """
+    a_text_clearner = TextCleaner(stopwords)
+    if processes > 1:
+        _file_util.l1_process_largefile(
+            path_input_txt=path_in_parsed_txt,
+            path_output_txt=path_out_cleaned_txt,
+            input_index_list=[
+                str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
+            ],  # fake IDs (do not need IDs for this function).
+            path_output_index_txt=None,
+            process_line_func=functools.partial(a_text_clearner.clean),
+            chunk_size=200000,
+        )
+
+    else:
+        _file_util.l1_mp_process_largefile(
+            path_input_txt=path_in_parsed_txt,
+            path_output_txt=path_out_cleaned_txt,
+            input_index_list=[
+                str(i) for i in range(_file_util.line_counter(path_in_parsed_txt))
+            ],  # fake IDs (do not need IDs for this function).
+            path_output_index_txt=None,
+            process_line_func=functools.partial(a_text_clearner.clean),
+            processes=processes,
+            chunk_size=200000,
         )

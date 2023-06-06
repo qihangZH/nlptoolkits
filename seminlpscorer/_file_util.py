@@ -1,3 +1,13 @@
+import datetime
+import itertools
+import os
+import pathos
+from . import qihangfuncs
+
+
+# --------------------------------------------------------------------------
+# l0 level functions/classes
+# --------------------------------------------------------------------------
 def line_counter(a_file):
     """Count the number of lines in a text file
     
@@ -67,3 +77,173 @@ def read_large_file(a_file, block_size=10000):
     # yield the last block
     if block:
         yield block
+
+
+# --------------------------------------------------------------------------
+# l1 level functions/classes
+# --------------------------------------------------------------------------
+
+"""Process file"""
+
+
+def l1_process_largefile(
+        path_input_txt,
+        path_output_txt,
+        input_index_list,
+        path_output_index_txt,
+        process_line_func,
+        chunk_size=100,
+        start_iloc=None,
+):
+    """ A helper function that transforms an input_data file + a list of IDs of each line (documents + document_IDs)
+    to two output files (processed_data documents + processed_data document IDs)
+    by calling function_name on chunks of the input_data files.
+      Each document can be decomposed into multiple processed_data documents (e.g. sentences).
+      Not support Multiprocessor
+
+
+    Arguments:
+    :param path_input_txt:  {str or Path} path to a text file, each line is a document
+    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
+    :param input_index_list: {str} -- a list of input_data line ids
+    :param path_output_index_txt: {str or Path} -- path to the index file of the output
+    :param process_line_func: {callable} -- A function that processes a list of strings, list of ids and return
+        a list of processed_data strings and ids. func(line_text, line_ids)
+    :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
+    :param start_iloc: {int} -- line number to start from (index starts with 0)
+
+    Writes:
+        Write the ouput_file and output_index_file
+
+      Not support Multiprocessor
+    """
+
+    # check data must save in txt and dim be 1:
+
+    try:
+        if start_iloc is None:
+            # if start from the first line, remove existing output file
+            # else append to existing output file
+            os.remove(str(path_output_txt))
+            os.remove(str(path_output_index_txt))
+    except OSError:
+        pass
+    assert line_counter(path_input_txt) == len(
+        input_index_list
+    ), "Make sure the input_data file has the same number of rows as the input_data ID file. "
+
+    with open(path_input_txt, newline="\n", encoding="utf-8", errors="ignore") as f_in:
+        line_i = 0
+        # jump to index
+        if start_iloc is not None:
+            # start at start_index line
+            for _ in range(start_iloc):
+                next(f_in)
+            input_index_list = input_index_list[start_iloc:]
+            line_i = start_iloc
+        for next_n_lines, next_n_line_ids in zip(
+                itertools.zip_longest(*[f_in] * chunk_size),
+                itertools.zip_longest(*[iter(input_index_list)] * chunk_size),
+        ):
+            line_i += chunk_size
+            print(datetime.datetime.now())
+            print(f"Processing line: {line_i}.")
+            next_n_lines = list(filter(None.__ne__, next_n_lines))
+            next_n_line_ids = list(filter(None.__ne__, next_n_line_ids))
+            output_lines = []
+            output_line_ids = []
+            # Use parse_parallel.py to speed things up
+            for output_line, output_line_id in map(
+                    process_line_func, next_n_lines, next_n_line_ids
+            ):
+                output_lines.append(output_line)
+                output_line_ids.append(output_line_id)
+            output_lines = "\n".join(output_lines) + "\n"
+            output_line_ids = "\n".join(output_line_ids) + "\n"
+            with open(path_output_txt, "a", newline="\n", encoding='utf-8') as f_out:
+                f_out.write(output_lines)
+            if path_output_index_txt is not None:
+                with open(path_output_index_txt, "a", newline="\n", encoding="utf-8") as f_out:
+                    f_out.write(output_line_ids)
+
+
+def l1_mp_process_largefile(
+        path_input_txt,
+        path_output_txt,
+        input_index_list,
+        path_output_index_txt,
+        process_line_func,
+        processes: int,
+        chunk_size=100,
+        start_iloc=None,
+
+):
+    """ A helper function that transforms an input_data file + a list of IDs of each line (documents + document_IDs)
+    to two output files (processed_data documents + processed_data document IDs)
+    by calling function_name on chunks of the input_data files.
+      Each document can be decomposed into multiple processed_data documents (e.g. sentences).
+
+
+
+    Arguments:
+    :param path_input_txt:  {str or Path} path to a text file, each line is a document
+    :param path_output_txt: {str or Path} processed_data linesentence file (remove if exists)
+    :param input_index_list: {str} -- a list of input_data line ids
+    :param path_output_index_txt: {str or Path} -- path to the index file of the output
+    :param process_line_func: {callable} -- A function that processes a list of strings, list of ids and return
+        a list of processed_data strings and ids. func(line_text, line_ids)
+    :param processes: {int} -- the core to use, should be same as the argument of your project,
+        like globaloption.NCORES
+    :param chunk_size: {int} -- number of lines to process each time, increasing the default may increase performance
+    :param start_iloc: {int} -- line number to start from (index starts with 0)
+
+    Writes:
+        Write the ouput_file and output_index_file
+    """
+    try:
+        if start_iloc is None:
+            # if start from the first line, remove existing output file
+            # else append to existing output file
+            os.remove(str(path_output_txt))
+            os.remove(str(path_output_index_txt))
+    except OSError:
+        pass
+    assert line_counter(path_input_txt) == len(
+        input_index_list
+    ), "Make sure the input_data file has the same number of rows as the input_data ID file. "
+
+    with open(path_input_txt, newline="\n", encoding="utf-8", errors="ignore") as f_in:
+        line_i = 0
+        # jump to index
+        if start_iloc is not None:
+            # start at start_index line
+            for _ in range(start_iloc):
+                next(f_in)
+            input_index_list = input_index_list[start_iloc:]
+            line_i = start_iloc
+        for next_n_lines, next_n_line_ids in zip(
+                itertools.zip_longest(*[f_in] * chunk_size),
+                itertools.zip_longest(*[iter(input_index_list)] * chunk_size),
+        ):
+            line_i += chunk_size
+            print(datetime.datetime.now())
+            print(f"Processing line: {line_i}.")
+            next_n_lines = list(filter(None.__ne__, next_n_lines))
+            next_n_line_ids = list(filter(None.__ne__, next_n_line_ids))
+            output_lines = []
+            output_line_ids = []
+            with pathos.multiprocessing.Pool(processes=processes,
+                                             initializer=qihangfuncs.threads_interrupt_initiator
+                                             ) as pool:
+                for output_line, output_line_id in pool.starmap(
+                        process_line_func, zip(next_n_lines, next_n_line_ids)
+                ):
+                    output_lines.append(output_line)
+                    output_line_ids.append(output_line_id)
+            output_lines = "\n".join(output_lines) + "\n"
+            output_line_ids = "\n".join(output_line_ids) + "\n"
+            with open(path_output_txt, "a", newline="\n", encoding='utf-8') as f_out:
+                f_out.write(output_lines)
+            if path_output_index_txt is not None:
+                with open(path_output_index_txt, "a", newline="\n", encoding='utf-8') as f_out:
+                    f_out.write(output_line_ids)
