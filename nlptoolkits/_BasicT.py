@@ -100,13 +100,13 @@ def write_dict_to_csv(culture_dict, file_name):
 
 
 def read_dict_dictname_from_csv_dictset(file_name):
-    """Read seminlpscorer dict from a csv file
+    """Read nlptoolkits dict from a csv file
 
     Arguments:
         file_name {str} -- expanded dictionary file
 
     Returns:
-        culture_dict {dict{str: set(str)}} -- a seminlpscorer dict, dim name as key, set of expanded words as value
+        culture_dict {dict{str: set(str)}} -- a nlptoolkits dict, dim name as key, set of expanded words as value
         all_dict_words {set(str)} -- a set of all words in the dict
     """
     print("Importing dict: {}".format(file_name))

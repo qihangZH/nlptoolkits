@@ -292,7 +292,7 @@ class DocParserParallel(_ParserBasic):
         Note:
             When the doc is empty, both doc_id and sentences processed_data will be too.
         """
-        # if not seminlpscorer.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
+        # if not nlptoolkits.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
         #     raise ConnectionError(f'{corenlp_endpoint} is not running, reset the port and try again.')
         wait_seconds = 10
         while True:
