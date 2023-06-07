@@ -15,21 +15,21 @@ if __name__ == "__main__":
     )
 
     """however, you do not need this part"""
-    # scorer_class.pickle_doc_freq(
-    #     pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_freq.pickle")
-    # )
-    #
-    # scorer_class.pickle_doc_level_ids(
-    #     pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_ids.pickle")
-    # )
-    #
-    # scorer_class.pickle_doc_level_corpus(
-    #     pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "corpus_doc_level.pickle")
-    # )
-    #
-    # scorer_class.score_tf_df().to_csv(
-    #     pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "scores_TF.csv"), index=False
-    # )
+    scorer_class.pickle_doc_freq(
+        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_freq.pickle")
+    )
+
+    scorer_class.pickle_doc_level_ids(
+        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_ids.pickle")
+    )
+
+    scorer_class.pickle_doc_level_corpus(
+        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "corpus_doc_level.pickle")
+    )
+
+    scorer_class.score_tf_df().to_csv(
+        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "scores_TF.csv"), index=False
+    )
     methods = ["TFIDF", "WFIDF"]
     for method in methods:
         score, contribution = scorer_class.score_tfidf_tupledf(

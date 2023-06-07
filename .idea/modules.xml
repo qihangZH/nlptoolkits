@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/seminlpclassify.iml" filepath="$PROJECT_DIR$/.idea/seminlpclassify.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/seminlpscorer.iml" filepath="$PROJECT_DIR$/.idea/seminlpscorer.iml" />
     </modules>
   </component>
 </project>

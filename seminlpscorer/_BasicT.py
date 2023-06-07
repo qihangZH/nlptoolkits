@@ -3,6 +3,9 @@ import itertools
 import os
 import pathos
 import pandas as pd
+import re
+import tqdm
+from collections import Counter, OrderedDict, defaultdict
 from . import qihangfuncs
 
 
@@ -96,7 +99,7 @@ def write_dict_to_csv(culture_dict, file_name):
     )
 
 
-def read_dict_from_csv(file_name):
+def read_dict_dictname_from_csv_dictset(file_name):
     """Read seminlpscorer dict from a csv file
 
     Arguments:
@@ -122,9 +125,69 @@ def read_dict_from_csv(file_name):
     return culture_dict, all_dict_words
 
 
+"""sentence level -> doc level function"""
+
+
+def calculate_doc_freq_dict(corpus):
+    """Calcualte and dump a document-freq dict for all the words.
+
+    Arguments:
+        corpus {[str]} -- a list of documents
+
+    Returns:
+        {dict[str: int]} -- document freq for each word
+    """
+    print("Calculating document frequencies.")
+    # document frequency
+    doc_freq_dict = defaultdict(int)
+    for doc in tqdm.tqdm(corpus):
+        doc_splited = doc.split()
+        words_in_doc = set(doc_splited)
+        for word in words_in_doc:
+            doc_freq_dict[word] += 1
+
+    return doc_freq_dict
+
+
 # --------------------------------------------------------------------------
 # l1 level functions/classes
 # --------------------------------------------------------------------------
+
+def l1_construct_doc_level_corpus(sent_corpus_file, sent_id_file):
+    """Construct document level corpus from sentence level corpus and write to disk.
+    Dump "corpus_doc_level.pickle" and "doc_ids.pickle" to Path(global_options.OUTPUT_FOLDER, "scores", "temp").
+
+    Arguments:
+        sent_corpus_file {str or Path} -- The sentence corpus after parsing and cleaning, each line is a sentence
+        sent_id_file {str or Path} -- The sentence ID file, each line correspond to a line in the sent_co(docID_sentenceID)
+
+    Returns:
+        [str], [str], int -- a tuple of a list of documents, a list of document IDs, and the number of documents
+    """
+    # sentence level corpus
+    sent_corpus = file_to_list(sent_corpus_file)
+    sent_IDs = file_to_list(sent_id_file)
+    assert len(sent_IDs) == len(sent_corpus)
+
+    # doc id for each sentence
+    """old-version:"""
+    # doc_ids = [x.split("_")[0] for x in sent_IDs]
+    """new-version:"""
+    doc_ids = pd.Series(sent_IDs).str.extract(pat=r'^(.*)_[^_]*$',  # pick the group which before the last underscore
+                                              expand=False, flags=re.IGNORECASE).to_list()
+
+    # concat all text from the same doc
+    id_doc_dict = defaultdict(lambda: "")
+    for i, id in enumerate(doc_ids):
+        id_doc_dict[id] += " " + sent_corpus[i]
+    # create doc level corpus
+    corpus = list(id_doc_dict.values())
+    doc_ids = list(id_doc_dict.keys())
+    assert len(corpus) == len(doc_ids)
+    N_doc = len(corpus)
+
+    return corpus, doc_ids, N_doc
+
 
 """Process file"""
 
