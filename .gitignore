@@ -1,6 +1,6 @@
 /outputs/
 /models/
 /processed_data/
-
-/input_data/
-/resources/
+#
+#/input_data/
+#/resources/
