@@ -141,16 +141,20 @@ def auto_parser(
 """Preprocessing: clean the parsed file"""
 
 
-def auto_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords, processes: int):
-    """clean the entire corpus (output from CoreNLP)
+def auto_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords_set, processes: int, **kwargs):
+    """
+    clean the entire corpus (output from CoreNLP)
+    see more info, see PreprocessT.TextCleaner
+
     :param path_in_parsed_txt: the parsed file(txt) which has be dealed by stanford corenlp
     :param path_out_cleaned_txt: the path of cleaned file to be output, will be tagged and some words are removed
     :param processes: how much processes to be used
-    Arguments:
-        in_file {str or Path} -- input_data corpus, each line is a sentence
-        out_file {str or Path} -- output corpus
+    :param stopwords_set: the stopwords, should be removed.
+    :param kwargs: the arguments which would be passed to PreprocessT.TextCleaner(stopwords_set, **kwargs)
+        stopwords_set/ner_keep_types_origin_list/token_minlength/punctuations_set/is_remove_no_alphabet_contains,
+
     """
-    a_text_clearner = PreprocessT.TextCleaner(stopwords)
+    a_text_clearner = PreprocessT.TextCleaner(stopwords_set, **kwargs)
     if processes > 1:
         _BasicT.l1_process_largefile(
             path_input_txt=path_in_parsed_txt,

@@ -13,7 +13,7 @@ if __name__ == '__main__':
     seminlpscorer.auto_clean_parsed_txt(
         path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
         path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
-        stopwords=global_options.STOPWORDS,
+        stopwords_set=global_options.STOPWORDS,
         processes=os.cpu_count()
     )
 
