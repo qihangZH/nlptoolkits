@@ -2,6 +2,7 @@ from . import _BasicT
 from . import PreprocessT
 from . import Wrd2vScorerT
 from . import qihangfuncs
+from . import resources
 # out source pack
 
 import os
