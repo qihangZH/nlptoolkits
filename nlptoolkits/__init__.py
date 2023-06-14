@@ -155,7 +155,7 @@ def auto_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords_se
         stopwords_set/ner_keep_types_origin_list/token_minlength/punctuations_set/is_remove_no_alphabet_contains,
 
     """
-    a_text_clearner = PreprocessT.TextCleanerLine(stopwords_set, **kwargs)
+    a_text_clearner = PreprocessT.LineTextCleaner(stopwords_set, **kwargs)
     if processes > 1:
         _BasicT.l1_process_largefile(
             path_input_txt=path_in_parsed_txt,

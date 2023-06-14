@@ -322,7 +322,7 @@ class DocParserParallel(_ParserBasic):
         return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
 
 
-class TextCleanerLine:
+class LineTextCleaner:
     """Clean the text parsed by CoreNLP (preprocessor)
     """
 
