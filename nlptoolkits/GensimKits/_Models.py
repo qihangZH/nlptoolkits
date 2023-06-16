@@ -1,7 +1,7 @@
 import gensim
 
 
-def train_w2v_model(path_input_cleaned_txt, path_output_model=None, *args, **kwargs):
+def train_w2v_model(path_input_sentence_txt, path_output_model=None, *args, **kwargs):
     """ Train a word2vec model using the LineSentence file in input_path,
     save the model to model_path.count
 
@@ -11,7 +11,7 @@ def train_w2v_model(path_input_cleaned_txt, path_output_model=None, *args, **kwa
     """
     # pathlib.Path(path_output_model).parent.mkdir(parents=True, exist_ok=True)
     corpus_confcall = gensim.models.word2vec.PathLineSentences(
-        str(path_input_cleaned_txt), max_sentence_length=10000000
+        str(path_input_sentence_txt), max_sentence_length=10000000
     )
     model = gensim.models.Word2Vec(corpus_confcall, *args, **kwargs)
 

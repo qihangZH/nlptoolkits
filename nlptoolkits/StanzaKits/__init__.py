@@ -10,7 +10,7 @@ from .. import _BasicKits
 """Preprocessing: parser"""
 
 
-def auto_parser(
+def auto_doc_to_sentences_parser(
         endpoint,
         memory,
         processes: int,
@@ -151,14 +151,14 @@ def auto_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords_se
 """Preprocessing: train and transform the bigram model, concat two words into one"""
 
 
-def auto_bigram_fit_transform_txt(path_input_clean_txt,
-                                  path_output_transformed_txt,
-                                  path_output_model_mod,
-                                  phrase_min_length: int,
-                                  stopwords_set,
-                                  threshold=None,
-                                  scoring="original_scorer"
-                                  ):
+def auto_sentence_bigram_fit_transform_txt(path_input_clean_txt,
+                                           path_output_transformed_txt,
+                                           path_output_model_mod,
+                                           phrase_min_length: int,
+                                           stopwords_set,
+                                           threshold=None,
+                                           scoring="original_scorer"
+                                           ):
     """
     transform the sep two length words to concat in a word which join by '_'
     which means uni-gram -> bi-gram words.
@@ -182,7 +182,7 @@ def auto_bigram_fit_transform_txt(path_input_clean_txt,
         raise ValueError('Model must end with .mod')
 
     # train and apply a phrase model to detect 3-word phrases ----------------
-    PreprocessT.train_bigram_model(
+    PreprocessT.train_sentence_bigram_model(
         input_path=path_input_clean_txt,
         model_path=path_output_model_mod,
         phrase_min_length=phrase_min_length,

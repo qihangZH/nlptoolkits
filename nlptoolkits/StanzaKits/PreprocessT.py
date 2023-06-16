@@ -150,7 +150,7 @@ class _ParserBasic:
 """bigram models to make seperate words to one word concat with _"""
 
 
-def train_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
+def train_sentence_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
     """ Train a phrase model and save it to the disk.
 
     Arguments:
