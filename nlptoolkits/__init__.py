@@ -96,7 +96,7 @@ def auto_parser(
                         sentence IDs with each in its own line: lineID_0 lineID_1 ...
         """
         try:
-            sentences_processed, doc_sent_ids = corpus_processor.process_document(
+            sentences_processed, doc_sent_ids = corpus_processor.parse_line_to_sentences(
                 line, lineID
             )
             return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
@@ -120,7 +120,7 @@ def auto_parser(
                 input_index_list=input_index_list,
                 path_output_index_txt=path_output_index_txt,
                 # you must make corenlp and mp.Pool's port are same
-                process_line_func=lambda x, y: corpus_preprocessor.process_document(x, y, endpoint),
+                process_line_func=lambda x, y: corpus_preprocessor.parse_line_to_sentences(x, y, endpoint),
                 processes=processes,
                 chunk_size=chunk_size,
                 start_iloc=start_iloc
@@ -223,7 +223,7 @@ def auto_bigram_fit_transform_txt(path_input_clean_txt,
         phrase_threshold=threshold,
         stopwords_set=stopwords_set
     )
-    PreprocessT.file_bigramer(
+    PreprocessT.sentence_file_bigramer(
         input_path=path_input_clean_txt,
         output_path=path_output_transformed_txt,
         model_path=path_output_model_mod,

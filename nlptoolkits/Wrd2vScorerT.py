@@ -417,7 +417,7 @@ class DocScorer:
         self.sent_id_file = path_trainw2v_dataset_index_txt
 
         self.doc_corpus, self.doc_ids, self.N_doc = \
-            _BasicT.l1_construct_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)
+            _BasicT.l1_sentence_to_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)
 
         """create doc freq dict"""
         self.doc_freq_dict = _BasicT.calculate_doc_freq_dict(self.doc_corpus)

@@ -27,6 +27,7 @@ def _line_counter(a_file):
     return n_lines
 
 
+
 # --------------------------------------------------------------------------
 # l0 level functions/classes
 # --------------------------------------------------------------------------
@@ -153,7 +154,7 @@ def calculate_doc_freq_dict(corpus):
 # l1 level functions/classes
 # --------------------------------------------------------------------------
 
-def l1_construct_doc_level_corpus(sent_corpus_file, sent_id_file):
+def l1_sentence_to_doc_level_corpus(sent_corpus_file, sent_id_file):
     """Construct document level corpus from sentence level corpus and write to disk.
     Dump "corpus_doc_level.pickle" and "doc_ids.pickle" to Path(global_options.OUTPUT_FOLDER, "scores", "temp").
 

@@ -1,4 +1,3 @@
-import pandas as pd
 from stanfordnlp.server import CoreNLPClient
 import re
 import time
@@ -179,7 +178,7 @@ def train_bigram_model(input_path, model_path, phrase_min_length, phrase_thresho
     return bigram_model
 
 
-def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=None):
+def sentence_file_bigramer(input_path, output_path, model_path, threshold=None, scoring=None):
     """ Transform an input_data text file into a file with 2-word phrases.
     Apply again to learn 3-word phrases.
 
@@ -216,10 +215,6 @@ def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=N
     assert len(input_data) == _BasicT._line_counter(output_path)
 
 
-"""Tokenize the Sentences in each line"""
-pass
-
-
 # --------------------------------------------------------------------------
 # l0 level classes
 # --------------------------------------------------------------------------
@@ -229,7 +224,7 @@ class DocParser(_ParserBasic):
         super().__init__(mwe_dep_types=mwe_dep_types)
         self.client = client
 
-    def process_document(self, doc, doc_id=None):
+    def parse_line_to_sentences(self, doc, doc_id=None):
         """Main method: Annotate a document using CoreNLP client
 
         Arguments:
@@ -269,7 +264,7 @@ class DocParserParallel(_ParserBasic):
     def __init__(self, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
 
-    def process_document(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
+    def parse_line_to_sentences(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
         """Main method: Annotate a document using CoreNLP client
 
         Arguments:
