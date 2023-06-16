@@ -3,6 +3,7 @@ from . import PreprocessT
 from . import Wrd2vScorerT
 from . import qihangfuncs
 from . import resources
+from . import GensimModels
 # out source pack
 
 import os

@@ -1,11 +1,11 @@
 """initialize the project and insure the project can run"""
 import global_options
 from pathlib import Path
-import nlptoolkits
 import os
 import pandas as pd
 import datetime
 import pathlib
+import nlptoolkits.GensimModels
 from nlptoolkits.Wrd2vScorerT import DocScorer
 
 if __name__ == '__main__':
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------------------------------
     print(datetime.datetime.now())
     print("Training w2v model...")
-    nlptoolkits.Wrd2vScorerT.l1_train_w2v_model(
+    nlptoolkits.GensimModels.train_w2v_model(
         path_input_cleaned_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
