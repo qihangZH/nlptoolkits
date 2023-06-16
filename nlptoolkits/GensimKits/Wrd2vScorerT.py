@@ -377,19 +377,20 @@ def l1_semi_supervise_w2v_dict(
 
 class DocScorer:
 
-    def __init__(self, path_current_dict, path_trainw2v_dataset_txt,
-                 path_trainw2v_dataset_index_txt,
-                 mp_threads
+    def __init__(self, path_current_dict,
+                 path_trainw2v_sentences_dataset_txt,
+                 path_trainw2v_sentences_dataset_index_txt,
+                 processes
                  ):
         """
         Args:
             path_current_dict: path of current trained dict, already finished
-            path_trainw2v_dataset_txt: path of the dataset to train the word2vec model
-            path_trainw2v_dataset_index_txt: path of the dataset's IDS to train the word2vec model
-            mp_threads: Ncores to run
+            path_trainw2v_sentences_dataset_txt: path of the dataset to train the word2vec model
+            path_trainw2v_sentences_dataset_index_txt: path of the dataset's IDS to train the word2vec model
+            processes: Ncores to run
         """
 
-        self.mp_threads = mp_threads
+        self.mp_threads = processes
 
         self.current_dict_path = str(path_current_dict)
 
@@ -401,8 +402,8 @@ class DocScorer:
 
         """create doc level data"""
 
-        self.sent_corpus_file = path_trainw2v_dataset_txt
-        self.sent_id_file = path_trainw2v_dataset_index_txt
+        self.sent_corpus_file = path_trainw2v_sentences_dataset_txt
+        self.sent_id_file = path_trainw2v_sentences_dataset_index_txt
 
         self.doc_corpus, self.doc_ids, self.N_doc = \
             _BasicKits.FileT.l1_sentence_to_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)

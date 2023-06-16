@@ -160,13 +160,13 @@ if __name__ == '__main__':
 
     scorer_class = nlptoolkits.GensimKits.Wrd2vScorerT.DocScorer(
         path_current_dict=pathlib.Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv"),
-        path_trainw2v_dataset_txt=pathlib.Path(
+        path_trainw2v_sentences_dataset_txt=pathlib.Path(
             global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
-        path_trainw2v_dataset_index_txt=pathlib.Path(
+        path_trainw2v_sentences_dataset_index_txt=pathlib.Path(
             global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt"
         ),
-        mp_threads=global_options.N_CORES
+        processes=global_options.N_CORES
     )
 
     """however, you do not need this part"""
