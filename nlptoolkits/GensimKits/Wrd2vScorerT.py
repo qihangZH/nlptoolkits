@@ -1,4 +1,3 @@
-
 import copy
 import pickle
 import warnings
@@ -14,8 +13,7 @@ from sklearn import preprocessing
 import gensim
 import typing
 # import basic funcs
-from . import qihangfuncs
-from . import _BasicT
+from .. import _BasicKits
 
 """
 WARNINGS: THIS PACKAGE USE GENSIM MODEL!
@@ -197,7 +195,7 @@ def tf_scorer(documents, document_ids, expanded_words, n_core=1):
         )
 
         with pathos.multiprocessing.Pool(processes=n_core,
-                                         initializer=qihangfuncs.threads_interrupt_initiator
+                                         initializer=_BasicKits._BasicFuncT.threads_interrupt_initiator
                                          ) as pool:
 
             results = list(pool.map(count_one_document_partial, documents))
@@ -379,7 +377,10 @@ def l1_semi_supervise_w2v_dict(
 
 class DocScorer:
 
-    def __init__(self, path_current_dict, path_trainw2v_dataset_txt, path_trainw2v_dataset_index_txt, mp_threads):
+    def __init__(self, path_current_dict, path_trainw2v_dataset_txt,
+                 path_trainw2v_dataset_index_txt,
+                 mp_threads
+                 ):
         """
         Args:
             path_current_dict: path of current trained dict, already finished
@@ -392,7 +393,7 @@ class DocScorer:
 
         self.current_dict_path = str(path_current_dict)
 
-        self.current_dict, self.all_dict_words = _BasicT.read_dict_dictname_from_csv_dictset(
+        self.current_dict, self.all_dict_words = _BasicKits.FileT.read_dict_dictname_from_csv_dictset(
             self.current_dict_path
         )
         # words weighted by similarity rank (optional)
@@ -404,10 +405,10 @@ class DocScorer:
         self.sent_id_file = path_trainw2v_dataset_index_txt
 
         self.doc_corpus, self.doc_ids, self.N_doc = \
-            _BasicT.l1_sentence_to_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)
+            _BasicKits.FileT.l1_sentence_to_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)
 
         """create doc freq dict"""
-        self.doc_freq_dict = _BasicT.calculate_doc_freq_dict(self.doc_corpus)
+        self.doc_freq_dict = _BasicKits.FileT.calculate_doc_freq_dict(self.doc_corpus)
 
     """pickle the data"""
 

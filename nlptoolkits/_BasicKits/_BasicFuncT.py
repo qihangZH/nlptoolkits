@@ -2,7 +2,11 @@ import functools
 import signal
 import socket
 import time
+import os
+import shutil
 from urllib.parse import urlparse
+
+"""The lowest level of package"""
 
 
 def threads_interrupt_initiator():
@@ -43,3 +47,9 @@ def timer_wrapper(func):
         return result
 
     return decorated
+
+
+def delete_whole_dir(directory):
+    """delete the whole dir..."""
+    if os.path.exists(directory) and os.path.isdir(directory):
+        shutil.rmtree(directory)

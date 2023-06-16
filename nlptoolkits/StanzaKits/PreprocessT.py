@@ -7,7 +7,7 @@ import gensim
 import tqdm
 from gensim import models
 import datetime
-from . import _BasicT
+from .. import _BasicKits
 
 
 # Qihang Zhang modified in 6/6/2023, National university of singapore
@@ -166,7 +166,7 @@ def train_bigram_model(input_path, model_path, phrase_min_length, phrase_thresho
     corpus = gensim.models.word2vec.PathLineSentences(
         str(input_path), max_sentence_length=10000000
     )
-    n_lines = _BasicT._line_counter(input_path)
+    n_lines = _BasicKits.FileT._line_counter(input_path)
     bigram_model = models.phrases.Phrases(
         tqdm.tqdm(corpus, total=n_lines),
         min_count=phrase_min_length,
@@ -212,7 +212,7 @@ def sentence_file_bigramer(input_path, output_path, model_path, threshold=None, 
     data_bigram = [_lambda_bigram_transform(l, bigram_model) for l in tqdm.tqdm(input_data)]
     with open(output_path, "w", encoding='utf-8') as f:
         f.write("\n".join(data_bigram) + "\n")
-    assert len(input_data) == _BasicT._line_counter(output_path)
+    assert len(input_data) == _BasicKits.FileT._line_counter(output_path)
 
 
 # --------------------------------------------------------------------------
@@ -292,7 +292,7 @@ class DocParserParallel(_ParserBasic):
         Note:
             When the doc is empty, both doc_id and sentences processed_data will be too.
         """
-        # if not nlptoolkits.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
+        # if not nlptoolkits._BasicKits.check_server(corenlp_endpoint, timeout=2100000):
         #     raise ConnectionError(f'{corenlp_endpoint} is not running, reset the port and try again.')
         wait_seconds = 10
         while True:

@@ -5,8 +5,8 @@ import pathos
 import pandas as pd
 import re
 import tqdm
-from collections import Counter, OrderedDict, defaultdict
-from . import qihangfuncs
+from collections import defaultdict
+from . import _BasicFuncT
 
 
 # --------------------------------------------------------------------------
@@ -340,7 +340,7 @@ def l1_mp_process_largefile(
             output_lines = []
             output_line_ids = []
             with pathos.multiprocessing.Pool(processes=processes,
-                                             initializer=qihangfuncs.threads_interrupt_initiator
+                                             initializer=_BasicFuncT.threads_interrupt_initiator
                                              ) as pool:
                 for output_line, output_line_id in pool.starmap(
                         process_line_func, zip(next_n_lines, next_n_line_ids)
