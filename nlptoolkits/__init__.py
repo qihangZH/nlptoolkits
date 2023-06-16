@@ -12,14 +12,19 @@ from . import resources
 """function aliases"""
 
 
-def alias_delete_whole_dir(directory):
+def alias_delete_whole_dir(*args, **kwargs):
     """delete the whole dir..."""
-    _BasicKits._BasicFuncT.delete_whole_dir(directory=directory)
+    _BasicKits._BasicFuncT.delete_whole_dir(*args, **kwargs)
 
 
 def alias_file_to_list(*args, **kwargs):
     """alias to _BasicT.file_to_list"""
     return _BasicKits.FileT.file_to_list(*args, **kwargs)
+
+
+def alias_list_to_file(*args, **kwargs):
+    """alias to _BasicT.file_to_list"""
+    _BasicKits.FileT.list_to_file(*args, **kwargs)
 
 
 def alias_write_dict_to_csv(*args, **kwargs):

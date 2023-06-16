@@ -1,4 +1,5 @@
 import gensim
+from .. import _BasicKits
 
 
 def train_w2v_model(path_input_sentence_txt, path_output_model=None, *args, **kwargs):
@@ -21,39 +22,36 @@ def train_w2v_model(path_input_sentence_txt, path_output_model=None, *args, **kw
     return model
 
 
-def train_tfidf_model_tuple(path_input_cleaned_txt, path_output_dictionary=None, path_output_model=None):
+def train_tfidf_model_tuple(text_list, path_output_dictionary=None, path_output_model=None):
     """
-    Train a tf-idf model using the LineSentence file in input_path,
+    Train a tf-idf model using the provided corpus,
     save the model and the dictionary to their respective paths.
     :return : tuple(dictionary, output_model)
 
     Arguments:
-        path_input_cleaned_txt {str} -- Corpus for training, each line is a sentence
+        text_list {list of list of str} -- each element of list is a whole text
         path_output_dictionary {str} -- Where to save the dictionary?
         path_output_model {str} -- Where to save the model?
-
     """
 
-    # Load sentences from the text file
-    corpus_confcall = gensim.models.word2vec.PathLineSentences(
-        str(path_input_cleaned_txt), max_sentence_length=10000000
-    )
+    # Tokenize each document in the corpus
+    tokenized_corpus = [doc.split() for doc in text_list]
 
     # Create a dictionary
-    dictionary = gensim.corpora.Dictionary(corpus_confcall)
+    dictionary = gensim.corpora.Dictionary(tokenized_corpus)
 
     # Create a BOW corpus
-    corpus = [dictionary.doc2bow(text) for text in corpus_confcall]
+    corpus = [dictionary.doc2bow(text) for text in tokenized_corpus]
 
     # Train the TF-IDF model
     tfidf_model = gensim.models.TfidfModel(corpus)
 
     # Save the dictionary for future use
-    if not (path_output_dictionary is None):
+    if path_output_dictionary is not None:
         dictionary.save(path_output_dictionary)
 
     # Save the model for future use
-    if not (path_output_model is None):
+    if path_output_model is not None:
         tfidf_model.save(path_output_model)
 
     return dictionary, tfidf_model
