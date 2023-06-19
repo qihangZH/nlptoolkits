@@ -52,15 +52,12 @@ class SimilarityTfidf:
         if not (chunksize is None):
             chunkslice_arr = np.arange(0, len(y_tfidf_corpus), chunksize)
 
-            if chunkslice_arr[-1] != len(y_tfidf_corpus):
-                chunkslice_arr = np.append(chunkslice_arr, len(y_tfidf_corpus))
-
             sim_mat_list = []
-            for sli in tqdm.tqdm(range(len(chunkslice_arr) - 1)):
+            for sli in tqdm.tqdm(range(len(chunkslice_arr))):
                 sim_mat_list.append(
                     np.array(index[
                                  y_tfidf_corpus[
-                                 chunkslice_arr[sli]:chunkslice_arr[sli + 1]
+                                 chunkslice_arr[sli]:chunkslice_arr[sli] + chunksize
                                  ]
                              ], dtype=dtype).T
                 )
