@@ -1,10 +1,9 @@
 import numpy as np
-
-from . import _Models
-from .. import _BasicKits
+import tqdm
 import gensim
 import gensim.similarities
-
+from . import _Models
+from .. import _BasicKits
 
 
 class SimilarityTfidf:
@@ -22,11 +21,14 @@ class SimilarityTfidf:
         )
 
     @_BasicKits._BasicFuncT.timer_wrapper
-    def similarity_matrix(self, x_text_list, y_text_list):
+    def similarity_matrix(self, x_text_list, y_text_list, chunksize=None, model_output_prefix='sim',
+                            dtype=np.float32):
         """
         Args:
             x_text_list: the first text list to input
             y_text_list: the second text list to input for compare the similarity
+            chunksize: chunksize which deal with onetime
+            model_output_prefix: the prefix of saved model
 
         Returns: shape of [X,Y] for dim 0 is X and dim 1 is y. Cosine similarity
 
@@ -43,11 +45,30 @@ class SimilarityTfidf:
         y_tfidf_corpus = self.tfidf_model[y_bow_corpus]
 
         # Create a Similarity object to compute pairwise similarities
-        index = gensim.similarities.Similarity(output_prefix='sim',
+        index = gensim.similarities.Similarity(output_prefix=model_output_prefix,
                                                corpus=x_tfidf_corpus,
                                                num_features=len(self.dictionary))
 
-        # Compute similarity matrix
-        sim_matrix = index[y_tfidf_corpus]
+        if not (chunksize is None):
+            chunkslice_arr = np.arange(0, len(y_tfidf_corpus), chunksize)
 
-        return np.array(sim_matrix)
+            if chunkslice_arr[-1] != len(y_tfidf_corpus):
+                chunkslice_arr = np.append(chunkslice_arr, len(y_tfidf_corpus))
+
+            sim_mat_list = []
+            for sli in tqdm.tqdm(range(len(chunkslice_arr) - 1)):
+                sim_mat_list.append(
+                    np.array(index[
+                                 y_tfidf_corpus[
+                                 chunkslice_arr[sli]:chunkslice_arr[sli + 1]
+                                 ]
+                             ], dtype=dtype).T
+                )
+
+            sim_matrix = np.concatenate(sim_mat_list, axis=1)  # concat axis 1
+
+        else:
+            # Compute similarity matrix
+            sim_matrix = np.array(index[y_tfidf_corpus], dtype=dtype).T
+
+        return sim_matrix

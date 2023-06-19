@@ -12,7 +12,10 @@ if __name__ == '__main__':
         )
     )
 
-    print(democls.similarity_matrix(democls.doc_corpus_list[:2000],
-                                    democls.doc_corpus_list[2000:]
+    print(democls.similarity_matrix(democls.doc_corpus_list[:3222],
+                                    democls.doc_corpus_list[3222:],
+                                    chunksize=1000
                                     ).shape
           )
+
+    print(len(democls.doc_corpus_list[3222:]))
