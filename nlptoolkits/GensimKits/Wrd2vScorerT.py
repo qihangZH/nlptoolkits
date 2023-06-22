@@ -461,7 +461,7 @@ class DocScorer:
 
     """Scorer at doc level"""
 
-    def score_tfidf_tupledf(self, method, normalize=False):
+    def score_tfidf_dfdf(self, method, normalize=False):
         """Score documents using tf-idf and its variations
 
         :param method :

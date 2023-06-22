@@ -16,13 +16,13 @@ class SimilarityTfidf:
             _BasicKits.FileT.l1_sentence_to_doc_level_corpus(path_sentences_dataset_txt,
                                                              path_sentences_dataset_index_txt)
 
-        self.dictionary, self.tfidf_model = _Models.train_tfidf_model_tuple(
+        self.dictionary, self.tfidf_model = _Models.train_tfidf_model_dictmod(
             text_list=self.doc_corpus_list
         )
 
     @_BasicKits._BasicFuncT.timer_wrapper
     def similarity_matrix(self, x_text_list, y_text_list, chunksize=None, model_output_prefix='sim',
-                            dtype=np.float32):
+                          dtype=np.float32):
         """
         Args:
             x_text_list: the first text list to input

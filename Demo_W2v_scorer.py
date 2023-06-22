@@ -187,7 +187,7 @@ if __name__ == '__main__':
     )
     methods = ["TFIDF", "WFIDF"]
     for method in methods:
-        score, contribution = scorer_class.score_tfidf_tupledf(
+        score, contribution = scorer_class.score_tfidf_dfdf(
             method=method,
             normalize=False,
         )

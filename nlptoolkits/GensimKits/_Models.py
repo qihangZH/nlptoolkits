@@ -1,5 +1,4 @@
 import gensim
-from .. import _BasicKits
 
 
 def train_w2v_model(path_input_sentence_txt, path_output_model=None, *args, **kwargs):
@@ -22,7 +21,7 @@ def train_w2v_model(path_input_sentence_txt, path_output_model=None, *args, **kw
     return model
 
 
-def train_tfidf_model_tuple(text_list, path_output_dictionary=None, path_output_model=None):
+def train_tfidf_model_dictmod(text_list, path_output_dictionary=None, path_output_model=None):
     """
     Train a tf-idf model using the provided corpus,
     save the model and the dictionary to their respective paths.
