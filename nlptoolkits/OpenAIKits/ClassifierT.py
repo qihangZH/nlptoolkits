@@ -31,7 +31,9 @@ def _chatcompletion_classifier_df(
     else:
         raise ValueError('Input must be pd.Series/pd.DataFrame')
 
-    if (not (target_col in statement_serdf.columns)) or (not (identifier_col in statement_serdf.columns)):
+    col_list = statement_serdf.columns if isinstance(statement_serdf, pd.DataFrame) else statement_serdf.index
+
+    if not (target_col in col_list) or not (identifier_col in col_list):
         raise ValueError('target_col/identifier_col must in statement_serdf columns!')
 
     if not (chunksize is None):
