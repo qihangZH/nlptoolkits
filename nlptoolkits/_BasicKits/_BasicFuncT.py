@@ -53,3 +53,16 @@ def delete_whole_dir(directory):
     """delete the whole dir..."""
     if os.path.exists(directory) and os.path.isdir(directory):
         shutil.rmtree(directory)
+
+
+def check_is_list_of_dicts(obj):
+    """check is it a list of dict"""
+
+    if not isinstance(obj, list):
+        return False
+
+    for element in obj:
+        if not isinstance(element, dict):
+            return False
+
+    return True
