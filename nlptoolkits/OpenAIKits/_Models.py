@@ -136,7 +136,7 @@ def chatcompletion_worker(
 
                             sub_prediction_list = retry_onebyone_dict_list
 
-                            print('successfully retry the full result from OpenAI(one by one)')
+                            # print('successfully retry the full result from OpenAI(one by one)')
                         except Exception as e:
                             print(e, 'use old return.')
                     elif dataframe_deficiency_error == 'raise':
