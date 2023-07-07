@@ -12,12 +12,12 @@ class SimilarityTfidf:
                  path_sentences_dataset_txt,
                  path_sentences_dataset_index_txt
                  ):
-        self.doc_corpus_list, self.doc_ids, self.N_doc = \
+        self.doc_text_corpus_list, self.doc_ids_list, self.N_doc = \
             _BasicKits.FileT.l1_sentence_to_doc_level_corpus(path_sentences_dataset_txt,
                                                              path_sentences_dataset_index_txt)
 
         self.dictionary, self.tfidf_model = _Models.train_tfidf_model_dictmod(
-            text_list=self.doc_corpus_list
+            text_list=self.doc_text_corpus_list
         )
 
     @_BasicKits._BasicFuncT.timer_wrapper
@@ -36,7 +36,7 @@ class SimilarityTfidf:
         x_text_tokenize_list = [doc.split() for doc in x_text_list]
         y_text_tokenize_list = [doc.split() for doc in y_text_list]
 
-        # Convert tokenized documents to bag-of-words vectors
+        # Convert tokenized documents to bag-of-words vectors (text corpus to num corpus...)
         x_bow_corpus = [self.dictionary.doc2bow(text) for text in x_text_tokenize_list]
         y_bow_corpus = [self.dictionary.doc2bow(text) for text in y_text_tokenize_list]
 

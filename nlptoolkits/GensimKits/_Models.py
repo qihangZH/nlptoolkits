@@ -29,7 +29,7 @@ def train_tfidf_model_dictmod(text_list, path_output_dictionary=None, path_outpu
 
     Arguments:
         text_list {list of list of str} -- each element of list is a whole text
-        path_output_dictionary {str} -- Where to save the dictionary?
+        path_output_dictionary {str} -- Where to save the dictionary? A dict to change tokenize corpus->bow corpus
         path_output_model {str} -- Where to save the model?
     """
 
@@ -40,10 +40,10 @@ def train_tfidf_model_dictmod(text_list, path_output_dictionary=None, path_outpu
     dictionary = gensim.corpora.Dictionary(tokenized_corpus)
 
     # Create a BOW corpus
-    corpus = [dictionary.doc2bow(text) for text in tokenized_corpus]
+    bow_corpus = [dictionary.doc2bow(text) for text in tokenized_corpus]
 
     # Train the TF-IDF model
-    tfidf_model = gensim.models.TfidfModel(corpus)
+    tfidf_model = gensim.models.TfidfModel(bow_corpus)
 
     # Save the dictionary for future use
     if path_output_dictionary is not None:
