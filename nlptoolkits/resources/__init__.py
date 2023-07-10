@@ -4,6 +4,7 @@ import os
 
 _DIR_RESOURCES = DIR_ROOT = os.path.abspath(os.path.dirname(__file__)) + '/'
 # The package include the resources
+# The stopwords which used in Stanza...
 SET_STOPWORDS: Set[str] = set(
     Path(_DIR_RESOURCES, "StopWords_Generic.txt").read_text().lower().split()
 )
