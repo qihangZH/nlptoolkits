@@ -1,6 +1,7 @@
 from . import _BasicKits
 from . import StanzaKits
 from . import GensimKits
+from . import WordninjaKits
 from . import resources
 
 # out source pack
