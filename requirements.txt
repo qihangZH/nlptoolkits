@@ -7,3 +7,11 @@ stanfordnlp==0.2.0
 protobuf
 pathos
 openai
+wordninja
+chardet
+setuptools
+html2text
+scikit-learn
+bs4
+pypandoc
+PyPDF2
