@@ -2,7 +2,12 @@ import functools
 import signal
 import socket
 import time
+import os
+import shutil
+import chardet
 from urllib.parse import urlparse
+
+"""The lowest level of package"""
 
 
 def threads_interrupt_initiator():
@@ -43,3 +48,35 @@ def timer_wrapper(func):
         return result
 
     return decorated
+
+
+def delete_whole_dir(directory):
+    """delete the whole dir..."""
+    if os.path.exists(directory) and os.path.isdir(directory):
+        shutil.rmtree(directory)
+
+
+def check_is_list_of_dicts(obj):
+    """check is it a list of dict"""
+
+    if not isinstance(obj, list):
+        return False
+
+    for element in obj:
+        if not isinstance(element, dict):
+            return False
+
+    return True
+
+
+def find_file_encoding(path):
+    """
+    find the encoding of target file(data or other else)
+    more details could be seen: https://chardet.readthedocs.io/en/latest/usage.html;
+    https://stackoverflow.com/questions/12468179/unicodedecodeerror-utf8-codec-cant-decode-byte-0x9c
+    :param path: the path of file which encoding should be detected, the type will return as string.
+    """
+    with open(path, 'rb') as file:
+        result = chardet.detect(file.read())
+
+    return result['encoding']

@@ -5,8 +5,8 @@ import pathos
 import pandas as pd
 import re
 import tqdm
-from collections import Counter, OrderedDict, defaultdict
-from . import qihangfuncs
+from collections import defaultdict
+from . import _BasicFuncT
 
 
 # --------------------------------------------------------------------------
@@ -25,6 +25,7 @@ def _line_counter(a_file):
     with open(a_file, "rb") as f:
         n_lines = sum(1 for _ in f)
     return n_lines
+
 
 
 # --------------------------------------------------------------------------
@@ -47,7 +48,7 @@ def file_to_list(a_file):
     return file_content
 
 
-def list_to_file(list, a_file, validate=True):
+def list_to_file(input_list, a_file, validate=True):
     """Write a list to a file, each element in a line
     The strings needs to have no line break "\n" or they will be removed
     
@@ -56,11 +57,11 @@ def list_to_file(list, a_file, validate=True):
             equals to the length of the list (default: {True})
     """
     with open(a_file, "w", 8192000, encoding="utf-8", newline="\n") as f:
-        for e in list:
+        for e in input_list:
             e = str(e).replace("\n", " ").replace("\r", " ")
             f.write("{}\n".format(e))
     if validate:
-        assert _line_counter(a_file) == len(list)
+        assert _line_counter(a_file) == len(input_list)
 
 
 def read_large_file(a_file, block_size=10000):
@@ -153,7 +154,10 @@ def calculate_doc_freq_dict(corpus):
 # l1 level functions/classes
 # --------------------------------------------------------------------------
 
-def l1_construct_doc_level_corpus(sent_corpus_file, sent_id_file):
+def l1_sentence_to_doc_level_corpus(sent_corpus_file, sent_id_file,
+                                    path_save_sent_corpus_file=None,
+                                    path_save_sent_id_file=None
+                                    ):
     """Construct document level corpus from sentence level corpus and write to disk.
     Dump "corpus_doc_level.pickle" and "doc_ids.pickle" to Path(global_options.OUTPUT_FOLDER, "scores", "temp").
 
@@ -185,6 +189,16 @@ def l1_construct_doc_level_corpus(sent_corpus_file, sent_id_file):
     doc_ids = list(id_doc_dict.keys())
     assert len(corpus) == len(doc_ids)
     N_doc = len(corpus)
+
+    if not (path_save_sent_corpus_file is None):
+        with open(path_save_sent_corpus_file, 'w', encoding='utf-8') as f:
+            for sentence in corpus:
+                f.write(sentence + '\n')  # add a newline character to separate sentences
+
+    if not (path_save_sent_id_file is None):
+        with open(path_save_sent_id_file, 'w', encoding='utf-8') as f:
+            for ids in doc_ids:
+                f.write(ids + '\n')  # add a newline character to separate sentences
 
     return corpus, doc_ids, N_doc
 
@@ -339,7 +353,7 @@ def l1_mp_process_largefile(
             output_lines = []
             output_line_ids = []
             with pathos.multiprocessing.Pool(processes=processes,
-                                             initializer=qihangfuncs.threads_interrupt_initiator
+                                             initializer=_BasicFuncT.threads_interrupt_initiator
                                              ) as pool:
                 for output_line, output_line_id in pool.starmap(
                         process_line_func, zip(next_n_lines, next_n_line_ids)

@@ -1,4 +1,3 @@
-
 import copy
 import pickle
 import warnings
@@ -14,9 +13,11 @@ from sklearn import preprocessing
 import gensim
 import typing
 # import basic funcs
-from . import qihangfuncs
-from . import _BasicT
+from .. import _BasicKits
 
+"""
+WARNINGS: THIS PACKAGE USE GENSIM MODEL!
+"""
 # --------------------------------------------------------------------------
 # l0 level functions/classes
 # --------------------------------------------------------------------------
@@ -194,7 +195,7 @@ def tf_scorer(documents, document_ids, expanded_words, n_core=1):
         )
 
         with pathos.multiprocessing.Pool(processes=n_core,
-                                         initializer=qihangfuncs.threads_interrupt_initiator
+                                         initializer=_BasicKits._BasicFuncT.threads_interrupt_initiator
                                          ) as pool:
 
             results = list(pool.map(count_one_document_partial, documents))
@@ -333,22 +334,6 @@ def compute_word_sim_weights(file_name):
 """word2vec model function"""
 
 
-def l1_train_w2v_model(path_input_cleaned_txt, path_output_model, *args, **kwargs):
-    """ Train a word2vec model using the LineSentence file in input_path,
-    save the model to model_path.count
-
-    Arguments:
-        input_path {str} -- Corpus for training, each line is a sentence
-        model_path {str} -- Where to save the model?
-    """
-    # pathlib.Path(path_output_model).parent.mkdir(parents=True, exist_ok=True)
-    corpus_confcall = gensim.models.word2vec.PathLineSentences(
-        str(path_input_cleaned_txt), max_sentence_length=10000000
-    )
-    model = gensim.models.Word2Vec(corpus_confcall, *args, **kwargs)
-    model.save(str(path_output_model))
-
-
 def l1_semi_supervise_w2v_dict(
         path_input_w2v_model,
         seed_words_dict,
@@ -392,20 +377,24 @@ def l1_semi_supervise_w2v_dict(
 
 class DocScorer:
 
-    def __init__(self, path_current_dict, path_trainw2v_dataset_txt, path_trainw2v_dataset_index_txt, mp_threads):
+    def __init__(self, path_current_dict,
+                 path_trainw2v_sentences_dataset_txt,
+                 path_trainw2v_sentences_dataset_index_txt,
+                 processes
+                 ):
         """
         Args:
             path_current_dict: path of current trained dict, already finished
-            path_trainw2v_dataset_txt: path of the dataset to train the word2vec model
-            path_trainw2v_dataset_index_txt: path of the dataset's IDS to train the word2vec model
-            mp_threads: Ncores to run
+            path_trainw2v_sentences_dataset_txt: path of the dataset to train the word2vec model
+            path_trainw2v_sentences_dataset_index_txt: path of the dataset's IDS to train the word2vec model
+            processes: Ncores to run
         """
 
-        self.mp_threads = mp_threads
+        self.mp_threads = processes
 
         self.current_dict_path = str(path_current_dict)
 
-        self.current_dict, self.all_dict_words = _BasicT.read_dict_dictname_from_csv_dictset(
+        self.current_dict, self.all_dict_words = _BasicKits.FileT.read_dict_dictname_from_csv_dictset(
             self.current_dict_path
         )
         # words weighted by similarity rank (optional)
@@ -413,14 +402,14 @@ class DocScorer:
 
         """create doc level data"""
 
-        self.sent_corpus_file = path_trainw2v_dataset_txt
-        self.sent_id_file = path_trainw2v_dataset_index_txt
+        self.sent_corpus_file = path_trainw2v_sentences_dataset_txt
+        self.sent_id_file = path_trainw2v_sentences_dataset_index_txt
 
         self.doc_corpus, self.doc_ids, self.N_doc = \
-            _BasicT.l1_construct_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)
+            _BasicKits.FileT.l1_sentence_to_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)
 
         """create doc freq dict"""
-        self.doc_freq_dict = _BasicT.calculate_doc_freq_dict(self.doc_corpus)
+        self.doc_freq_dict = _BasicKits.FileT.calculate_doc_freq_dict(self.doc_corpus)
 
     """pickle the data"""
 
@@ -472,7 +461,7 @@ class DocScorer:
 
     """Scorer at doc level"""
 
-    def score_tfidf_tupledf(self, method, normalize=False):
+    def score_tfidf_dfdf(self, method, normalize=False):
         """Score documents using tf-idf and its variations
 
         :param method :

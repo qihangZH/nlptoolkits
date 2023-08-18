@@ -1,12 +1,11 @@
 """initialize the project and insure the project can run"""
 import global_options
 from pathlib import Path
-import nlptoolkits
 import os
 import pandas as pd
 import datetime
 import pathlib
-from nlptoolkits.Wrd2vScorerT import DocScorer
+import nlptoolkits
 
 if __name__ == '__main__':
 
@@ -21,7 +20,7 @@ if __name__ == '__main__':
                       global_options.OUTPUT_FOLDER
 
                       ]:
-        nlptoolkits.delete_whole_dir(directory=outputdir)
+        nlptoolkits.alias_delete_whole_dir(directory=outputdir)
 
     """root level dir make"""
     Path(global_options.PROCESSED_DATA_FOLDER).mkdir(parents=False, exist_ok=True)
@@ -65,7 +64,7 @@ if __name__ == '__main__':
         )
 
     """Arguments"""
-    nlptoolkits.auto_parser(
+    nlptoolkits.StanzaKits.auto_doc_to_sentences_parser(
         endpoint=global_options.ADDRESS_CORENLP,
         memory=global_options.RAM_CORENLP,
         processes=global_options.N_CORES,
@@ -87,7 +86,7 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------------------------------
 
     # clean the parsed text (remove POS tags, stopwords, etc.) ----------------
-    nlptoolkits.auto_clean_parsed_txt(
+    nlptoolkits.StanzaKits.auto_clean_parsed_txt(
         path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
         path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
         stopwords_set=global_options.STOPWORDS,
@@ -95,7 +94,7 @@ if __name__ == '__main__':
     )
 
     # train and apply a phrase model to detect 2-word phrases ----------------
-    nlptoolkits.auto_bigram_fit_transform_txt(
+    nlptoolkits.StanzaKits.auto_sentence_bigram_fit_transform_txt(
         path_input_clean_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"
         ),
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     # train and apply a phrase model to detect 3-word phrases
     # --------------------------------------------------------------------------------------------------
 
-    nlptoolkits.auto_bigram_fit_transform_txt(
+    nlptoolkits.StanzaKits.auto_sentence_bigram_fit_transform_txt(
         path_input_clean_txt=Path(global_options.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"),
         path_output_transformed_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
@@ -130,8 +129,8 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------------------------------
     print(datetime.datetime.now())
     print("Training w2v model...")
-    nlptoolkits.Wrd2vScorerT.l1_train_w2v_model(
-        path_input_cleaned_txt=Path(
+    nlptoolkits.GensimKits._Models.train_w2v_model(
+        path_input_sentence_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
         path_output_model=Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod"),
@@ -141,7 +140,7 @@ if __name__ == '__main__':
         iter=global_options.W2V_ITER,
     )
 
-    result_dict = nlptoolkits.Wrd2vScorerT.l1_semi_supervise_w2v_dict(
+    result_dict = nlptoolkits.GensimKits.Wrd2vScorerT.l1_semi_supervise_w2v_dict(
         path_input_w2v_model=str(Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod")),
         seed_words_dict=global_options.SEED_WORDS,
         restrict_vocab_per=global_options.DICT_RESTRICT_VOCAB,
@@ -153,21 +152,21 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------------------------------
 
     # output the dictionary
-    nlptoolkits._BasicT.write_dict_to_csv(
+    nlptoolkits._BasicKits.FileT.write_dict_to_csv(
         culture_dict=result_dict,
         file_name=str(Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv")),
     )
     print(f'Dictionary saved at {str(Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv"))}')
 
-    scorer_class = DocScorer(
+    scorer_class = nlptoolkits.GensimKits.Wrd2vScorerT.DocScorer(
         path_current_dict=pathlib.Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv"),
-        path_trainw2v_dataset_txt=pathlib.Path(
+        path_trainw2v_sentences_dataset_txt=pathlib.Path(
             global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
-        path_trainw2v_dataset_index_txt=pathlib.Path(
+        path_trainw2v_sentences_dataset_index_txt=pathlib.Path(
             global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt"
         ),
-        mp_threads=global_options.N_CORES
+        processes=global_options.N_CORES
     )
 
     """however, you do not need this part"""
@@ -188,7 +187,7 @@ if __name__ == '__main__':
     )
     methods = ["TFIDF", "WFIDF"]
     for method in methods:
-        score, contribution = scorer_class.score_tfidf_tupledf(
+        score, contribution = scorer_class.score_tfidf_dfdf(
             method=method,
             normalize=False,
         )

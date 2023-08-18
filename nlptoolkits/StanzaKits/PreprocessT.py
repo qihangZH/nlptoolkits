@@ -1,4 +1,3 @@
-import pandas as pd
 from stanfordnlp.server import CoreNLPClient
 import re
 import time
@@ -8,7 +7,7 @@ import gensim
 import tqdm
 from gensim import models
 import datetime
-from . import _BasicT
+from .. import _BasicKits
 
 
 # Qihang Zhang modified in 6/6/2023, National university of singapore
@@ -151,7 +150,7 @@ class _ParserBasic:
 """bigram models to make seperate words to one word concat with _"""
 
 
-def train_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
+def train_sentence_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
     """ Train a phrase model and save it to the disk.
 
     Arguments:
@@ -167,7 +166,7 @@ def train_bigram_model(input_path, model_path, phrase_min_length, phrase_thresho
     corpus = gensim.models.word2vec.PathLineSentences(
         str(input_path), max_sentence_length=10000000
     )
-    n_lines = _BasicT._line_counter(input_path)
+    n_lines = _BasicKits.FileT._line_counter(input_path)
     bigram_model = models.phrases.Phrases(
         tqdm.tqdm(corpus, total=n_lines),
         min_count=phrase_min_length,
@@ -179,19 +178,7 @@ def train_bigram_model(input_path, model_path, phrase_min_length, phrase_thresho
     return bigram_model
 
 
-def bigram_transform(line, bigram_phraser):
-    """ Helper file fore file_bigramer
-    Note: Needs a phraser object or phrase model.
-
-    Arguments:
-        line {str}: a line
-
-    return: a line with phrases joined using "_"
-    """
-    return " ".join(bigram_phraser[line.split()])
-
-
-def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=None):
+def sentence_file_bigramer(input_path, output_path, model_path, threshold=None, scoring=None):
     """ Transform an input_data text file into a file with 2-word phrases.
     Apply again to learn 3-word phrases.
 
@@ -199,8 +186,21 @@ def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=N
         input_path {str}: Each line is a sentence
         ouput_file {str}: Each line is a sentence with 2-word phraes concatenated
     """
+
     # Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     # Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+
+    def _lambda_bigram_transform(line, bigram_phraser):
+        """ Helper file fore file_bigramer
+        Note: Needs a phraser object or phrase model.
+
+        Arguments:
+            line {str}: a line
+
+        return: a line with phrases joined using "_"
+        """
+        return " ".join(bigram_phraser[line.split()])
+
     bigram_model = gensim.models.phrases.Phrases.load(str(model_path))
     if scoring is not None:
         bigram_model.scoring = getattr(gensim.models.phrases, scoring)
@@ -209,10 +209,10 @@ def file_bigramer(input_path, output_path, model_path, threshold=None, scoring=N
     # bigram_phraser = models.phrases.Phraser(bigram_model)
     with open(input_path, "r", encoding='utf-8') as f:
         input_data = f.readlines()
-    data_bigram = [bigram_transform(l, bigram_model) for l in tqdm.tqdm(input_data)]
+    data_bigram = [_lambda_bigram_transform(l, bigram_model) for l in tqdm.tqdm(input_data)]
     with open(output_path, "w", encoding='utf-8') as f:
         f.write("\n".join(data_bigram) + "\n")
-    assert len(input_data) == _BasicT._line_counter(output_path)
+    assert len(input_data) == _BasicKits.FileT._line_counter(output_path)
 
 
 # --------------------------------------------------------------------------
@@ -224,7 +224,7 @@ class DocParser(_ParserBasic):
         super().__init__(mwe_dep_types=mwe_dep_types)
         self.client = client
 
-    def process_document(self, doc, doc_id=None):
+    def parse_line_to_sentences(self, doc, doc_id=None):
         """Main method: Annotate a document using CoreNLP client
 
         Arguments:
@@ -264,7 +264,7 @@ class DocParserParallel(_ParserBasic):
     def __init__(self, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
 
-    def process_document(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
+    def parse_line_to_sentences(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
         """Main method: Annotate a document using CoreNLP client
 
         Arguments:
@@ -292,7 +292,7 @@ class DocParserParallel(_ParserBasic):
         Note:
             When the doc is empty, both doc_id and sentences processed_data will be too.
         """
-        # if not nlptoolkits.qihangfuncs.check_server(corenlp_endpoint, timeout=2100000):
+        # if not nlptoolkits._BasicKits.check_server(corenlp_endpoint, timeout=2100000):
         #     raise ConnectionError(f'{corenlp_endpoint} is not running, reset the port and try again.')
         wait_seconds = 10
         while True:
@@ -317,7 +317,7 @@ class DocParserParallel(_ParserBasic):
         return "\n".join(sentences_processed), "\n".join(doc_sent_ids)
 
 
-class TextCleaner:
+class LineTextCleaner:
     """Clean the text parsed by CoreNLP (preprocessor)
     """
 
