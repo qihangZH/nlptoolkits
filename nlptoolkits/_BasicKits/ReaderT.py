@@ -14,7 +14,7 @@ def __sep_letter_warning():
         The converter names like 'convert_<...>_to_single_line_str' you using may occurs problems like:
         l o w i n g the salary w i l l m a k e t h e worker a r g u i n g t h e c o m p a n y.
         IF you want to correct this problem,
-        you have to use WordninjaKits.PreprocessT.replace_sequence_letters_to_words_str
+        you have to use nlptoolkits/SmallKits/WordninjaT/replace_sequence_letters_to_words_str
         """
     )
 

@@ -11,7 +11,7 @@ wordninja
 chardet
 setuptools
 html2text
-scikit-learn
+bitermplus
 bs4
 pypandoc
 PyPDF2
