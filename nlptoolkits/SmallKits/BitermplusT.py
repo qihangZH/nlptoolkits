@@ -25,7 +25,8 @@ class BtmTopic:
     @property
     def model(self):
 
-        if self._model:
+        if not self._model:
+            # if a model has not been made...
             raise ValueError('The model has not been made, try to have BtmTopic.fit and initiate')
 
         else:
@@ -49,6 +50,7 @@ class BtmTopic:
         """
         :param fit_iterations: the iteration of btm.BTM().fit()'s iteration times, fit's iter times
         :param kwargs: the kwarg arguments of bitermplus.BTM
+            https://bitermplus.readthedocs.io/en/latest/bitermplus.html#bitermplus.BTM
         """
         self.fit(fit_iterations=fit_iterations, **kwargs)
         return self._model.transform(self.train_docs_vec)
