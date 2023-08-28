@@ -353,7 +353,7 @@ def l1_mp_process_largefile(
             output_lines = []
             output_line_ids = []
             with pathos.multiprocessing.Pool(processes=processes,
-                                             initializer=_BasicFuncT.threads_interrupt_initiator
+                                             initializer=_BasicFuncT.processes_interrupt_initiator
                                              ) as pool:
                 for output_line, output_line_id in pool.starmap(
                         process_line_func, zip(next_n_lines, next_n_line_ids)

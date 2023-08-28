@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 """The lowest level of package"""
 
 
-def threads_interrupt_initiator():
+def processes_interrupt_initiator():
     """
     Function for multiprocessing.Pool(initializer=threads_interrupt_initiator())
     Each pool process will execute this as part of its initialization.

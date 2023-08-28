@@ -195,7 +195,7 @@ def tf_scorer(documents, document_ids, expanded_words, n_core=1):
         )
 
         with pathos.multiprocessing.Pool(processes=n_core,
-                                         initializer=_BasicKits._BasicFuncT.threads_interrupt_initiator
+                                         initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator
                                          ) as pool:
 
             results = list(pool.map(count_one_document_partial, documents))
