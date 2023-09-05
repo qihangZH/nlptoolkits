@@ -94,7 +94,7 @@ if __name__ == '__main__':
     )
 
     # train and apply a phrase model to detect 2-word phrases ----------------
-    nlptoolkits.StanzaKits.auto_sentence_bigram_fit_transform_txt(
+    nlptoolkits.GensimKits.BigramT.sentence_bigram_fit_transform_txt(
         path_input_clean_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"
         ),
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     # train and apply a phrase model to detect 3-word phrases
     # --------------------------------------------------------------------------------------------------
 
-    nlptoolkits.StanzaKits.auto_sentence_bigram_fit_transform_txt(
+    nlptoolkits.GensimKits.BigramT.sentence_bigram_fit_transform_txt(
         path_input_clean_txt=Path(global_options.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"),
         path_output_transformed_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"

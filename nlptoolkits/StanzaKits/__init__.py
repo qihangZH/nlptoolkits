@@ -1,6 +1,7 @@
 import functools
 import stanfordnlp.server
-from . import PreprocessT
+from . import CleanT
+from . import ParserT
 from .. import _BasicKits
 
 # --------------------------------------------------------------------------
@@ -79,7 +80,7 @@ def auto_doc_to_sentences_parser(
 
         if processes > 1:
             """you must make corenlp and mp.Pool's port are same!!!"""
-            corpus_preprocessor = PreprocessT.DocParserParallel(mwe_dep_types=mwe_dep_types)
+            corpus_preprocessor = ParserT.DocParserParallel(mwe_dep_types=mwe_dep_types)
             _BasicKits.FileT.l1_mp_process_largefile(
                 path_input_txt=path_input_txt,
                 path_output_txt=path_output_txt,
@@ -92,7 +93,7 @@ def auto_doc_to_sentences_parser(
                 start_iloc=start_iloc
             )
         else:
-            corpus_preprocessor = PreprocessT.DocParser(client=client, mwe_dep_types=mwe_dep_types)
+            corpus_preprocessor = ParserT.DocParser(client=client, mwe_dep_types=mwe_dep_types)
 
             _BasicKits.FileT.l1_process_largefile(
                 path_input_txt=path_input_txt,
@@ -121,7 +122,7 @@ def auto_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords_se
         stopwords_set/ner_keep_types_origin_list/token_minlength/punctuations_set/is_remove_no_alphabet_contains,
 
     """
-    a_text_clearner = PreprocessT.LineTextCleaner(stopwords_set, **kwargs)
+    a_text_clearner = CleanT.LineTextCleaner(stopwords_set, **kwargs)
     if processes > 1:
         _BasicKits.FileT.l1_process_largefile(
             path_input_txt=path_in_parsed_txt,
@@ -146,53 +147,3 @@ def auto_clean_parsed_txt(path_in_parsed_txt, path_out_cleaned_txt, stopwords_se
             processes=processes,
             chunk_size=200000,
         )
-
-
-"""Preprocessing: train and transform the bigram model, concat two words into one"""
-
-
-def auto_sentence_bigram_fit_transform_txt(path_input_clean_txt,
-                                           path_output_transformed_txt,
-                                           path_output_model_mod,
-                                           phrase_min_length: int,
-                                           stopwords_set,
-                                           threshold=None,
-                                           scoring="original_scorer"
-                                           ):
-    """
-    transform the sep two length words to concat in a word which join by '_'
-    which means uni-gram -> bi-gram words.
-    you can recursive this function to get the target tri-gram or bigger phrases.
-
-    Args:
-        path_input_clean_txt:
-        path_output_transformed_txt:
-        path_output_model_mod:
-        phrase_min_length:
-        stopwords_set:
-        threshold:
-        scoring:
-
-    Returns:
-
-    """
-
-    # precheck
-    if not str(path_output_model_mod).endswith('.mod'):
-        raise ValueError('Model must end with .mod')
-
-    # train and apply a phrase model to detect 3-word phrases ----------------
-    PreprocessT.train_sentence_bigram_model(
-        input_path=path_input_clean_txt,
-        model_path=path_output_model_mod,
-        phrase_min_length=phrase_min_length,
-        phrase_threshold=threshold,
-        stopwords_set=stopwords_set
-    )
-    PreprocessT.sentence_file_bigramer(
-        input_path=path_input_clean_txt,
-        output_path=path_output_transformed_txt,
-        model_path=path_output_model_mod,
-        scoring=scoring,
-        threshold=threshold,
-    )

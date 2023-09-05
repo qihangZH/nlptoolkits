@@ -1,4 +1,7 @@
+import datetime
 import gensim
+import tqdm
+from .. import _BasicKits
 
 
 def train_w2v_model(path_input_sentence_txt, path_output_model=None, *args, **kwargs):
@@ -54,3 +57,31 @@ def train_tfidf_model_dictmod(text_list, path_output_dictionary=None, path_outpu
         tfidf_model.save(path_output_model)
 
     return dictionary, tfidf_model
+
+
+def train_sentence_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
+    """ Train a phrase model and save it to the disk.
+
+    Arguments:
+        input_path {str or Path} -- input_data corpus
+        model_path {str or Path} -- where to save the trained phrase model?
+
+    Returns:
+        gensim.models.phrases.Phrases -- the trained phrase model
+    """
+    # Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+    print(datetime.datetime.now())
+    print("Training phraser...")
+    corpus = gensim.models.word2vec.PathLineSentences(
+        str(input_path), max_sentence_length=10000000
+    )
+    n_lines = _BasicKits.FileT._line_counter(input_path)
+    bigram_model = gensim.models.phrases.Phrases(
+        tqdm.tqdm(corpus, total=n_lines),
+        min_count=phrase_min_length,
+        scoring="default",
+        threshold=phrase_threshold,
+        common_terms=stopwords_set,
+    )
+    bigram_model.save(str(model_path))
+    return bigram_model
