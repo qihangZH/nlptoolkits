@@ -5,6 +5,7 @@ import os
 import PyPDF2
 import pypandoc
 import warnings
+import typing
 from . import _BasicFuncT
 
 
@@ -53,10 +54,12 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "st
     return result_text
 
 
-def convert_pdf_to_single_line_str(pdf_file_path):
+def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_index: typing.Optional[int] = None):
     """
     Args:
         pdf_file_path: pdf file path
+        start_index: the page index to start reading
+        end_index: None default, however if not None must be int, the end index
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
@@ -64,15 +67,21 @@ def convert_pdf_to_single_line_str(pdf_file_path):
     # Open the PDF file in binary mode
     with open(pdf_file_path, 'rb') as f:
         # Create a PDF file reader object
-        pdf_reader = PyPDF2.PdfFileReader(f)
+        # pdf_reader = PyPDF2.PdfFileReader(f)
+        pdf_reader = PyPDF2.PdfReader(f)
 
         # Initialize an empty string to store the result_text
         result_text = ''
 
         # Loop through each page in the PDF and add the result_text to the string
-        for page_num in range(pdf_reader.getNumPages()):
-            page = pdf_reader.getPage(page_num)
-            result_text += page.extractText()
+        end_index = end_index if end_index else len(pdf_reader.pages)
+
+        # for page_num in range(pdf_reader.getNumPages()):
+        for page_num in range(start_index, end_index):
+            # page = pdf_reader.getPage(page_num)
+            page = pdf_reader.pages[page_num]
+            # result_text += page.extractText()
+            result_text += page.extract_text()
 
     # Remove newline characters to make the result_text a single line
     result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)

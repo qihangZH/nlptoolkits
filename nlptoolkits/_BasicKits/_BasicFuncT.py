@@ -57,7 +57,7 @@ def delete_whole_dir(directory):
 
 
 def check_is_list_of_dicts(obj):
-    """check is it a list of dict"""
+    """check is it a list of dict， [{},{},{}...]"""
 
     if not isinstance(obj, list):
         return False
