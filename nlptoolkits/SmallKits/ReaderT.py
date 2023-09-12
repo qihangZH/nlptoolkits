@@ -6,7 +6,7 @@ import PyPDF2
 import pypandoc
 import warnings
 import typing
-from . import _BasicFuncT
+from .. import _BasicKits
 
 
 def __sep_letter_warning():
@@ -31,8 +31,8 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "st
     """
     __sep_letter_warning()
 
-    encodetype = _BasicFuncT.find_file_encoding(html_filepath) \
-        if not _BasicFuncT.find_file_encoding(html_filepath) is None else 'utf-8'
+    encodetype = _BasicKits._BasicFuncT.find_file_encoding(html_filepath) \
+        if not _BasicKits._BasicFuncT.find_file_encoding(html_filepath) is None else 'utf-8'
     # Open the HTML file and read it into a string
     with open(html_filepath, 'r', encoding=encodetype, errors='replace') as f:
         html_content = f.read()
@@ -104,8 +104,8 @@ def convert_doc_to_single_line_str(doc_file_path, temp_txt_file_path):
 
     os.system('antiword ' + doc_file + ' > ' + temp_txt_file_path)
 
-    encodetype = _BasicFuncT.find_file_encoding(temp_txt_file_path) \
-        if not _BasicFuncT.find_file_encoding(temp_txt_file_path) is None else 'utf-8'
+    encodetype = _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file_path) \
+        if not _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file_path) is None else 'utf-8'
 
     with open(temp_txt_file_path, 'r',
               encoding=encodetype,
