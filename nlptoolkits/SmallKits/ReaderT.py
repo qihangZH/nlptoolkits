@@ -6,6 +6,7 @@ import PyPDF2
 import pypandoc
 import warnings
 import typing
+import pathlib
 from .. import _BasicKits
 
 
@@ -93,11 +94,11 @@ def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_inde
     return result_text
 
 
-def convert_doc_to_single_line_str(doc_file_path, temp_txt_file_path, suppress_warn=False):
+def convert_doc_to_single_line_str(doc_file_path, temp_dir, suppress_warn=False):
     """
     Args:
         doc_file_path: read doc file path, need antiword engine
-        temp_txt_file_path: the path to save temp txt file
+        temp_dir: the path to save temp txt file
 
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
@@ -105,14 +106,19 @@ def convert_doc_to_single_line_str(doc_file_path, temp_txt_file_path, suppress_w
     if suppress_warn:
         __sep_letter_warning()
     # converting .doc to .docx
-    doc_file = doc_file_path
+    doc_file = _BasicKits._BasicFuncT.get_absolute_posix_path(doc_file_path)
 
-    os.system('antiword ' + doc_file + ' > ' + temp_txt_file_path)
+    temp_txt_file = _BasicKits._BasicFuncT.get_absolute_posix_path(
+        pathlib.Path(temp_dir,
+                     re.search(r'^.+/([^/.]+)\.doc$', doc_file).groups()[0] + '.txt')
+    )
 
-    encodetype = _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file_path) \
-        if not _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file_path) is None else 'utf-8'
+    os.system(f'antiword "{doc_file}" > "{temp_txt_file}"')
 
-    with open(temp_txt_file_path, 'r',
+    encodetype = _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file) \
+        if not _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file) is None else 'utf-8'
+
+    with open(temp_txt_file, 'r',
               encoding=encodetype,
               errors='replace') as file:
         result_text = file.read()

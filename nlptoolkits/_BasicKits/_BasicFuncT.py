@@ -5,6 +5,7 @@ import time
 import os
 import shutil
 import chardet
+import pathlib
 from urllib.parse import urlparse
 
 """The lowest level of package"""
@@ -17,6 +18,10 @@ def processes_interrupt_initiator():
     Use this to keep safe for multiprocessing...and gracefully interrupt by keyboard
     """
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
+def get_absolute_posix_path(any_format_path):
+    return str(pathlib.Path(any_format_path).resolve().as_posix())
 
 
 def check_server(url, timeout: int):
