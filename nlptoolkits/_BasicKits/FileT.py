@@ -6,6 +6,7 @@ import pandas as pd
 import re
 import tqdm
 import base64
+import gzip
 from collections import defaultdict
 from . import _BasicFuncT
 
@@ -48,21 +49,34 @@ def file_to_list(a_file):
     return file_content
 
 
-def list_to_file(input_list, a_file, validate=True, mode="w", encoding="utf-8"):
+def list_to_file(input_list, a_file, plain_validate=True, mode="w", encoding="utf-8", compress=False):
     """Write a list to a file, each element in a line
-    The strings needs to have no line break "\n" or they will be removed
-    
+    The strings need to have no line break "\n" or they will be removed
+
     Keyword Arguments:
-        validate {bool} -- check if number of lines in the file
-            equals to the length of the list (default: {True})
+        plain_validate {bool} -- check if the number of lines in the file
+            equals the length of the list (default: {True}), Only Useful when not compress
         mode {str} -- the argument of open()
+        compress {bool} -- whether to compress the output file as a gz file (default: {False})
     """
-    with open(a_file, mode, 8192000, encoding=encoding, newline="\n") as f:
-        for e in input_list:
-            e = str(e).replace("\n", " ").replace("\r", " ")
-            f.write("{}\n".format(e))
-    if validate:
-        assert _line_counter(a_file) == len(input_list)
+    open_mode = mode
+    if compress:
+        a_file += '.gz'
+        open_mode = 'wb'
+
+    if compress:
+        with gzip.open(a_file, open_mode) as f:
+            for e in input_list:
+                e = str(e).replace("\n", " ").replace("\r", " ")
+                f.write("{}\n".format(e).encode(encoding))
+    else:
+        with open(a_file, mode, 8192000, encoding=encoding, newline="\n") as f:
+            for e in input_list:
+                e = str(e).replace("\n", " ").replace("\r", " ")
+                f.write("{}\n".format(e))
+
+        if plain_validate:
+            assert _line_counter(a_file) == len(input_list)
 
 
 def base64_to_file(base64_string, file_path, **kwargs):
