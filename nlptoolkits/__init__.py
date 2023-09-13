@@ -3,7 +3,6 @@ from . import GensimKits
 from . import StanzaKits
 from . import SmallKits
 from . import OpenAIKits
-
 from . import resources
 
 # out source pack
@@ -33,3 +32,8 @@ def alias_list_to_file(*args, **kwargs):
 def alias_write_dict_to_csv(*args, **kwargs):
     """alias to _BasicT.write_dict_to_csv"""
     return _BasicKits.FileT.write_dict_to_csv(*args, **kwargs)
+
+
+def alias_base64_to_file(*args, **kwargs):
+    """alias to _BasicT.base64_to_file"""
+    return _BasicKits.FileT.base64_to_file(*args, **kwargs)

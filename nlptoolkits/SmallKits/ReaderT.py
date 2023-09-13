@@ -20,7 +20,7 @@ def __sep_letter_warning():
     )
 
 
-def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "strike", "del"]):
+def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "strike", "del"], suppress_warn=False):
     """
     Args:
         html_filepath: file path
@@ -29,7 +29,8 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "st
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    __sep_letter_warning()
+    if suppress_warn:
+        __sep_letter_warning()
 
     encodetype = _BasicKits._BasicFuncT.find_file_encoding(html_filepath) \
         if not _BasicKits._BasicFuncT.find_file_encoding(html_filepath) is None else 'utf-8'
@@ -54,7 +55,9 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "st
     return result_text
 
 
-def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_index: typing.Optional[int] = None):
+def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_index: typing.Optional[int] = None,
+                                   suppress_warn=False
+                                   ):
     """
     Args:
         pdf_file_path: pdf file path
@@ -63,7 +66,8 @@ def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_inde
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    __sep_letter_warning()
+    if suppress_warn:
+        __sep_letter_warning()
     # Open the PDF file in binary mode
     with open(pdf_file_path, 'rb') as f:
         # Create a PDF file reader object
@@ -89,7 +93,7 @@ def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_inde
     return result_text
 
 
-def convert_doc_to_single_line_str(doc_file_path, temp_txt_file_path):
+def convert_doc_to_single_line_str(doc_file_path, temp_txt_file_path, suppress_warn=False):
     """
     Args:
         doc_file_path: read doc file path, need antiword engine
@@ -98,7 +102,8 @@ def convert_doc_to_single_line_str(doc_file_path, temp_txt_file_path):
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    __sep_letter_warning()
+    if suppress_warn:
+        __sep_letter_warning()
     # converting .doc to .docx
     doc_file = doc_file_path
 
@@ -118,7 +123,7 @@ def convert_doc_to_single_line_str(doc_file_path, temp_txt_file_path):
     return result_text
 
 
-def convert_rtf_to_single_line_str(rtf_file_path):
+def convert_rtf_to_single_line_str(rtf_file_path, suppress_warn=False):
     """
     Args:
         rtf_file_path: the rtf file path
@@ -126,7 +131,8 @@ def convert_rtf_to_single_line_str(rtf_file_path):
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    __sep_letter_warning()
+    if suppress_warn:
+        __sep_letter_warning()
     # Convert the RTF file to TXT format
     result_text = pypandoc.convert_file(rtf_file_path, 'plain', format='rtf')
 

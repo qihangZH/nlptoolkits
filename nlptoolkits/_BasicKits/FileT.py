@@ -5,6 +5,7 @@ import pathos
 import pandas as pd
 import re
 import tqdm
+import base64
 from collections import defaultdict
 from . import _BasicFuncT
 
@@ -27,7 +28,6 @@ def _line_counter(a_file):
     return n_lines
 
 
-
 # --------------------------------------------------------------------------
 # l0 level functions/classes
 # --------------------------------------------------------------------------
@@ -48,20 +48,37 @@ def file_to_list(a_file):
     return file_content
 
 
-def list_to_file(input_list, a_file, validate=True):
+def list_to_file(input_list, a_file, validate=True, mode="w", encoding="utf-8"):
     """Write a list to a file, each element in a line
     The strings needs to have no line break "\n" or they will be removed
     
     Keyword Arguments:
         validate {bool} -- check if number of lines in the file
             equals to the length of the list (default: {True})
+        mode {str} -- the argument of open()
     """
-    with open(a_file, "w", 8192000, encoding="utf-8", newline="\n") as f:
+    with open(a_file, mode, 8192000, encoding=encoding, newline="\n") as f:
         for e in input_list:
             e = str(e).replace("\n", " ").replace("\r", " ")
             f.write("{}\n".format(e))
     if validate:
         assert _line_counter(a_file) == len(input_list)
+
+
+def base64_to_file(base64_string, file_path, **kwargs):
+    """
+    Args:
+        base64_string: encoded base64
+        file_path: the path to save the file
+        **kwargs: the arguments of open()
+
+    Returns: None
+
+    """
+    data_bytes = base64.b64decode(base64_string)
+
+    with open(file_path, mode='wb', **kwargs) as text_file:
+        text_file.write(data_bytes)
 
 
 def read_large_file(a_file, block_size=10000):
