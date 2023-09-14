@@ -16,15 +16,9 @@ def auto_file_reader_list(filepath_list, file_mime_list: list, temp_folder_dir, 
                           ):
     """
     Auto return the file-Text(If contains any), the function use imap+loop, so result is definitely in sequence.
-    Args:
-        filepath_list:
-        file_mime_list:
-        temp_folder_dir:
-        processes:
-        is_trim_text_wordninja:
-        **kwargs:
-
-    Returns:
+    return the tuple of result list and the error list.
+    :param filepath_list: the path list of file to be read
+    :return : the tuple(result_list, error_list), any error one should result in result_list as None.
 
     """
     # default value should be False for suppress the warning.
@@ -39,6 +33,7 @@ def auto_file_reader_list(filepath_list, file_mime_list: list, temp_folder_dir, 
 
     def _lambda_reader_loop(task_list_tuple):
 
+        err_list = []
         rst_list = []
 
         filepaths, file_mimes = task_list_tuple
@@ -61,7 +56,12 @@ def auto_file_reader_list(filepath_list, file_mime_list: list, temp_folder_dir, 
                 rst_list.append(
                     None
                 )
-        return rst_list
+                # also append error list
+                err_list.append(
+                    filepaths[pos]
+                )
+
+        return rst_list, err_list
 
     # precheck if the data is suitable
     assert set(file_mime_list).issubset({'rtf', 'html', 'pdf', 'doc'}), \
@@ -79,11 +79,14 @@ def auto_file_reader_list(filepath_list, file_mime_list: list, temp_folder_dir, 
     ]
 
     text_list = []
+    error_list = []
 
     with pathos.multiprocessing.Pool(
             processes=processes, initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator
     ) as pool:
-        for rst in pool.imap(_lambda_reader_loop, tasks_chunks):
-            text_list.extend(rst)
+        for rsterr in pool.imap(_lambda_reader_loop, tasks_chunks):
+            text_list.extend(rsterr[0])
+            if rsterr[1]:  # [] -> None extend if not contain anything(list)
+                error_list.extend(rsterr[1])
 
-    return text_list
+    return text_list, error_list
