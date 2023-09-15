@@ -11,24 +11,25 @@ import pandas as pd
 from .. import _BasicKits
 
 
-def auto_file_reader_list(filepath_list, file_mime_list: list, temp_folder_dir, processes=os.cpu_count(),
-                          is_trim_text_wordninja=True, **kwargs
+def auto_file_reader_list(filepath_list, file_mime_list: list, processes=os.cpu_count(),
+                          is_trim_text_wordninja=True, suppress_warn=True, **kwargs
                           ):
     """
     Auto return the file-Text(If contains any), the function use imap+loop, so result is definitely in sequence.
     return the tuple of result list and the error list.
     :param filepath_list: the path list of file to be read
+    :param kwargs: the special kwargs which will be passed to function:
+        <**catdoc_path**: the path of catdoc.exe to excute, do not type anything/None to make it run as default>
     :return : the tuple(result_list, error_list), any error one should result in result_list as None.
 
     """
     # default value should be False for suppress the warning.
-    kwargs['suppress_warn'] = kwargs['suppress_warn'] if 'suppress_warn' in kwargs else False
 
     func_map = {
-        'rtf': lambda x: ReaderT.convert_rtf_to_single_line_str(x, **kwargs),
-        'doc': lambda x: ReaderT.convert_doc_to_single_line_str(x, temp_folder_dir, **kwargs),
-        'pdf': lambda x: ReaderT.convert_pdf_to_single_line_str(x, **kwargs),
-        'html': lambda x: ReaderT.convert_html_to_single_line_str(x, **kwargs)
+        'rtf': lambda x: ReaderT.convert_rtf_to_single_line_str(x, suppress_warn=suppress_warn),
+        'doc': lambda x: ReaderT.convert_doc_to_single_line_str(x, suppress_warn=suppress_warn),
+        'pdf': lambda x: ReaderT.convert_pdf_to_single_line_str(x, suppress_warn=suppress_warn),
+        'html': lambda x: ReaderT.convert_html_to_single_line_str(x, suppress_warn=suppress_warn)
     }
 
     def _lambda_reader_loop(task_list_tuple):

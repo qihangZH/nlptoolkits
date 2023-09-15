@@ -1,12 +1,14 @@
 import html2text
 import re
 import bs4
-import os
 import PyPDF2
 import pypandoc
 import warnings
 import typing
-import pathlib
+import subprocess
+import tempfile
+import os
+
 from .. import _BasicKits
 
 
@@ -30,7 +32,7 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "st
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    if suppress_warn:
+    if not suppress_warn:
         __sep_letter_warning()
 
     encodetype = _BasicKits._BasicFuncT.find_file_encoding(html_filepath) \
@@ -67,7 +69,7 @@ def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_inde
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    if suppress_warn:
+    if not suppress_warn:
         __sep_letter_warning()
     # Open the PDF file in binary mode
     with open(pdf_file_path, 'rb') as f:
@@ -94,37 +96,41 @@ def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_inde
     return result_text
 
 
-def convert_doc_to_single_line_str(doc_file_path, temp_dir, suppress_warn=False):
+def convert_doc_to_single_line_str(doc_file_path, suppress_warn=False):
     """
+    new version use Libreoffice->soffice to read the txt from doc file.
     Args:
         doc_file_path: read doc file path, need antiword engine
-        temp_dir: the path to save temp txt file
 
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    if suppress_warn:
+
+    if not suppress_warn:
         __sep_letter_warning()
-    # converting .doc to .docx
     doc_file = _BasicKits._BasicFuncT.get_absolute_posix_path(doc_file_path)
 
-    temp_txt_file = _BasicKits._BasicFuncT.get_absolute_posix_path(
-        pathlib.Path(temp_dir,
-                     re.search(r'^.+/([^/.]+)\.doc$', doc_file).groups()[0] + '.txt')
-    )
+    # get pure name
+    doc_pure_name = os.path.splitext(os.path.basename(doc_file))[0]
 
-    os.system(f'antiword "{doc_file}" > "{temp_txt_file}"')
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_text_file = os.path.join(temp_dir, f"{doc_pure_name}.txt")
 
-    encodetype = _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file) \
-        if not _BasicKits._BasicFuncT.find_file_encoding(temp_txt_file) is None else 'utf-8'
+        # Use LibreOffice's soffice command to convert the DOC file to a text file
+        subprocess.run(["soffice", "--headless", "--convert-to", "txt:Text", "--outdir", temp_dir, doc_file])
 
-    with open(temp_txt_file, 'r',
-              encoding=encodetype,
-              errors='replace') as file:
-        result_text = file.read()
+        doc_encoding = _BasicKits._BasicFuncT.find_file_encoding(temp_text_file) \
+            if _BasicKits._BasicFuncT.find_file_encoding(temp_text_file) else 'utf-8'
 
-    # Remove newline characters to make the result_text a single line
-    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+        # Read the converted text file， however, when you successful read, you always convert success.
+        with open(temp_text_file, "r", encoding=doc_encoding) as text_file:
+            result_text = text_file.read()
+
+        # Remove newline characters to make the text a single line
+        result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+
+        if len(result_text) == 0:
+            warnings.warn('Errors occurs for read Nothing from Libre office converted file', UserWarning)
 
     return result_text
 
@@ -137,7 +143,7 @@ def convert_rtf_to_single_line_str(rtf_file_path, suppress_warn=False):
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
     """
-    if suppress_warn:
+    if not suppress_warn:
         __sep_letter_warning()
     # Convert the RTF file to TXT format
     result_text = pypandoc.convert_file(rtf_file_path, 'plain', format='rtf')

@@ -15,4 +15,3 @@ bitermplus
 bs4
 pypandoc
 PyPDF2
-langdetect
