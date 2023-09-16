@@ -42,14 +42,20 @@ def file_to_list(a_file):
     Returns:
         [str] -- list of lines in the input_data file, can be empty
     """
+    """If meet any erors, deal with in future"""
+    # doc_encoding = 'utf-8'
+    doc_encoding = _BasicFuncT.find_file_encoding(a_file) \
+        if _BasicFuncT.find_file_encoding(a_file) else 'utf-8'
+
     file_content = []
     with open(a_file, "rb") as f:
         for l in f:
-            file_content.append(l.decode(encoding="utf-8").strip())
+            file_content.append(l.decode(encoding=doc_encoding).strip())
     return file_content
 
 
-def list_to_file(input_list, a_file, plain_validate=True, mode="w", encoding="utf-8", compress=False):
+def list_to_file(input_list, a_file,
+                 plain_validate=True, mode="w", encoding="utf-8", compress=False, errors='strict'):
     """Write a list to a file, each element in a line
     The strings need to have no line break "\n" or they will be removed
 
@@ -58,6 +64,7 @@ def list_to_file(input_list, a_file, plain_validate=True, mode="w", encoding="ut
             equals the length of the list (default: {True}), Only Useful when not compress
         mode {str} -- the argument of open()
         compress {bool} -- whether to compress the output file as a gz file (default: {False})
+        errors {str} -- codec error types, see https://docs.python.org/3/library/codecs.html#codec-base-classes
     """
     open_mode = mode
     if compress:
@@ -68,9 +75,9 @@ def list_to_file(input_list, a_file, plain_validate=True, mode="w", encoding="ut
         with gzip.open(a_file, open_mode) as f:
             for e in input_list:
                 e = str(e).replace("\n", " ").replace("\r", " ")
-                f.write("{}\n".format(e).encode(encoding))
+                f.write("{}\n".format(e).encode(encoding, errors=errors))
     else:
-        with open(a_file, mode, 8192000, encoding=encoding, newline="\n") as f:
+        with open(a_file, mode, 8192000, encoding=encoding, newline="\n", errors=errors) as f:
             for e in input_list:
                 e = str(e).replace("\n", " ").replace("\r", " ")
                 f.write("{}\n".format(e))
