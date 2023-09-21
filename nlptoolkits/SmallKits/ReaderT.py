@@ -7,6 +7,7 @@ import warnings
 import typing
 import subprocess
 import tempfile
+import bs4
 import os
 
 from .. import _BasicKits
@@ -162,3 +163,42 @@ def convert_rtf_to_single_line_str(rtf_file_path, suppress_warn=False):
     result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
 
     return result_text
+
+
+# --------------------------------------------------------------------------
+# GROBID-NEI-PDF->XML reader
+# --------------------------------------------------------------------------
+def read_tei_xml_text_list(tei_xml_path,
+                           tag: typing.Union[list, str] = ['div'],
+                           subtags: typing.Union[list, str] = ['p']
+                           ):
+    """
+    read tei-format XML to list of text
+    Args:
+        tei_xml_path: the path of Tei-xml-path, is a format could be seen in https://tei-c.org/ for detail
+        tag: the tag which contain text you interested in, first level
+        subtags: second level tags, like p/s/head, etc
+
+    Returns: a list of text
+
+    """
+    with open(tei_xml_path, 'r') as tei:
+        soup = bs4.BeautifulSoup(tei, 'xml')
+
+    div_elements = soup.find_all(tag)
+
+    # Initialize a list to store <s> pairs from all <div> elements
+    s_pairs_list = []
+
+    # Iterate through each <div> element
+    for div in div_elements:
+        # Find all <s> elements within the current <div>
+        s_elements = div.find_all(subtags)
+
+        # Extract and store <s> pairs as tuples in a list
+        sentences = [s.get_text(strip=True) for s in s_elements]
+
+        # Append the <s> pairs to the main list
+        s_pairs_list.extend(sentences)
+
+    return s_pairs_list
