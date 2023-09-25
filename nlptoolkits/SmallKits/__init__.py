@@ -1,8 +1,7 @@
 from . import BitermplusT
 from . import WordninjaT
 from . import LangDetectT
-from . import ReaderT
-from . import WriterT
+from . import IOHandlerT
 
 import pathos
 import os
@@ -27,10 +26,10 @@ def auto_file_reader_list(filepath_list, file_mime_list: list, processes=os.cpu_
     # default value should be False for suppress the warning.
 
     func_map = {
-        'rtf': lambda x: ReaderT.convert_rtf_to_single_line_str(x, suppress_warn=suppress_warn),
-        'doc': lambda x: ReaderT.convert_doc_to_single_line_str(x, suppress_warn=suppress_warn),
-        'pdf': lambda x: ReaderT.convert_pdf_to_single_line_str(x, suppress_warn=suppress_warn),
-        'html': lambda x: ReaderT.convert_html_to_single_line_str(x, suppress_warn=suppress_warn)
+        'rtf': lambda x: IOHandlerT.convert_rtf_to_single_line_str(x, suppress_warn=suppress_warn),
+        'doc': lambda x: IOHandlerT.convert_doc_to_single_line_str(x, suppress_warn=suppress_warn),
+        'pdf': lambda x: IOHandlerT.convert_pdf_to_single_line_str(x, suppress_warn=suppress_warn),
+        'html': lambda x: IOHandlerT.convert_html_to_single_line_str(x, suppress_warn=suppress_warn)
     }
 
     def _lambda_reader_loop(task_list_tuple):
