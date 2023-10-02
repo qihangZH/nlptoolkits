@@ -1,2 +1,2 @@
-from . import _Models
+from . import _ChatCompletionT
 from . import ClassifierT

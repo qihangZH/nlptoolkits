@@ -1,6 +1,6 @@
 import typing
 
-from . import _Models
+from . import _ChatCompletionT
 
 
 def classify_single_task_res(
@@ -15,9 +15,13 @@ def classify_single_task_res(
         stop_text='#S_#T#O#P_#',
         system_message="You are a serious research assistant who"
                        " follows exact instructions and returns only valid JSON.",
+        ratelimit_call: int = 1000,
+        ratelimit_period: int = 60,
+        backoff_max_tries: int = 8,
         result_type: typing.Literal['raw', 'df'] = 'df',
-        dataframe_format_error: typing.Literal['raise', 'skip'] = 'raise',
-        dataframe_deficiency_error: typing.Literal['warn', 'ignore', 'onebyone', 'raise'] = 'warn',
+        dataframe_format_error: typing.Literal['skip', 'raise'] = 'raise',
+        dataframe_deficiency_error: typing.Literal['warn', 'ignore', 'raise'] = 'raise',
+        is_dataframe_errors_onebyone_retry: bool = False,
         **kwargs):
     """
     Remember-> If you want to make a response which have no any choices, make choice Null
@@ -26,16 +30,22 @@ def classify_single_task_res(
     :param choices_seq: the choices from which GPT choose the answer, should be an array-like/sequence
     :param statement_serdf: a DataFrame/Series(Pandas) to input the question
     :param target_col: for each dict, the statement key to point out to use it to classify
+    :param identifier_col: the col which takes the id func to know the each observations
     :param openai_apikey: the api key of openai
     :param chunksize: how many input to put in per session, default None
     :param stop_text: stop text which indicate the endpoint to save out, default '#S_#T#O#P_#'
     :param system_message: the message to indicate the GPT act with what person
-    :param result_type, raw/df, default df how would GPT return the result, raw is for debugger or specialize using.
-    :param dataframe_format_error: raise/skip default raise, how to deal with dataframe error when you choose 'df'
-    :param dataframe_deficiency_error: if you use 'df'/'chunksize', sometimes you could detect no sufficient reply from
-            GPT, you could choose these method: default 'warn', warn/ignore/onebyone/raise
-            'warn' will only warn, ignore do nothing,
-             onebyone will retry one by one and return, but cost more money. If fail, return origin result.
+    :param ratelimit_call: the ratelimit's call times per period
+    :param ratelimit_period: the period seconds
+    :param backoff_max_tries: If meet errors, How much retry times? use backoff.expo to control the retry.
+    :param result_type, raw/df, how would GPT return the result, raw is for debugger or specialize using.
+    :param dataframe_format_error: 'warn', 'ignore', 'raise'
+            how to deal with dataframe error when you choose 'df'/'chunksize'
+    :param dataframe_deficiency_error: 'warn', 'ignore', 'raise'
+            sometimes you could detect no sufficient reply from
+    :param is_dataframe_errors_onebyone_retry: Do retry one by one when meets error? It will start when
+            the code find format/deficiency errors in loop, and retry again, whatever your error-dealing method
+            is.
     :param kwargs: any other parameters of openai.ChatCompletion.create
     :return:which contains the id/classify result
     """
@@ -64,18 +74,22 @@ def classify_single_task_res(
             JSON =
             """
 
-    return _Models.chatcompletion_worker(
+    return _ChatCompletionT.chatcompletion_worker(
         prompt_generator_func=_lambda_prompt_generator,
-        statement_serdf=statement_serdf,
+        statement_df=statement_serdf,
         target_col=target_col,
         identifier_col=identifier_col,
         openai_apikey=openai_apikey,
         chunksize=chunksize,
         stop_text=stop_text,
         system_message=system_message,
+        ratelimit_call=ratelimit_call,
+        ratelimit_period=ratelimit_period,
+        backoff_max_tries=backoff_max_tries,
         result_type=result_type,
         dataframe_format_error=dataframe_format_error,
         dataframe_deficiency_error=dataframe_deficiency_error,
+        is_dataframe_errors_onebyone_retry=is_dataframe_errors_onebyone_retry,
         **kwargs
     )
 
@@ -91,9 +105,13 @@ def classify_multi_task_dictres(
         stop_text='#S_#T#O#P_#',
         system_message="You are a serious research assistant who"
                        " follows exact instructions and returns only valid JSON.",
+        ratelimit_call: int = 1000,
+        ratelimit_period: int = 60,
+        backoff_max_tries: int = 8,
         result_type: typing.Literal['raw', 'df'] = 'df',
-        dataframe_format_error: typing.Literal['raise', 'skip'] = 'raise',
-        dataframe_deficiency_error: typing.Literal['warn', 'ignore', 'onebyone', 'raise'] = 'warn',
+        dataframe_format_error: typing.Literal['skip', 'raise'] = 'raise',
+        dataframe_deficiency_error: typing.Literal['warn', 'ignore', 'raise'] = 'raise',
+        is_dataframe_errors_onebyone_retry: bool = False,
         **kwargs) -> tuple:
     """
     Remember-> If you want to make a response which have no any choices, make choice Null
@@ -103,16 +121,22 @@ def classify_multi_task_dictres(
                               by which GPT can choose from.
     :param statement_serdf: a DataFrame/Series(Pandas) to input the question
     :param target_col: for each dict, the statement key to point out to use it to classify
+    :param identifier_col: the col which takes the id func to know the each observations
     :param openai_apikey: the api key of openai
     :param chunksize: how many input to put in per session, default None
     :param stop_text: stop text which indicate the endpoint to save out, default '#S_#T#O#P_#'
     :param system_message: the message to indicate the GPT act with what person
-    :param result_type, raw/df, default df how would GPT return the result, raw is for debugger or specialize using.
-    :param dataframe_format_error: raise/skip default raise, how to deal with dataframe error when you choose 'df'
-    :param dataframe_deficiency_error: if you use 'df'/'chunksize', sometimes you could detect no sufficient reply from
-            GPT, you could choose these method: default 'warn', warn/ignore/onebyone/raise
-            'warn' will only warn, ignore do nothing,
-             onebyone will retry one by one and return, but cost more money. If fail, return origin result.
+    :param ratelimit_call: the ratelimit's call times per period
+    :param ratelimit_period: the period seconds
+    :param backoff_max_tries: If meet errors, How much retry times? use backoff.expo to control the retry.
+    :param result_type, raw/df, how would GPT return the result, raw is for debugger or specialize using.
+    :param dataframe_format_error: 'warn', 'ignore', 'raise'
+            how to deal with dataframe error when you choose 'df'/'chunksize'
+    :param dataframe_deficiency_error: 'warn', 'ignore', 'raise'
+            sometimes you could detect no sufficient reply from
+    :param is_dataframe_errors_onebyone_retry: Do retry one by one when meets error? It will start when
+            the code find format/deficiency errors in loop, and retry again, whatever your error-dealing method
+            is.
     :param kwargs: any other parameters of openai.ChatCompletion.create
     :return: a tuple contains dictionary of (Question i mapping to exact info,
                                             result contains the id/classify result)
@@ -160,17 +184,21 @@ def classify_multi_task_dictres(
 
     return {f'Question{i}': key
             for i, key, values in qid_qkey_qvalue_tuple_list
-            }, _Models.chatcompletion_worker(
+            }, _ChatCompletionT.chatcompletion_worker(
         prompt_generator_func=_lambda_prompt_generator,
-        statement_serdf=statement_serdf,
+        statement_df=statement_serdf,
         target_col=target_col,
         identifier_col=identifier_col,
         openai_apikey=openai_apikey,
         chunksize=chunksize,
         stop_text=stop_text,
         system_message=system_message,
+        ratelimit_call=ratelimit_call,
+        ratelimit_period=ratelimit_period,
+        backoff_max_tries=backoff_max_tries,
         result_type=result_type,
         dataframe_format_error=dataframe_format_error,
         dataframe_deficiency_error=dataframe_deficiency_error,
+        is_dataframe_errors_onebyone_retry=is_dataframe_errors_onebyone_retry,
         **kwargs
     )
