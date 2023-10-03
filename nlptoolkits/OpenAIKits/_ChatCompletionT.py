@@ -18,14 +18,21 @@ def _chatcompletion_requester(
         **kwargs
 ) -> (list, bool, bool):
 
-    completion = openai.ChatCompletion.create(
-        stop=[stop_text],
-        messages=[
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": prompt}
-        ],
-        **kwargs
-    )
+    # first step, get data from chat.openai, However sometimes will meet errors.
+
+    try:
+        completion = openai.ChatCompletion.create(
+            stop=[stop_text],
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": prompt}
+            ],
+            **kwargs
+        )
+    except openai.error.OpenAIError:
+        raise
+    except Exception:
+        return [], True, True
 
     if result_type == 'raw':
         prediction_raw_list = [completion]
@@ -138,7 +145,9 @@ def chatcompletion_worker(
     :return:which contains the id/classify result
     """
 
-    @backoff.on_exception(backoff.expo, ratelimit.RateLimitException, max_tries=backoff_max_tries)
+    @backoff.on_exception(backoff.expo,
+                          (ratelimit.RateLimitException, openai.error.OpenAIError),
+                          max_tries=backoff_max_tries)
     @ratelimit.limits(calls=ratelimit_call, period=ratelimit_period)
     def _lambda_backoff_chatcompletion_requester(*largs, **lkwargs):
         return _chatcompletion_requester(*largs, **lkwargs)
