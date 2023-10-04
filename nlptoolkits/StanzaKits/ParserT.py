@@ -1,5 +1,5 @@
 import time
-from stanfordnlp.server import CoreNLPClient
+from stanza.server import CoreNLPClient
 
 
 class _ParserBasic:
@@ -173,7 +173,7 @@ class DocParserParallel(_ParserBasic):
     def __init__(self, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
 
-    def parse_line_to_sentences(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
+    def parse_line_to_sentences(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002", be_quite=False):
         """Main method: Annotate a document using CoreNLP client
 
         Arguments:
@@ -207,7 +207,7 @@ class DocParserParallel(_ParserBasic):
         while True:
             try:
                 with CoreNLPClient(
-                        endpoint=corenlp_endpoint, start_server=False, timeout=120000000
+                        endpoint=corenlp_endpoint, start_server=False, timeout=120000000, be_quite=be_quite
                 ) as client:
                     doc_ann = client.annotate(doc)
 

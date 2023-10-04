@@ -22,3 +22,9 @@ not run properly.
 kindly use the guidance below, I use this to config my cmd in windows, Unix-like/BSD sure be easier.
 https://darrengoossens.wordpress.com/2020/03/04/convert-between-formats-using-libreoffice-on-the-command-line/
 
+### stanza Errors
+Stanza always cause errors and do not be worry:
+
+
+IF any resource error: try:
+```stanza.download('en')``` or your language

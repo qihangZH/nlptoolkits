@@ -74,6 +74,19 @@ def check_is_list_of_dicts(obj):
     return True
 
 
+def check_is_list_of_string(obj):
+    """check is it a list of string， ['...','...',...]"""
+
+    if not isinstance(obj, list):
+        return False
+
+    for element in obj:
+        if not isinstance(element, str):
+            return False
+
+    return True
+
+
 def find_file_encoding(path):
     """
     find the encoding of target file(data or other else)

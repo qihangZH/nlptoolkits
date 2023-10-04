@@ -20,7 +20,7 @@ if __name__ == '__main__':
                       global_options.OUTPUT_FOLDER
 
                       ]:
-        nlptoolkits.alias_delete_whole_dir(directory=outputdir)
+        nlptoolkits.delete_whole_dir(directory=outputdir)
 
     """root level dir make"""
     Path(global_options.PROCESSED_DATA_FOLDER).mkdir(parents=False, exist_ok=True)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         memory=global_options.RAM_CORENLP,
         processes=global_options.N_CORES,
         path_input_txt=Path(global_options.INPUT_DATA_FOLDER, "tweets_origin.txt"),
-        input_index_list=nlptoolkits.alias_file_to_list(
+        input_index_list=nlptoolkits.SmallKits.IOHandlerT.file_to_list(
             Path(global_options.INPUT_DATA_FOLDER, "ids_origin.txt")
         ),
         path_output_txt=Path(
@@ -78,7 +78,8 @@ if __name__ == '__main__':
         path_output_index_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
         ),
-        chunk_size=global_options.PARSE_CHUNK_SIZE
+        chunk_size=global_options.PARSE_CHUNK_SIZE,
+        be_quite=True
     )
 
     # --------------------------------------------------------------------------------------------------
