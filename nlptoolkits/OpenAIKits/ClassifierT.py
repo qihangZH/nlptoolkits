@@ -13,8 +13,7 @@ def classify_single_task_res(
         openai_apikey,
         chunksize: typing.Optional[int] = None,
         stop_text='#S_#T#O#P_#',
-        system_message="You are a serious research assistant who"
-                       " follows exact instructions and returns only valid JSON.",
+        message_generate_func: typing.Callable = _ChatCompletionT.default_message_generator,
         ratelimit_call: int = 1000,
         ratelimit_period: int = 60,
         backoff_max_tries: int = 8,
@@ -34,7 +33,9 @@ def classify_single_task_res(
     :param openai_apikey: the api key of openai
     :param chunksize: how many input to put in per session, default None
     :param stop_text: stop text which indicate the endpoint to save out, default '#S_#T#O#P_#'
-    :param system_message: the message to indicate the GPT act with what person
+    :param message_generate_func: the message generate function, input prompt and return a message,
+            the argument showed in https://platform.openai.com/docs/api-reference/chat/create
+            The function input ONLY the prompt like lambda prompt: [...message]
     :param ratelimit_call: the ratelimit's call times per period
     :param ratelimit_period: the period seconds
     :param backoff_max_tries: If meet errors, How much retry times? use backoff.expo to control the retry.
@@ -82,7 +83,7 @@ def classify_single_task_res(
         openai_apikey=openai_apikey,
         chunksize=chunksize,
         stop_text=stop_text,
-        system_message=system_message,
+        message_generate_func=message_generate_func,
         ratelimit_call=ratelimit_call,
         ratelimit_period=ratelimit_period,
         backoff_max_tries=backoff_max_tries,
@@ -103,8 +104,7 @@ def classify_multi_task_dictres(
         openai_apikey,
         chunksize: typing.Optional[int] = None,
         stop_text='#S_#T#O#P_#',
-        system_message="You are a serious research assistant who"
-                       " follows exact instructions and returns only valid JSON.",
+        message_generate_func: typing.Callable = _ChatCompletionT.default_message_generator,
         ratelimit_call: int = 1000,
         ratelimit_period: int = 60,
         backoff_max_tries: int = 8,
@@ -125,7 +125,9 @@ def classify_multi_task_dictres(
     :param openai_apikey: the api key of openai
     :param chunksize: how many input to put in per session, default None
     :param stop_text: stop text which indicate the endpoint to save out, default '#S_#T#O#P_#'
-    :param system_message: the message to indicate the GPT act with what person
+    :param message_generate_func: the message generate function, input prompt and return a message,
+            the argument showed in https://platform.openai.com/docs/api-reference/chat/create
+            The function input ONLY the prompt like lambda prompt: [...message]
     :param ratelimit_call: the ratelimit's call times per period
     :param ratelimit_period: the period seconds
     :param backoff_max_tries: If meet errors, How much retry times? use backoff.expo to control the retry.
@@ -192,7 +194,7 @@ def classify_multi_task_dictres(
         openai_apikey=openai_apikey,
         chunksize=chunksize,
         stop_text=stop_text,
-        system_message=system_message,
+        message_generate_func=message_generate_func,
         ratelimit_call=ratelimit_call,
         ratelimit_period=ratelimit_period,
         backoff_max_tries=backoff_max_tries,

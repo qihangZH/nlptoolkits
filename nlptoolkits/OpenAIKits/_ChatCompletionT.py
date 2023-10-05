@@ -11,22 +11,18 @@ from .. import _BasicKits
 
 def _chatcompletion_requester(
         prompt: str,
-        prompt_task_num:int,
+        prompt_task_num: int,
         stop_text: str,
-        system_message: str,
         result_type: typing.Literal['raw', 'json'],
+        message_generate_func: typing.Callable,
         **kwargs
 ) -> (list, bool, bool):
-
     # first step, get data from chat.openai, However sometimes will meet errors.
 
     try:
         completion = openai.ChatCompletion.create(
             stop=[stop_text],
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": prompt}
-            ],
+            messages=message_generate_func(prompt),
             **kwargs
         )
     except openai.error.OpenAIError:
@@ -110,7 +106,7 @@ def chatcompletion_worker(
         openai_apikey: str,
         chunksize: typing.Optional[int],
         stop_text: str,
-        system_message: str,
+        message_generate_func: typing.Callable,
         ratelimit_call: int,
         ratelimit_period: int,
         backoff_max_tries: int,
@@ -129,7 +125,9 @@ def chatcompletion_worker(
     :param openai_apikey: the api key of openai
     :param chunksize: how many input to put in per session, default None
     :param stop_text: stop text which indicate the endpoint to save out, default '#S_#T#O#P_#'
-    :param system_message: the message to indicate the GPT act with what person
+    :param message_generate_func: the message generate function, input prompt and return a message,
+            the argument showed in https://platform.openai.com/docs/api-reference/chat/create
+            The function input ONLY the prompt like lambda prompt: [...message]
     :param ratelimit_call: the ratelimit's call times per period
     :param ratelimit_period: the period seconds
     :param backoff_max_tries: If meet errors, How much retry times? use backoff.expo to control the retry.
@@ -151,6 +149,7 @@ def chatcompletion_worker(
     @ratelimit.limits(calls=ratelimit_call, period=ratelimit_period)
     def _lambda_backoff_chatcompletion_requester(*largs, **lkwargs):
         return _chatcompletion_requester(*largs, **lkwargs)
+
     # --------------------------------------------------------------------------
     # Argument Prepare
     # --------------------------------------------------------------------------
@@ -188,9 +187,9 @@ def chatcompletion_worker(
                 prompt=prompt_generator_func(sub_prompt_dict_list),
                 prompt_task_num=len(sub_prompt_dict_list),
                 stop_text=stop_text,
-                system_message=system_message,
                 # This place are different for this function actually got json
                 result_type=finalrst_completionlist_type_dict[result_type],
+                message_generate_func=message_generate_func,
                 **kwargs
             )
 
@@ -206,9 +205,9 @@ def chatcompletion_worker(
                         prompt=prompt_generator_func([prpdict]),
                         prompt_task_num=1,
                         stop_text=stop_text,
-                        system_message=system_message,
                         # This place are different for this function actually got json
                         result_type=finalrst_completionlist_type_dict[result_type],
+                        message_generate_func=message_generate_func,
                         **kwargs
                     )
                     sub_pred_list += _chatcompletion_dfjson_errorholder(
@@ -237,3 +236,12 @@ def chatcompletion_worker(
 
     elif result_type == 'df':
         return pd.DataFrame(prediction_list)
+
+
+def default_message_generator(prp):
+    """prototype for you to refer and make message_generate_func"""
+    return [
+        {"role": "system", "content": "You are a serious research assistant who"
+                                      " follows exact instructions and returns only valid JSON."},
+        {"role": "user", "content": prp}
+    ]

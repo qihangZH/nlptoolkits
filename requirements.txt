@@ -20,6 +20,7 @@ backoff
 ratelimit
 lexrank
 torch
+openpyxl
 # gensim>=3.7.2,<4.0.0
 # stanfordnlp==0.2.0
 # protobuf<3.20
