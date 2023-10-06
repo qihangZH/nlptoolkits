@@ -22,7 +22,8 @@ def replace_sequence_letters_to_words_str(input_text):
 
     newtext = re.sub(
         # greedy method will make it match as much as possible(letters)
-        rf'(\b\w((\b\s)|(\b$)|([{re.escape(string.punctuation)}]\s*)))+',
+        # ?!\d to avoid mismatch \d.\d etc.
+        rf'(\b\w((\b\s)|(\b$)|([{re.escape(string.punctuation)}](?!\d)\s*)))+',
         # r'((?:\b\w\b\s)+)',
         _lambda_replace,
         input_text,

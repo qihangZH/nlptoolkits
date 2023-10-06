@@ -162,15 +162,10 @@ def chatcompletion_worker(
 
     # Check the format is surely pd.DataFrame
     if isinstance(statement_df, pd.DataFrame):
+        statement_df = statement_df[[target_col, identifier_col]]
         prompt_dict_list = statement_df.to_dict(orient='records')
     else:
         raise ValueError('Input must be pd.DataFrame')
-
-    col_list = statement_df.columns
-
-    # Check the target/identifiers are in cols
-    if not (target_col in col_list) or not (identifier_col in col_list):
-        raise ValueError('target_col/identifier_col must in statement_serdf columns!')
 
     # we have to modify chunksize to suitable for one-time-running:
     chunksize = len(prompt_dict_list) if not chunksize else chunksize
