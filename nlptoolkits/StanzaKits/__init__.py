@@ -3,6 +3,7 @@ import stanza.server
 from . import CleanT
 from . import ParserT
 from .. import _BasicKits
+from . import PipeLineT
 
 # --------------------------------------------------------------------------
 # L0 Preprocessing AUTO functions

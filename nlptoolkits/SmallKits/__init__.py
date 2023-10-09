@@ -2,6 +2,7 @@ from . import BitermplusT
 from . import WordninjaT
 from . import LangDetectT
 from . import IOHandlerT
+from . import LexRankT
 
 import pathos
 import os
