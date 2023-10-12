@@ -18,8 +18,8 @@ PyPDF2
 langdetect
 backoff
 ratelimit
-lexrank
 torch
+scipy
 openpyxl
 # gensim>=3.7.2,<4.0.0
 # stanfordnlp==0.2.0

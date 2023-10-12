@@ -13,6 +13,8 @@
 4. The reference codes do not have LICENCE now, if any update the reference LICENSE, this repo will follow on. However,
    this code's structure and inner is mostly different from origin code.
 
+5. LexRankT code was copy from https://github.com/crabcamp/lexrank, where they work same, and the
+   License is set as 
 ### Libre Office in windows
 
 Libre office is a free software and could easily help you to read the doc, if you do not have one then some of code
