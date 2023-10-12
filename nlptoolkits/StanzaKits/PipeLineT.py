@@ -17,7 +17,7 @@ class PipeLineParser:
                  doc_ids_list: typing.Optional[list]=None,
                  thread_num: int = os.cpu_count(),
                  show_progressbar: bool = True,
-                 gpu_process_chunksize: typing.Optional[int] = None,
+                 process_chunksize: typing.Optional[int] = None,
                  **kwargs):
         """
         More infos see: https://stanfordnlp.github.io/stanza/neural_pipeline.html
@@ -25,7 +25,7 @@ class PipeLineParser:
             doc_list:
             thread_num:
             show_progressbar:
-            gpu_process_chunksize:
+            process_chunksize:
             **kwargs:
         """
         kwargs['lang'] = kwargs['lang'] if 'lang' in kwargs else 'en'
@@ -46,7 +46,7 @@ class PipeLineParser:
         if not _BasicKits._BasicFuncT.check_is_list_of_string(doc_list):
             raise NotImplementedError('The PipeLineParser only support doc_list like ["...","...",...]')
 
-        self.gpu_process_chunksize = gpu_process_chunksize if gpu_process_chunksize else 1
+        self.process_chunksize = process_chunksize if process_chunksize else 1
 
         self.thread_num = thread_num
 
@@ -54,21 +54,22 @@ class PipeLineParser:
 
         self.show_progressbar = show_progressbar
 
-        if kwargs['use_gpu'] and torch.cuda.is_available():
-            print('Detect GPU(cuda), use gpu-version instead')
-            self.parsed_docs = self._gpu_process(**kwargs)
-        else:
-            self.parsed_docs = self._multithread_process(**kwargs)
+        # if kwargs['use_gpu'] and torch.cuda.is_available():
+        #     print('Detect GPU(cuda), use gpu-version instead')
+        #     self.parsed_docs = self._mp_in_loop_process(**kwargs)
+        # else:
+        #     self.parsed_docs = self._loop_in_mp_process(**kwargs)
+        self.parsed_docs = self._mp_in_loop_process(**kwargs)
 
-    def _gpu_process(self, **kwargs):
+    def _mp_in_loop_process(self, **kwargs):
 
         nlp = stanza.Pipeline(**kwargs)
 
         task_len = len(self.doc_list)
 
         task_chunked_list = [
-            self.doc_list[s: s + self.gpu_process_chunksize]
-            for s in range(0, task_len, self.gpu_process_chunksize)
+            self.doc_list[s: s + self.process_chunksize]
+            for s in range(0, task_len, self.process_chunksize)
         ]
 
         parsed_doc_list = []
@@ -77,37 +78,6 @@ class PipeLineParser:
             parsed_doc_list.extend(
                 nlp.bulk_process(taskl)
             )
-
-        return parsed_doc_list
-
-    def _multithread_process(self, **kwargs):
-
-        def _lambda_parser_worker(taskl):
-            nlp = stanza.Pipeline(**kwargs)
-
-            out_list = []
-            _iterator = tqdm.tqdm(taskl) if self.show_progressbar else taskl
-            for doc in _iterator:
-                out_list.append(nlp(doc))
-
-            return out_list
-
-        task_len = len(self.doc_list)
-
-        chunksize = math.ceil(task_len / self.thread_num)
-
-        task_chunked_list = [
-            self.doc_list[s: s + chunksize]
-            for s in range(0, task_len, chunksize)
-        ]
-
-        parsed_doc_list = []
-        with pathos.multiprocessing.Pool(processes=self.thread_num,
-                                         initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator
-                                         ) as pool:
-
-            for r in pool.imap(func=_lambda_parser_worker, iterable=task_chunked_list):
-                parsed_doc_list.extend(r)
 
         return parsed_doc_list
 
