@@ -14,7 +14,7 @@ class PipeLineParser:
 
     def __init__(self,
                  doc_list: list,
-                 doc_ids_list: typing.Optional[list]=None,
+                 doc_ids_list: typing.Optional[list] = None,
                  thread_num: int = os.cpu_count(),
                  show_progressbar: bool = True,
                  process_chunksize: typing.Optional[int] = None,
@@ -54,11 +54,6 @@ class PipeLineParser:
 
         self.show_progressbar = show_progressbar
 
-        # if kwargs['use_gpu'] and torch.cuda.is_available():
-        #     print('Detect GPU(cuda), use gpu-version instead')
-        #     self.parsed_docs = self._mp_in_loop_process(**kwargs)
-        # else:
-        #     self.parsed_docs = self._loop_in_mp_process(**kwargs)
         self.parsed_docs = self._mp_in_loop_process(**kwargs)
 
     def _mp_in_loop_process(self, **kwargs):
