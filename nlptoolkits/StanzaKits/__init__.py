@@ -23,7 +23,6 @@ def auto_doc_to_sentences_parser(
         chunk_size=100,
         start_iloc=None,
         mwe_dep_types: set = set(["mwe", "compound", "compound:prt"]),
-        be_quite = False,
         **kwargs):
     """
     :param memory: memory using, should be str like "\d+G"
@@ -77,7 +76,6 @@ def auto_doc_to_sentences_parser(
             memory=memory,
             threads=processes,
             endpoint=endpoint,  # must type in
-            be_quite=be_quite,
             **kwargs
     ) as client:
 
@@ -90,7 +88,7 @@ def auto_doc_to_sentences_parser(
                 input_index_list=input_index_list,
                 path_output_index_txt=path_output_index_txt,
                 # you must make corenlp and mp.Pool's port are same
-                process_line_func=lambda x, y: corpus_preprocessor.parse_line_to_sentences(x, y, endpoint, be_quite),
+                process_line_func=lambda x, y: corpus_preprocessor.parse_line_to_sentences(x, y, endpoint),
                 processes=processes,
                 chunk_size=chunk_size,
                 start_iloc=start_iloc

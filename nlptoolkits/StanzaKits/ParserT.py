@@ -173,7 +173,7 @@ class DocParserParallel(_ParserBasic):
     def __init__(self, mwe_dep_types: set):
         super().__init__(mwe_dep_types=mwe_dep_types)
 
-    def parse_line_to_sentences(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002", be_quite=False):
+    def parse_line_to_sentences(self, doc, doc_id=None, corenlp_endpoint: str = "http://localhost:9002"):
         """Main method: Annotate a document using CoreNLP client
 
         Arguments:
@@ -207,7 +207,7 @@ class DocParserParallel(_ParserBasic):
         while True:
             try:
                 with CoreNLPClient(
-                        endpoint=corenlp_endpoint, start_server=False, timeout=120000000, be_quite=be_quite
+                        endpoint=corenlp_endpoint, start_server=False, timeout=120000000
                 ) as client:
                     doc_ann = client.annotate(doc)
 
