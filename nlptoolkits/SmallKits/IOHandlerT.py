@@ -1,6 +1,5 @@
 import html2text
 import re
-import bs4
 import PyPDF2
 import pypandoc
 import warnings
@@ -9,6 +8,8 @@ import subprocess
 import tempfile
 import bs4
 import os
+import warnings
+import readability
 
 from .. import _BasicKits
 
@@ -18,7 +19,6 @@ from .. import _BasicKits
 
 from .._BasicKits.FileT import file_to_list
 
-
 # --------------------------------------------------------------------------
 # _BasicKits naive Writers, aliases
 # --------------------------------------------------------------------------
@@ -27,7 +27,7 @@ from .._BasicKits.FileT import list_to_file, base64_to_file, write_dict_to_csv
 
 
 # --------------------------------------------------------------------------
-# Non-Naive functions
+# Basic functions
 # --------------------------------------------------------------------------
 
 def __sep_letter_warning():
@@ -41,11 +41,19 @@ def __sep_letter_warning():
     )
 
 
-def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "strike", "del"], suppress_warn=False):
+# --------------------------------------------------------------------------
+# Readers, ..._to_single_line_str series
+# --------------------------------------------------------------------------
+def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "strike", "del"],
+                                    html_partial=False, suppress_warn=False, errors='backslashreplace', **kwargs):
     """
     Args:
         html_filepath: file path
         strike_tags: the tags of strike html tags, default ["s", "strike", "del"]
+        html_partial: return only the div of the document, don't wrap
+                             in html and body tags. see readability.Document().summary
+        suppress_warn: is or not suppress the warn of sep letter
+
 
     Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
 
@@ -56,15 +64,22 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "st
     encodetype = _BasicKits._BasicFuncT.find_file_encoding(html_filepath) \
         if not _BasicKits._BasicFuncT.find_file_encoding(html_filepath) is None else 'utf-8'
     # Open the HTML file and read it into a string
-    with open(html_filepath, 'r', encoding=encodetype, errors='replace') as f:
-        html_content = f.read()
+    with open(html_filepath, 'r', encoding=encodetype, errors=errors) as f:
+        html_f = f.read()
+
+    readability_cls = readability.Document(html_f, **kwargs)
+
+    html_content = readability_cls.summary(html_partial)
 
     # Parse the HTML with BeautifulSoup
     soup = bs4.BeautifulSoup(html_content, 'html.parser')
 
     # Find and remove all strikethrough text
-    for strike_tag in soup(strike_tags):
-        strike_tag.decompose()
+    try:
+        for strike_tag in soup(strike_tags):
+            strike_tag.decompose()
+    except:
+        warnings.warn('decompose of bs4 runs in error, automatically passed', ResourceWarning)
 
     # Convert the modified HTML to text
     h = html2text.HTML2Text()
@@ -177,7 +192,8 @@ def convert_rtf_to_single_line_str(rtf_file_path, suppress_warn=False):
 # --------------------------------------------------------------------------
 def read_tei_xml_text_list(tei_xml_path,
                            tag: typing.Union[list, str] = ['div'],
-                           subtags: typing.Union[list, str] = ['p']
+                           subtags: typing.Union[list, str] = ['p'],
+                           errors='backslashreplace'
                            ):
     """
     read tei-format XML to list of text
@@ -189,7 +205,11 @@ def read_tei_xml_text_list(tei_xml_path,
     Returns: a list of text
 
     """
-    with open(tei_xml_path, 'r') as tei:
+
+    encodetype = _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) \
+        if not _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) is None else 'utf-8'
+
+    with open(tei_xml_path, 'r', encoding=encodetype, errors=errors) as tei:
         soup = bs4.BeautifulSoup(tei, 'xml')
 
     div_elements = soup.find_all(tag)

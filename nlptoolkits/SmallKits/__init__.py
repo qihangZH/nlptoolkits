@@ -1,3 +1,5 @@
+import typing
+
 from . import BitermplusT
 from . import WordninjaT
 from . import LangDetectT
@@ -12,26 +14,34 @@ import pandas as pd
 from .. import _BasicKits
 
 
-def auto_file_reader_list(filepath_list, file_mime_list: list, processes=os.cpu_count(),
-                          is_trim_text_wordninja=True, suppress_warn=True, **kwargs
-                          ):
+def auto_filelist_reader(filepath_list, file_mime_list: list, processes=os.cpu_count(),
+                         is_trim_text_wordninja=True, mime_readerfunc_dict: typing.Optional[dict] = None,
+                         ):
     """
     Auto return the file-Text(If contains any), the function use imap+loop, so result is definitely in sequence.
-    return the tuple of result list and the error list.
+    return the tuple of result list and the error list. The readers are given in defaults and all ..._to_single_line_str
+    Series. However, You may update new config-function by yourself in mime_readerfunc_dict.
+    For example {'pdf': lambda x: IOHandlerT.convert_pdf_to_single_line_str(x, start_index=2, end_index=3)}
+    This will cause the pdf reader only read the pdf at page index 2(or page num 3).
     :param filepath_list: the path list of file to be read
-    :param kwargs: the special kwargs which will be passed to function:
-        <**catdoc_path**: the path of catdoc.exe to excute, do not type anything/None to make it run as default>
+    :param file_mime_list: the mime, like rtf, doc, actually the suffix of file
+    :param processes: Use Howmuch Processes to run
+    :param is_trim_text_wordninja: Is trim the data use wordninja?
+    :param mime_readerfunc_dict: Optional, update the function map, like {'pdf':func}
     :return : the tuple(result_list, error_list), any error one should result in result_list as None.
 
     """
     # default value should be False for suppress the warning.
 
     func_map = {
-        'rtf': lambda x: IOHandlerT.convert_rtf_to_single_line_str(x, suppress_warn=suppress_warn),
-        'doc': lambda x: IOHandlerT.convert_doc_to_single_line_str(x, suppress_warn=suppress_warn),
-        'pdf': lambda x: IOHandlerT.convert_pdf_to_single_line_str(x, suppress_warn=suppress_warn),
-        'html': lambda x: IOHandlerT.convert_html_to_single_line_str(x, suppress_warn=suppress_warn)
+        'rtf': lambda x: IOHandlerT.convert_rtf_to_single_line_str(x, suppress_warn=True),
+        'doc': lambda x: IOHandlerT.convert_doc_to_single_line_str(x, suppress_warn=True),
+        'pdf': lambda x: IOHandlerT.convert_pdf_to_single_line_str(x, suppress_warn=True),
+        'html': lambda x: IOHandlerT.convert_html_to_single_line_str(x, suppress_warn=True)
     }
+
+    if isinstance(mime_readerfunc_dict, dict):
+        func_map = func_map.update(mime_readerfunc_dict)
 
     def _lambda_reader_loop(task_list_tuple):
 

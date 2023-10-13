@@ -21,6 +21,8 @@ ratelimit
 torch
 scipy
 openpyxl
+sentence-transformers
+readability-lxml
 # gensim>=3.7.2,<4.0.0
 # stanfordnlp==0.2.0
 # protobuf<3.20
