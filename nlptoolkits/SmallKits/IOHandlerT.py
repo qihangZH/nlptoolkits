@@ -30,8 +30,8 @@ from .._BasicKits.FileT import list_to_file, base64_to_file, write_dict_to_csv
 # GROBID-NEI-PDF->XML reader
 # --------------------------------------------------------------------------
 def _tei_xml_to_list(tei_xml_path,
-                     tag: typing.Union[list, str] = ['div'],
-                     subtags: typing.Union[list, str] = ['p'],
+                     tag: typing.Union[list, str],
+                     subtags: typing.Optional[typing.Union[list, str]],
                      errors='backslashreplace',
                      **kwargs
                      ):
@@ -39,12 +39,19 @@ def _tei_xml_to_list(tei_xml_path,
     read tei-format XML to list of text
     Args:
         tei_xml_path: the path of Tei-xml-path, is a format could be seen in https://tei-c.org/ for detail
-        tag: the tag which contain text you interested in, first level
+        tag: the tag which contain text you interested in, first level, should be ['text'] in default
         subtags: second level tags, like p/s/head, etc
 
     Returns: a list of text
 
     """
+    if isinstance(tag, list):
+        if len(tag)>1:
+            warnings.warn('More then one tag will cause replicated result, you should known that')
+    elif isinstance(tag, str):
+        tag = [tag]
+    else:
+        raise ValueError('The tag either be string of list')
 
     encodetype = _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) \
         if not _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) is None else 'utf-8'
@@ -52,21 +59,20 @@ def _tei_xml_to_list(tei_xml_path,
     with open(tei_xml_path, 'r', encoding=encodetype, errors=errors) as tei:
         soup = bs4.BeautifulSoup(tei, 'xml')
 
-    div_elements = soup.find_all(tag)
-
     # Initialize a list to store <s> pairs from all <div> elements
     s_pairs_list = []
+    for t in tag:
+        div_elements = soup.find_all(t)
 
-    # Iterate through each <div> element
-    for div in div_elements:
-        # Find all <s> elements within the current <div>
-        s_elements = div.find_all(subtags)
-
-        # Extract and store <s> pairs as tuples in a list
-        sentences = [s.get_text(strip=True) for s in s_elements]
-
-        # Append the <s> pairs to the main list
-        s_pairs_list.extend(sentences)
+        for div in div_elements:
+            if subtags:
+                for st in subtags:
+                    s_elements = div.find_all(st)
+                    sentences = [s.get_text(strip=True) for s in s_elements]
+                    s_pairs_list.extend(sentences)
+            else:
+                sentences = div.get_text(strip=True)
+                s_pairs_list.append(sentences)
 
     return s_pairs_list
 
@@ -91,8 +97,8 @@ def __sep_letter_warning():
 # --------------------------------------------------------------------------
 
 def convert_teixml_to_single_line_str(tei_xml_path,
-                                      tag: typing.Union[list, str] = ['div'],
-                                      subtags: typing.Union[list, str] = ['p', 'head'],
+                                      tag: typing.Union[list, str] = ['text'],
+                                      subtags: typing.Optional[typing.Union[list, str]] = None,
                                       errors='backslashreplace',
                                       sep: str = ' ',
                                       suppress_warn: bool = False,
