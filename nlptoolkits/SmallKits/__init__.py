@@ -41,7 +41,7 @@ def auto_filelist_reader(filepath_list, file_mime_list: list, processes=os.cpu_c
     }
 
     if isinstance(mime_readerfunc_dict, dict):
-        func_map = func_map.update(mime_readerfunc_dict)
+        func_map.update(mime_readerfunc_dict)
 
     def _lambda_reader_loop(task_list_tuple):
 
@@ -76,7 +76,7 @@ def auto_filelist_reader(filepath_list, file_mime_list: list, processes=os.cpu_c
         return rst_list, err_list
 
     # precheck if the data is suitable
-    assert set(file_mime_list).issubset({'rtf', 'html', 'pdf', 'doc'}), \
+    assert set(file_mime_list).issubset(set(func_map.keys())), \
         'the file_mime_list contains file mime type which could not be read'
     assert len(filepath_list) == len(file_mime_list), \
         'The path of filepath and its mime must be same'

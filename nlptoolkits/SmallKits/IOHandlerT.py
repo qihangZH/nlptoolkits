@@ -27,6 +27,51 @@ from .._BasicKits.FileT import list_to_file, base64_to_file, write_dict_to_csv
 
 
 # --------------------------------------------------------------------------
+# GROBID-NEI-PDF->XML reader
+# --------------------------------------------------------------------------
+def _tei_xml_to_list(tei_xml_path,
+                     tag: typing.Union[list, str] = ['div'],
+                     subtags: typing.Union[list, str] = ['p'],
+                     errors='backslashreplace',
+                     **kwargs
+                     ):
+    """
+    read tei-format XML to list of text
+    Args:
+        tei_xml_path: the path of Tei-xml-path, is a format could be seen in https://tei-c.org/ for detail
+        tag: the tag which contain text you interested in, first level
+        subtags: second level tags, like p/s/head, etc
+
+    Returns: a list of text
+
+    """
+
+    encodetype = _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) \
+        if not _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) is None else 'utf-8'
+
+    with open(tei_xml_path, 'r', encoding=encodetype, errors=errors) as tei:
+        soup = bs4.BeautifulSoup(tei, 'xml')
+
+    div_elements = soup.find_all(tag)
+
+    # Initialize a list to store <s> pairs from all <div> elements
+    s_pairs_list = []
+
+    # Iterate through each <div> element
+    for div in div_elements:
+        # Find all <s> elements within the current <div>
+        s_elements = div.find_all(subtags)
+
+        # Extract and store <s> pairs as tuples in a list
+        sentences = [s.get_text(strip=True) for s in s_elements]
+
+        # Append the <s> pairs to the main list
+        s_pairs_list.extend(sentences)
+
+    return s_pairs_list
+
+
+# --------------------------------------------------------------------------
 # Basic functions
 # --------------------------------------------------------------------------
 
@@ -44,6 +89,31 @@ def __sep_letter_warning():
 # --------------------------------------------------------------------------
 # Readers, ..._to_single_line_str series
 # --------------------------------------------------------------------------
+
+def convert_teixml_to_single_line_str(tei_xml_path,
+                                      tag: typing.Union[list, str] = ['div'],
+                                      subtags: typing.Union[list, str] = ['p', 'head'],
+                                      errors='backslashreplace',
+                                      sep: str = ' ',
+                                      suppress_warn: bool = False,
+                                      **kwargs
+                                      ):
+    if not suppress_warn:
+        __sep_letter_warning()
+
+    string_list = _tei_xml_to_list(tei_xml_path,
+                                   tag=tag,
+                                   subtags=subtags,
+                                   errors=errors,
+                                   **kwargs
+                                   )
+    result_text = sep.join(string_list)
+    # remove all \s+ to ' '
+    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+
+    return result_text
+
+
 def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "strike", "del"],
                                     html_partial=False, suppress_warn=False, errors='backslashreplace', **kwargs):
     """
@@ -185,50 +255,6 @@ def convert_rtf_to_single_line_str(rtf_file_path, suppress_warn=False):
     result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
 
     return result_text
-
-
-# --------------------------------------------------------------------------
-# GROBID-NEI-PDF->XML reader
-# --------------------------------------------------------------------------
-def read_tei_xml_text_list(tei_xml_path,
-                           tag: typing.Union[list, str] = ['div'],
-                           subtags: typing.Union[list, str] = ['p'],
-                           errors='backslashreplace'
-                           ):
-    """
-    read tei-format XML to list of text
-    Args:
-        tei_xml_path: the path of Tei-xml-path, is a format could be seen in https://tei-c.org/ for detail
-        tag: the tag which contain text you interested in, first level
-        subtags: second level tags, like p/s/head, etc
-
-    Returns: a list of text
-
-    """
-
-    encodetype = _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) \
-        if not _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) is None else 'utf-8'
-
-    with open(tei_xml_path, 'r', encoding=encodetype, errors=errors) as tei:
-        soup = bs4.BeautifulSoup(tei, 'xml')
-
-    div_elements = soup.find_all(tag)
-
-    # Initialize a list to store <s> pairs from all <div> elements
-    s_pairs_list = []
-
-    # Iterate through each <div> element
-    for div in div_elements:
-        # Find all <s> elements within the current <div>
-        s_elements = div.find_all(subtags)
-
-        # Extract and store <s> pairs as tuples in a list
-        sentences = [s.get_text(strip=True) for s in s_elements]
-
-        # Append the <s> pairs to the main list
-        s_pairs_list.extend(sentences)
-
-    return s_pairs_list
 
 
 # --------------------------------------------------------------------------
