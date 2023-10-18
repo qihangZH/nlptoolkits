@@ -29,6 +29,9 @@ IF any resource error: try:
 ```stanza.download('en')``` or your language
 This version do not show so much errors.
 
+### tesseract
+If you want to use OCR, then you have to make sure this app is already download and config in python.
+nlptoolkit contain a light function, but you could use PyMupdf(Fitz) or other methods.
 
 ## references
 

@@ -10,6 +10,9 @@ import bs4
 import os
 import warnings
 import readability
+import io
+import pytesseract
+import pdf2image
 
 from .. import _BasicKits
 
@@ -24,6 +27,27 @@ from .._BasicKits.FileT import file_to_list
 # --------------------------------------------------------------------------
 
 from .._BasicKits.FileT import list_to_file, base64_to_file, write_dict_to_csv
+
+
+# --------------------------------------------------------------------------
+# OCR functions
+# --------------------------------------------------------------------------
+def _ocr_pdf_to_text(pdf_file_path, start_index: int = 0, end_index: typing.Optional[int] = None, **kwargs):
+    # Convert PDF to image
+    pages = pdf2image.convert_from_path(pdf_file_path, **kwargs)
+
+    # Extract text from each page using Tesseract OCR
+    text_data = ''
+
+    # Loop through each page in the PDF and add the result_text to the string
+    end_index = end_index if end_index else len(pages)
+
+    for page in pages[start_index: end_index]:
+        text = pytesseract.image_to_string(page)
+        text_data += text + '\n'
+
+    # Return the text data
+    return text_data
 
 
 # --------------------------------------------------------------------------
@@ -46,7 +70,7 @@ def _tei_xml_to_list(tei_xml_path,
 
     """
     if isinstance(tag, list):
-        if len(tag)>1:
+        if len(tag) > 1:
             warnings.warn('More then one tag will cause replicated result, you should known that')
     elif isinstance(tag, str):
         tag = [tag]
@@ -95,6 +119,32 @@ def __sep_letter_warning():
 # --------------------------------------------------------------------------
 # Readers, ..._to_single_line_str series
 # --------------------------------------------------------------------------
+
+def convert_ocrpdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_index: typing.Optional[int] = None,
+                                      suppress_warn=False, **kwargs
+                                      ):
+    """
+    Args:
+        pdf_file_path: pdf file path
+        start_index: the page index to start reading
+        end_index: None default, however if not None must be int, the end index
+        suppress_warn: is or not raise warning of usage
+        kwargs: the argument of pdf2image.convert_from_path
+    Returns: flat string with no \s{2,}, no \n, \t etc include, but only \s
+
+    """
+    if not suppress_warn:
+        __sep_letter_warning()
+    # Open the PDF file in binary mode
+    result_text = _ocr_pdf_to_text(pdf_file_path=pdf_file_path, start_index=start_index, end_index=end_index,
+                                   **kwargs
+                                   )
+
+    # Remove newline characters to make the result_text a single line
+    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+
+    return result_text
+
 
 def convert_teixml_to_single_line_str(tei_xml_path,
                                       tag: typing.Union[list, str] = ['text'],
