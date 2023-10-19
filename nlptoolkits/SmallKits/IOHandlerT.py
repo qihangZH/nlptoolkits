@@ -10,8 +10,7 @@ import bs4
 import os
 import warnings
 import readability
-import io
-import pytesseract
+
 import pdf2image
 
 from .. import _BasicKits
