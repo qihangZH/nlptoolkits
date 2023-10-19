@@ -35,6 +35,8 @@ from .._BasicKits.FileT import list_to_file, base64_to_file, write_dict_to_csv
 def _ocr_pdf_to_text(pdf_file_path, start_index: int = 0, end_index: typing.Optional[int] = None,
                      temp_image_suffix='PNG', **kwargs):
 
+    kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 60
+
     pdf_file_posix_path = _BasicKits._BasicFuncT.get_absolute_posix_path(pdf_file_path)
 
     # get pure name
