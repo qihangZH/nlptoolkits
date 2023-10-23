@@ -50,8 +50,7 @@ def __so_many_processes_warning(func_name: str):
         will be unstable or dead under so-many-threadings.
         It is recommend to use small processes/threads under the problem.
         Like no-more then 4 threads/processes, but this depend on your computer.
-        """,
-        ResourceWarning
+        """
     )
 
 
