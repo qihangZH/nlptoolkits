@@ -43,7 +43,7 @@ def _chatcompletion_requester(
             if result["content"].endswith('...'):
                 raise ValueError('Max token return exceed, try another model or change your strategy(chunksize)')
 
-            prediction_json_list = json.loads(result["content"])
+            prediction_json_list = json.loads(result["content"], strict=False)
 
             # Check is Json Format suitable for return dataframe
             is_dataframe_format_error = not _BasicKits._BasicFuncT.check_is_list_of_dicts(prediction_json_list)
