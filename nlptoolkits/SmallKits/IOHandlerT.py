@@ -29,10 +29,38 @@ from .._BasicKits.FileT import list_to_file, base64_to_file, write_dict_to_csv
 
 
 # --------------------------------------------------------------------------
+# Basic functions
+# --------------------------------------------------------------------------
+
+def __sep_letter_warning():
+    warnings.warn(
+        """
+        The converter names like 'convert_<...>_to_single_line_str' you using may occurs problems like:
+        l o w i n g the salary w i l l m a k e t h e worker a r g u i n g t h e c o m p a n y.
+        IF you want to correct this problem,
+        you have to use nlptoolkits/SmallKits/WordninjaT/replace_sequence_letters_to_words_str
+        """
+    )
+
+
+def __so_many_processes_warning(func_name: str):
+    warnings.warn(
+        f"""
+        Warning: If multi-threads/processes used by This type of function-{func_name}
+        will be unstable or dead under so-many-threadings.
+        It is recommend to use small processes/threads under the problem.
+        Like no-more then 4 threads/processes, but this depend on your computer.
+        """,
+        ResourceWarning
+    )
+
+
+# --------------------------------------------------------------------------
 # OCR functions
 # --------------------------------------------------------------------------
 def _ocr_pdf_to_text(pdf_file_path, start_index: int = 0, end_index: typing.Optional[int] = None,
                      temp_image_suffix='PNG', **kwargs):
+    __so_many_processes_warning(_ocr_pdf_to_text.__name__)
 
     kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 60
 
@@ -140,21 +168,6 @@ def _tei_xml_to_list(tei_xml_path,
                 s_pairs_list.append(sentences)
 
     return s_pairs_list
-
-
-# --------------------------------------------------------------------------
-# Basic functions
-# --------------------------------------------------------------------------
-
-def __sep_letter_warning():
-    warnings.warn(
-        """
-        The converter names like 'convert_<...>_to_single_line_str' you using may occurs problems like:
-        l o w i n g the salary w i l l m a k e t h e worker a r g u i n g t h e c o m p a n y.
-        IF you want to correct this problem,
-        you have to use nlptoolkits/SmallKits/WordninjaT/replace_sequence_letters_to_words_str
-        """
-    )
 
 
 # --------------------------------------------------------------------------

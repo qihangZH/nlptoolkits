@@ -33,6 +33,12 @@ This version do not show so much errors.
 If you want to use OCR, then you have to make sure this app is already download and config in python.
 nlptoolkit contain a light function, but you could use PyMupdf(Fitz) or other methods.
 
+### poppler
+
+The OCR may also depends on OCR for pdf reading need firstly use pdf2image to convert to 
+files like JPEG or PNG(default). More info please refer to https://github.com/Belval/pdf2image
+
+
 ## references
 
 ### https://github.com/MS20190155/Measuring-Corporate-Culture-Using-Machine-Learning
