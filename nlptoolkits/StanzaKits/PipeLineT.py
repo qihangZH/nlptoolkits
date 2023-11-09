@@ -142,3 +142,20 @@ class PipeLineParser:
             ]
             for idx in range(len(self.parsed_docs))
         ]
+
+    def attr_sentences_words(self, attr: str):
+        """
+        Args:
+            attr: attribute of words insides sentences in:
+            https://stanfordnlp.github.io/stanza/data_objects.html#word
+
+        Returns: list of sentences and their attrs
+
+        """
+        return [
+            [
+                getattr(s, attr)
+                for s in self.parsed_docs[idx].sentences
+            ]
+            for idx in range(len(self.parsed_docs))
+        ]
