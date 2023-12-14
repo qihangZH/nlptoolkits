@@ -26,7 +26,7 @@ WARNINGS: THIS PACKAGE USE GENSIM MODEL!
 
 def expand_words_dimension_mean(
         word2vec_model,
-        seed_words,
+        seed_words: dict,
         n=50,
         restrict=None,
         min_similarity=0,

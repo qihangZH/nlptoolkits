@@ -38,6 +38,8 @@ nlptoolkit contain a light function, but you could use PyMupdf(Fitz) or other me
 The OCR may also depends on OCR for pdf reading need firstly use pdf2image to convert to 
 files like JPEG or PNG(default). More info please refer to https://github.com/Belval/pdf2image
 
+### stanford nlp
+This is a to do project. Old version use Java, but now it is a torch version(prepare to).
 
 ## references
 
