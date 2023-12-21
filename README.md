@@ -1,5 +1,13 @@
 # nlptoolkits
 
+## Name Suffix Info
+
+```...Kits``` means it is a upper folder.
+
+```...Pack``` means it is a pack in upper folder
+
+```...T``` means it is a Tool module.
+
 ## Requirement 
 
 ### Pytorch/Torch

@@ -1,6 +1,7 @@
 """Global options for analysis
 """
 import os
+import pathlib
 import nlptoolkits
 from typing import Dict, List, Set
 
@@ -11,13 +12,14 @@ PARSE_CHUNK_SIZE: int = 500
 # number of lines in the input_data file to process uing CoreNLP at once.
 # Increase on workstations with larger RAM (e.g. to 1000 if RAM is 64G)
 ADDRESS_CORENLP: str = "http://localhost:9010"
-# Directory locations
-# os.environ[
-#     "CORENLP_HOME"
-# ] = "F:/stanford-corenlp-4.5.4"  # location of the CoreNLP models; use / to seperate folders
-
 
 PROJ_FOLDER = os.path.abspath(os.path.dirname(__file__)) + '/'
+
+# Directory locations
+os.environ[
+    "CORENLP_HOME"
+] = pathlib.Path(PROJ_FOLDER, 'stanford-corenlp-4.5.5').as_posix()
+# location of the CoreNLP models; use / to seperate folders
 
 # result/processed data folder, should be cleaned before run
 INPUT_DATA_FOLDER: str = PROJ_FOLDER + "input_data"

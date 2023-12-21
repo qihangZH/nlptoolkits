@@ -1,11 +1,7 @@
 import os
 import warnings
-import warnings
 import stanza
 import tqdm
-import pathos
-import math
-import torch
 import typing
 from .. import _BasicKits
 
@@ -146,8 +142,7 @@ class PipeLineParser:
     def attr_sentences_words(self, attr: str):
         """
         Args:
-            attr: attribute of words insides sentences in:
-            https://stanfordnlp.github.io/stanza/data_objects.html#word
+            attr: attribute of words insides sentences in: https://stanfordnlp.github.io/stanza/data_objects.html#word
 
         Returns: list of sentences and their attrs
 

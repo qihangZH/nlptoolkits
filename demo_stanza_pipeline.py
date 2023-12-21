@@ -1,8 +1,6 @@
 # %%
 from nlptoolkits.StanzaKits import PipeLineT
 import logging
-import stanza
-import nlptoolkits as nk
 
 if __name__ == "__main__":
 

@@ -1,8 +1,9 @@
 from . import _BasicKits
 from . import GensimKits
-from . import StanzaKits
-from . import SmallKits
 from . import OpenAIKits
+from . import SmallKits
+from . import StanzaKits
+
 from . import resources
 
 # out source pack

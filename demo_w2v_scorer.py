@@ -64,7 +64,7 @@ if __name__ == '__main__':
         )
 
     """Arguments"""
-    nlptoolkits.StanzaKits.auto_doc_to_sentences_parser(
+    nlptoolkits.StanzaKits.CoreNLPServerPack.auto_doc_to_sentences_parser(
         endpoint=global_options.ADDRESS_CORENLP,
         memory=global_options.RAM_CORENLP,
         processes=global_options.N_CORES,
@@ -79,7 +79,8 @@ if __name__ == '__main__':
             global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
         ),
         chunk_size=global_options.PARSE_CHUNK_SIZE,
-        be_quite=True
+        be_quite=True,
+        parsing_choices=['POStags', 'Lemmatize', 'DepParseMWECompounds']
     )
 
     # --------------------------------------------------------------------------------------------------
@@ -87,7 +88,7 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------------------------------
 
     # clean the parsed text (remove POS tags, stopwords, etc.) ----------------
-    nlptoolkits.StanzaKits.auto_clean_parsed_txt(
+    nlptoolkits.StanzaKits.CoreNLPServerPack.auto_clean_parsed_txt(
         path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
         path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
         stopwords_set=global_options.STOPWORDS,
