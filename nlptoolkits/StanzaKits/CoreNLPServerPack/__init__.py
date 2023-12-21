@@ -64,7 +64,7 @@ def auto_doc_to_sentences_parser(
     kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 12000000
     kwargs['max_char_length'] = kwargs['max_char_length'] if 'max_char_length' in kwargs else 1000000
     kwargs['start_server'] = kwargs['start_server'] \
-        if 'start_server' in kwargs else stanza.server.StartServer.TRY_START
+        if 'start_server' in kwargs else stanza.server.StartServer.FORCE_START
     kwargs['be_quiet'] = kwargs['be_quiet'] if 'be_quiet' in kwargs else True
 
     def _lambda_process_line(line, lineID, corpus_processor):

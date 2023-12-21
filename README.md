@@ -37,11 +37,9 @@ IF any resource error: try:
 ```stanza.download('en')``` or your language
 This version do not show so much errors.
 
-TO see the attibute of the stanford core nlp(python client), please refer to:
-https://github.com/stanfordnlp/stanza/blob/main/doc/CoreNLP.proto
 
-FURTHER:
-https://stanfordnlp.github.io/stanza/client_usage.html
+
+
 
 ### tesseract
 If you want to use OCR, then you have to make sure this app is already download and config in python.
@@ -53,7 +51,21 @@ The OCR may also depends on OCR for pdf reading need firstly use pdf2image to co
 files like JPEG or PNG(default). More info please refer to https://github.com/Belval/pdf2image
 
 ### stanford nlp
-This is a to do project. Old version use Java, but now it is a torch version(prepare to).
+TO see the attibute of the stanford core nlp(python client), please refer to:
+https://github.com/stanfordnlp/stanza/blob/main/doc/CoreNLP.proto
+
+FURTHER:
+https://stanfordnlp.github.io/stanza/client_usage.html
+
+Moreover, You should not shutdown the process in force. Like close the window of terminal or kill the process.
+The code it self use ```with CoreNLPClient(...) as client:``` to close the server properly. whatever it runs
+properly or not, the server will be closed properly. 
+Kill the process in force will cause the server not be closed properly and cause the port be occupied.
+
+If you really want to use a non-killed server, you can set the 
+```nlptoolkits.StanzaKits.CoreNLPServerPack.auto_doc_to_sentences_parser``` 's kwargs ```start_server``` argument from
+```stanza.server.StartServer.FORCE_START``` to ```stanza.server.StartServer.TRY_START```, then the server will be
+run on non-killed server. But I do not recommend that.
 
 ## references
 
