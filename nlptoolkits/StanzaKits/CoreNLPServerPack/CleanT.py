@@ -89,7 +89,7 @@ class LineTextCleaner:
             str -- text with stopwords, numerics, 1-letter words removed
         """
         tokens = line.strip().lower().split(" ")  # do not use nltk.tokenize here
-        tokens = [re.sub("\[pos:.*?\]", "", t, flags=re.IGNORECASE) for t in tokens]
+        tokens = [re.sub(r"\[pos:.*?\]", "", t, flags=re.IGNORECASE) for t in tokens]
 
         # these are tagged bracket and parenthesises
         if self.punctuations or self.stopwords:

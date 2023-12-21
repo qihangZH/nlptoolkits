@@ -37,6 +37,12 @@ IF any resource error: try:
 ```stanza.download('en')``` or your language
 This version do not show so much errors.
 
+TO see the attibute of the stanford core nlp(python client), please refer to:
+https://github.com/stanfordnlp/stanza/blob/main/doc/CoreNLP.proto
+
+FURTHER:
+https://stanfordnlp.github.io/stanza/client_usage.html
+
 ### tesseract
 If you want to use OCR, then you have to make sure this app is already download and config in python.
 nlptoolkit contain a light function, but you could use PyMupdf(Fitz) or other methods.

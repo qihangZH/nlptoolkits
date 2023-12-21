@@ -164,7 +164,7 @@ class _ParserBasic:
             # OPTION: Lemmatize
             # ----------------------------------------------------------------------------------------------
 
-            token_lemma = t.lemma if 'Lemmatize' in self.parsing_choices else t.text
+            token_lemma = t.lemma if 'Lemmatize' in self.parsing_choices else t.originalText
 
             # ----------------------------------------------------------------------------------------------
             # OPTION: POStags
