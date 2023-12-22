@@ -2,8 +2,6 @@ import typing
 
 from . import _ChatCompletionT
 
-from ._ChatCompletionT import chatcompletion_worker
-
 
 def classify_single_task_res(
         notion_text: str,
