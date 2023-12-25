@@ -9,7 +9,8 @@ if __name__ == '__main__':
         ),
         path_sentences_dataset_index_txt=Path(
             global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
-        )
+        ),
+        charset_error_encoding=global_options.DEFAULT_ENCODING
     )
 
     print(democls.similarity_matrix(democls.doc_text_corpus_list[:3111],
