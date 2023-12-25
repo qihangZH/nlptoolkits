@@ -10,11 +10,14 @@ class SimilarityTfidf:
 
     def __init__(self,
                  path_sentences_dataset_txt,
-                 path_sentences_dataset_index_txt
+                 path_sentences_dataset_index_txt,
+                 charset_error_encoding
                  ):
         self.doc_text_corpus_list, self.doc_ids_list, self.N_doc = \
             _BasicKits.FileT.l1_sentence_to_doc_level_corpus(path_sentences_dataset_txt,
-                                                             path_sentences_dataset_index_txt)
+                                                             path_sentences_dataset_index_txt,
+                                                             charset_error_encoding=charset_error_encoding
+                                                             )
 
         self.dictionary, self.tfidf_model = _Models.train_tfidf_model_dictmod(
             text_list=self.doc_text_corpus_list

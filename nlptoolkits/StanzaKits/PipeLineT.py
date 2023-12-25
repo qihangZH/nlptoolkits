@@ -6,7 +6,7 @@ import typing
 from .. import _BasicKits
 
 
-class PipeLineParser:
+class PipeLineAnnotator:
 
     def __init__(self,
                  doc_list: list,

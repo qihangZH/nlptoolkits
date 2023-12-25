@@ -5,6 +5,8 @@ import pathlib
 import nlptoolkits
 from typing import Dict, List, Set
 
+DEFAULT_ENCODING: str = "utf-8"
+
 # Hardware options
 N_CORES: int = 12  # max number of CPU cores to use
 RAM_CORENLP: str = "40G"  # max RAM allocated for parsing using CoreNLP; increase to speed up parsing

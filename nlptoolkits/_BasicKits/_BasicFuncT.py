@@ -4,7 +4,7 @@ import socket
 import time
 import os
 import shutil
-import chardet
+import charset_normalizer
 import pathlib
 from urllib.parse import urlparse
 
@@ -95,6 +95,6 @@ def find_file_encoding(path):
     :param path: the path of file which encoding should be detected, the type will return as string.
     """
     with open(path, 'rb') as file:
-        result = chardet.detect(file.read())
+        result = charset_normalizer.detect(file.read())
 
     return result['encoding']

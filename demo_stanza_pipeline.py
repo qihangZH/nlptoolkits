@@ -19,8 +19,8 @@ if __name__ == "__main__":
     # documents = nk.SmallKits.IOHandlerT.file_to_list('./input_data/tweets_origin.txt')
 
     # pcls = PipeLineT.PipeLineParser(doc_list=documents, processors='tokenize,sentiment', gpu_process_chunksize=500)
-    pcls = PipeLineT.PipeLineParser(doc_list=replic_docs, processors='tokenize,sentiment', use_gpu=False,
-                                    process_chunksize=1000
-                                    )
+    pcls = PipeLineT.PipeLineAnnotator(doc_list=replic_docs, processors='tokenize,sentiment', use_gpu=False,
+                                       process_chunksize=1000
+                                       )
 
     print(pcls.raw_sentences)

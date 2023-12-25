@@ -33,19 +33,19 @@ def _line_counter(a_file):
 # l0 level functions/classes
 # --------------------------------------------------------------------------
 
-def file_to_list(a_file):
+def file_to_list(a_file, charset_error_encoding):
     """Read a text file to a list, each line is an element
     
     Arguments:
         a_file {str or path} -- path to the file
+        charset_error_encoding {str} -- the encoding of the file if charset find nothing, default is utf-8
     
     Returns:
         [str] -- list of lines in the input_data file, can be empty
     """
-    """If meet any erors, deal with in future"""
     # doc_encoding = 'utf-8'
     doc_encoding = _BasicFuncT.find_file_encoding(a_file) \
-        if _BasicFuncT.find_file_encoding(a_file) else 'utf-8'
+        if _BasicFuncT.find_file_encoding(a_file) else charset_error_encoding
 
     file_content = []
     with open(a_file, "rb") as f:
@@ -126,7 +126,7 @@ def read_large_file(a_file, block_size=10000):
         yield block
 
 
-def write_dict_to_csv(culture_dict, file_name):
+def write_dict_to_csv(culture_dict, file_name: str):
     """write the expanded dictionary to a csv file, each dimension is a column, the header includes dimension names
 
     Arguments:
@@ -134,7 +134,7 @@ def write_dict_to_csv(culture_dict, file_name):
         file_name {str} -- where to save the csv file?
     """
     pd.DataFrame.from_dict(culture_dict, orient="index").transpose().to_csv(
-        file_name, index=None
+        file_name, index=False
     )
 
 
@@ -193,6 +193,7 @@ def calculate_doc_freq_dict(corpus):
 # --------------------------------------------------------------------------
 
 def l1_sentence_to_doc_level_corpus(sent_corpus_file, sent_id_file,
+                                    charset_error_encoding,
                                     path_save_sent_corpus_file=None,
                                     path_save_sent_id_file=None
                                     ):
@@ -202,13 +203,13 @@ def l1_sentence_to_doc_level_corpus(sent_corpus_file, sent_id_file,
     Arguments:
         sent_corpus_file {str or Path} -- The sentence corpus after parsing and cleaning, each line is a sentence
         sent_id_file {str or Path} -- The sentence ID file, each line correspond to a line in the sent_co(docID_sentenceID)
-
+        charset_error_encoding {str} -- the encoding of the file if charset find nothing, default is utf-8
     Returns:
         [str], [str], int -- a tuple of a list of documents, a list of document IDs, and the number of documents
     """
     # sentence level corpus
-    sent_corpus = file_to_list(sent_corpus_file)
-    sent_IDs = file_to_list(sent_id_file)
+    sent_corpus = file_to_list(sent_corpus_file, charset_error_encoding)
+    sent_IDs = file_to_list(sent_id_file, charset_error_encoding)
     assert len(sent_IDs) == len(sent_corpus)
 
     # doc id for each sentence

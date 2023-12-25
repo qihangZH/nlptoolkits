@@ -8,7 +8,7 @@ gensim>=3.7.2
 pathos
 openai
 wordninja
-chardet
+charset_normalizer
 setuptools
 html2text
 bitermplus

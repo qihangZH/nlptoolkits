@@ -15,7 +15,7 @@ Anchored by Wall Street in the Financial District of Lower Manhattan, New York C
 New York City has been described as the cultural, financial, and media capital of the world, significantly influencing commerce, entertainment, research, technology, education, politics, tourism, art, fashion, and sports.
 If the New York metropolitan area were a sovereign state, it would have the eighth-largest economy in the world.
 """
-from nlptoolkits.StanzaKits.PipeLineT import PipeLineParser
+from nlptoolkits.StanzaKits.PipeLineT import PipeLineAnnotator
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -36,7 +36,7 @@ Many districts and landmarks in New York City are well known, including three of
 """
 
 # Split the document into sentences
-sentences = [j for i in PipeLineParser([document]).raw_sentences for j in i]
+sentences = [j for i in PipeLineAnnotator([document]).raw_sentences for j in i]
 print("Num sentences:", len(sentences))
 
 # Compute the sentence embeddings
