@@ -4,38 +4,57 @@ from stanza.server import CoreNLPClient
 import typing
 
 
-class _ParserBasic:
+class _AnnotatorBasic:
 
     def __init__(self,
-                 parsing_choices: typing.Iterable[str],
-                 mwe_dep_types: set
+                 annotation_choices: typing.Iterable[str],
+                 mwe_dep_types: set,
+                 pos_tag_label: str,
+                 ner_tag_label: str,
+                 compounding_sep_string: str,
+                 token_sep_string: str
                  ):
         """
         parse the sentence with NER tagging and MWEs concatenated, etc
-        For example: Rickey Hall -> [NER:PERSON]Rickey[pos:NNP]_Hall[pos:NNP]
+        For example: Rickey Hall -> [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
         :param mwe_dep_types: a list of MWEs in Universal Dependencies v1: set(["mwe", "compound", "compound:prt"])
-        :param parsing_choices: a list of parsing choices. The order is not important.
+        :param annotation_choices: a list of parsing choices. The order is not important.
             Here is the explaination of each element:
             **'Lemmatize'**: lemmatize the word, for example, wanted -> want
-            **'POStags'**: add POS tags to the word **IN SUFFIX**, for example, want -> want[pos:VB]
-                see https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html for detail.
+            **'POStags'**: add POS tags to the word **IN SUFFIX**, for example, want -> want[{self.pos_tag_label}:VB]
+                see https://erwinkomen.ruhosting.nl/eng/2014_Longdale-Labels.htm for detail.
                 Besides, other 12 kinds of punctuations are not list in penn treebank pos. Like `,:#
             **'NERtags'**: add NER tags to the word *IN PREFIX*,
-                for example, Stanford University -> [NER:ORGANIZATION]Stanford_University
+                for example, Stanford University -> [{self.ner_tag_label}:ORGANIZATION]Stanford_University
+                For English, by default, this annotator recognizes named (PERSON, LOCATION, ORGANIZATION, MISC),
+                numerical (MONEY, NUMBER, ORDINAL, PERCENT),
+                and temporal (DATE, TIME, DURATION, SET) entities (12 classes).
             **'DepParseMWECompounds'**: use dep parsing to concatenate MWEs and compounds, for example, go to -> go_to.
                                     If you want use this function, you have to set mwe_dep_types.
                                     like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
+        :param pos_tag_label: the POS tag used in the output
+        :param ner_tag_label: the NER tag used in the output
+        :param compounding_sep_string: the separator string used to concatenate MWEs and compounds
+        :param token_sep_string: the separator string used to separate tokens
         """
+        self.annotation_choices_all = {'Lemmatize', 'POStags', 'NERtags', 'DepParseMWECompounds'}
+
+        if set([i for i in annotation_choices]).issubset(self.annotation_choices_all):
+            self.annotation_choices = annotation_choices
+        else:
+            raise ValueError(f'parsing choices must be subset of {self.annotation_choices_all}')
+
         self.mwe_dep_types = mwe_dep_types
         if not isinstance(mwe_dep_types, set):
             raise ValueError('mwe dep types must be set!')
 
-        self.parsing_choices_all = {'Lemmatize', 'POStags', 'NERtags', 'DepParseMWECompounds'}
+        self.pos_tag_label = pos_tag_label
 
-        if set([i for i in parsing_choices]).issubset(self.parsing_choices_all):
-            self.parsing_choices = parsing_choices
-        else:
-            raise ValueError(f'parsing choices must be subset of {self.parsing_choices_all}')
+        self.ner_tag_label = ner_tag_label
+
+        self.compounding_sep_string = compounding_sep_string
+
+        self.token_sep_string = token_sep_string
 
     def sentence_mwe_finder(self, sentence_ann):
         """Find the edges between words that are MWEs
@@ -103,7 +122,7 @@ class _ParserBasic:
             edges {[[a,b], [c,d]...]} -- a list of edges using tokenBeginIndex; a <= b.
 
         Returns:
-            [a, c, ...] -- a list of edge sources, edges always go from word_i to word_i+1
+            {a, c, ...} -- a list of edge sources, edges always go from word_i to word_i+1
         """
         edge_sources = set([])  # edge that connects next token
         for e in edges:
@@ -132,17 +151,17 @@ class _ParserBasic:
         # ----------------------------------------------------------------------------------------------
         # OPTION: DepParseMWECompounds
         # ----------------------------------------------------------------------------------------------
-        if 'DepParseMWECompounds' in self.parsing_choices:
+        if 'DepParseMWECompounds' in self.annotation_choices:
             # if mwe/compound is in choices then give a list of edges, else []
             mwe_edge_sources = self.edge_simplifier(self.sentence_mwe_finder(sentence_ann))
         else:
-            mwe_edge_sources = {}
+            mwe_edge_sources = set([])
 
         # ----------------------------------------------------------------------------------------------
         # OPTION: NERtags
         # ----------------------------------------------------------------------------------------------
 
-        if 'NERtags' in self.parsing_choices:
+        if 'NERtags' in self.annotation_choices:
             # NE_edges can span more than two words or self-pointing
             NE_edges, NE_types = self.sentence_NE_finder(sentence_ann)
             # For tagging NEs
@@ -164,54 +183,76 @@ class _ParserBasic:
             # OPTION: Lemmatize
             # ----------------------------------------------------------------------------------------------
 
-            token_lemma = t.lemma if 'Lemmatize' in self.parsing_choices else t.originalText
+            token_lemma = t.lemma if 'Lemmatize' in self.annotation_choices else t.originalText
 
             # ----------------------------------------------------------------------------------------------
             # OPTION: POStags
             # ----------------------------------------------------------------------------------------------
 
             token_lemma_postags = token_lemma \
-                if 'POStags' not in self.parsing_choices else "{}[pos:{}]".format(token_lemma, t.pos)
+                if 'POStags' not in self.annotation_choices else f"{token_lemma}[{self.pos_tag_label}:{t.pos}]"
 
             # ----------------------------------------------------------------------------------------------
-            # OPTION: DepParseMWECompounds
+            # OPTION: DepParseMWECompounds, NERtags(NER is a kind of MWE too)
             # ----------------------------------------------------------------------------------------------
 
             # concate MWEs
             if t.tokenBeginIndex not in mwe_edge_sources:
-                token_lemma_postags = token_lemma_postags + " "
+                token_lemma_postags = token_lemma_postags + self.token_sep_string
             else:
-                token_lemma_postags = token_lemma_postags + "_"
+                # token_lemma_postags = token_lemma_postags + "_"
+                token_lemma_postags = token_lemma_postags + self.compounding_sep_string
             # Add NE tags
             if t.tokenBeginIndex in NE_BeginIndices:
                 if t.ner != "O":
                     # Only add tag if the word itself is an entity.
                     # (If a Pronoun refers to an entity, mention will also tag it.)
-                    token_lemma_postags = "[NER:{}]".format(NE_types[NE_j]) + token_lemma_postags
+                    token_lemma_postags = f"[{self.ner_tag_label}:{NE_types[NE_j]}]" + token_lemma_postags
                     NE_j += 1
             sentence_parsed.append(token_lemma_postags)
         return "".join(sentence_parsed)
 
 
-class DocParser(_ParserBasic):
-    def __init__(self, client, parsing_choices: typing.Iterable[str], mwe_dep_types: set):
+class DocAnnotator(_AnnotatorBasic):
+    def __init__(self,
+                 client,
+                 annotation_choices: typing.Iterable[str],
+                 mwe_dep_types: set,
+                 pos_tag_label: str,
+                 ner_tag_label: str,
+                 compounding_sep_string: str,
+                 token_sep_string: str
+                 ):
         """
-        parser of document using stanza/stanford core nlp client, No-parallel version
+        parse the sentence with NER tagging and MWEs concatenated, etc
+        For example: Rickey Hall -> [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
         :param mwe_dep_types: a list of MWEs in Universal Dependencies v1: set(["mwe", "compound", "compound:prt"])
-        :param parsing_choices: a list of parsing choices. The order is not important.
+        :param annotation_choices: a list of parsing choices. The order is not important.
             Here is the explaination of each element:
             **'Lemmatize'**: lemmatize the word, for example, wanted -> want
-            **'POStags'**: add POS tags to the word **IN SUFFIX**, for example, want -> want[pos:VB]
-                see https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html for detail.
+            **'POStags'**: add POS tags to the word **IN SUFFIX**, for example, want -> want[{self.pos_tag_label}:VB]
+                see https://erwinkomen.ruhosting.nl/eng/2014_Longdale-Labels.htm for detail.
                 Besides, other 12 kinds of punctuations are not list in penn treebank pos. Like `,:#
             **'NERtags'**: add NER tags to the word *IN PREFIX*,
-                for example, Stanford University -> [NER:ORGANIZATION]Stanford_University
+                for example, Stanford University -> [{self.ner_tag_label}:ORGANIZATION]Stanford_University
+                For English, by default, this annotator recognizes named (PERSON, LOCATION, ORGANIZATION, MISC),
+                numerical (MONEY, NUMBER, ORDINAL, PERCENT),
+                and temporal (DATE, TIME, DURATION, SET) entities (12 classes).
             **'DepParseMWECompounds'**: use dep parsing to concatenate MWEs and compounds, for example, go to -> go_to.
                                     If you want use this function, you have to set mwe_dep_types.
                                     like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
+        :param pos_tag_label: the POS tag used in the output, default "POS", finally will become "[POS:...]"
+        :param ner_tag_label: the NER tag used in the output, default "NER", finally will become "[{self.ner_tag_label}:...]"
+        :param compounding_sep_string: the separator string used to concatenate MWEs and compounds, default "[SEP]"
+        :param token_sep_string: the separator string used to separate tokens, default " "
         """
-        super().__init__(parsing_choices=parsing_choices,
-                         mwe_dep_types=mwe_dep_types)
+        super().__init__(annotation_choices=annotation_choices,
+                         mwe_dep_types=mwe_dep_types,
+                         pos_tag_label=pos_tag_label,
+                         ner_tag_label=ner_tag_label,
+                         compounding_sep_string=compounding_sep_string,
+                         token_sep_string=token_sep_string
+                         )
         self.client = client
 
     def parse_line_to_sentences(self, doc, doc_id):
@@ -233,24 +274,45 @@ class DocParser(_ParserBasic):
         return sentences_processed, doc_ids
 
 
-class DocParserParallel(_ParserBasic):
-    def __init__(self, parsing_choices: typing.Iterable[str], mwe_dep_types: set):
+class DocAnnotatorParallel(_AnnotatorBasic):
+    def __init__(self,
+                 annotation_choices: typing.Iterable[str],
+                 mwe_dep_types: set,
+                 pos_tag_label: str,
+                 ner_tag_label: str,
+                 compounding_sep_string: str,
+                 token_sep_string: str
+                 ):
         """
-        parser of document using stanza/stanford core nlp client, parallel version
+        parse the sentence with NER tagging and MWEs concatenated, etc
+        For example: Rickey Hall -> [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
         :param mwe_dep_types: a list of MWEs in Universal Dependencies v1: set(["mwe", "compound", "compound:prt"])
-        :param parsing_choices: a list of parsing choices. The order is not important.
+        :param annotation_choices: a list of parsing choices. The order is not important.
             Here is the explaination of each element:
             **'Lemmatize'**: lemmatize the word, for example, wanted -> want
-            **'POStags'**: add POS tags to the word **IN SUFFIX**, for example, want -> want[pos:VB]
-                see https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html for detail.
+            **'POStags'**: add POS tags to the word **IN SUFFIX**, for example, want -> want[{self.pos_tag_label}:VB]
+                see https://erwinkomen.ruhosting.nl/eng/2014_Longdale-Labels.htm for detail.
                 Besides, other 12 kinds of punctuations are not list in penn treebank pos. Like `,:#
             **'NERtags'**: add NER tags to the word *IN PREFIX*,
-                for example, Stanford University -> [NER:ORGANIZATION]Stanford_University
+                for example, Stanford University -> [{self.ner_tag_label}:ORGANIZATION]Stanford_University
+                For English, by default, this annotator recognizes named (PERSON, LOCATION, ORGANIZATION, MISC),
+                numerical (MONEY, NUMBER, ORDINAL, PERCENT),
+                and temporal (DATE, TIME, DURATION, SET) entities (12 classes).
             **'DepParseMWECompounds'**: use dep parsing to concatenate MWEs and compounds, for example, go to -> go_to.
                                     If you want use this function, you have to set mwe_dep_types.
                                     like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
+        :param pos_tag_label: the POS tag used in the output, default "POS", finally will become "[POS:...]"
+        :param ner_tag_label: the NER tag used in the output, default "NER", finally will become "[{self.ner_tag_label}:...]"
+        :param compounding_sep_string: the separator string used to concatenate MWEs and compounds, default "[SEP]"
+        :param token_sep_string: the separator string used to separate tokens, default " "
         """
-        super().__init__(parsing_choices=parsing_choices, mwe_dep_types=mwe_dep_types)
+        super().__init__(annotation_choices=annotation_choices,
+                         mwe_dep_types=mwe_dep_types,
+                         pos_tag_label=pos_tag_label,
+                         ner_tag_label=ner_tag_label,
+                         compounding_sep_string=compounding_sep_string,
+                         token_sep_string=token_sep_string
+                         )
 
     def parse_line_to_sentences(self, doc, doc_id, corenlp_endpoint: str):
         """
