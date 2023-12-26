@@ -57,7 +57,7 @@ def sentence_bigram_fit_transform_txt(path_input_clean_txt,
                                       path_output_transformed_txt,
                                       path_output_model_mod,
                                       phrase_min_length: int,
-                                      stopwords_set,
+                                      connection_words,
                                       threshold=None,
                                       scoring="original_scorer"
                                       ):
@@ -71,7 +71,7 @@ def sentence_bigram_fit_transform_txt(path_input_clean_txt,
         path_output_transformed_txt:
         path_output_model_mod:
         phrase_min_length:
-        stopwords_set:
+        connection_words:
         threshold:
         scoring:
 
@@ -89,7 +89,7 @@ def sentence_bigram_fit_transform_txt(path_input_clean_txt,
         model_path=path_output_model_mod,
         phrase_min_length=phrase_min_length,
         phrase_threshold=threshold,
-        stopwords_set=stopwords_set
+        connector_words=connection_words
     )
     _sentence_file_bigram(
         input_path=path_input_clean_txt,

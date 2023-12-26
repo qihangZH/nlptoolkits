@@ -11,12 +11,16 @@ class _AnnotatorBasic:
                  mwe_dep_types: set,
                  pos_tag_label: str,
                  ner_tag_label: str,
+                 sentiment_tag_label: str,
                  compounding_sep_string: str,
                  token_sep_string: str
                  ):
         """
         parse the sentence with NER tagging and MWEs concatenated, etc
-        For example: Rickey Hall -> [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
+        For example: Rickey Hall ->
+        [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
+        Moreover, if sentiment is choosed, then the output will be:
+        [{self.sentiment_tag_label}:2] [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
         :param mwe_dep_types: a list of MWEs in Universal Dependencies v1: set(["mwe", "compound", "compound:prt"])
         :param annotation_choices: a list of parsing choices. The order is not important.
             Here is the explaination of each element:
@@ -30,14 +34,17 @@ class _AnnotatorBasic:
                 numerical (MONEY, NUMBER, ORDINAL, PERCENT),
                 and temporal (DATE, TIME, DURATION, SET) entities (12 classes).
             **'DepParseMWECompounds'**: use dep parsing to concatenate MWEs and compounds, for example, go to -> go_to.
-                                    If you want use this function, you have to set mwe_dep_types.
-                                    like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
+                If you want use this function, you have to set mwe_dep_types.
+                like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
+            **SentenceSentiment**: add sentence sentiment to the sentence, if use, then 'sentiment' have to be added to
+                stanford corenlp client pipeline choices.
         :param pos_tag_label: the POS tag used in the output
         :param ner_tag_label: the NER tag used in the output
+        :param sentiment_tag_label: the sentiment tag used in the output
         :param compounding_sep_string: the separator string used to concatenate MWEs and compounds
         :param token_sep_string: the separator string used to separate tokens
         """
-        self.annotation_choices_all = {'Lemmatize', 'POStags', 'NERtags', 'DepParseMWECompounds'}
+        self.annotation_choices_all = {'Lemmatize', 'POStags', 'NERtags', 'DepParseMWECompounds', 'SentenceSentiment'}
 
         if set([i for i in annotation_choices]).issubset(self.annotation_choices_all):
             self.annotation_choices = annotation_choices
@@ -51,6 +58,8 @@ class _AnnotatorBasic:
         self.pos_tag_label = pos_tag_label
 
         self.ner_tag_label = ner_tag_label
+
+        self.sentiment_tag_label = sentiment_tag_label
 
         self.compounding_sep_string = compounding_sep_string
 
@@ -189,8 +198,8 @@ class _AnnotatorBasic:
             # OPTION: POStags
             # ----------------------------------------------------------------------------------------------
 
-            token_lemma_postags = token_lemma \
-                if 'POStags' not in self.annotation_choices else f"{token_lemma}[{self.pos_tag_label}:{t.pos}]"
+            token_lemma_postags = f"{token_lemma}[{self.pos_tag_label}:{t.pos}]" \
+                if 'POStags' in self.annotation_choices else token_lemma
 
             # ----------------------------------------------------------------------------------------------
             # OPTION: DepParseMWECompounds, NERtags(NER is a kind of MWE too)
@@ -210,22 +219,38 @@ class _AnnotatorBasic:
                     token_lemma_postags = f"[{self.ner_tag_label}:{NE_types[NE_j]}]" + token_lemma_postags
                     NE_j += 1
             sentence_parsed.append(token_lemma_postags)
-        return "".join(sentence_parsed)
+
+        processed_sentence = "".join(sentence_parsed)
+
+        # ----------------------------------------------------------------------------------------------
+        # OPTION: SentenceSentiment
+        # ----------------------------------------------------------------------------------------------
+        if 'SentenceSentiment' in self.annotation_choices:
+            sentence_sentiment = sentence_ann.sentiment
+            processed_sentence = f"[{self.sentiment_tag_label}:{sentence_sentiment}]" + \
+                                 self.token_sep_string + \
+                                 processed_sentence
+
+        return processed_sentence
 
 
-class DocAnnotator(_AnnotatorBasic):
+class LineAnnotator(_AnnotatorBasic):
     def __init__(self,
                  client,
                  annotation_choices: typing.Iterable[str],
                  mwe_dep_types: set,
                  pos_tag_label: str,
                  ner_tag_label: str,
+                 sentiment_tag_label: str,
                  compounding_sep_string: str,
                  token_sep_string: str
                  ):
         """
         parse the sentence with NER tagging and MWEs concatenated, etc
-        For example: Rickey Hall -> [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
+        For example: Rickey Hall ->
+        [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
+        Moreover, if sentiment is choosed, then the output will be:
+        [{self.sentiment_tag_label}:2] [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
         :param mwe_dep_types: a list of MWEs in Universal Dependencies v1: set(["mwe", "compound", "compound:prt"])
         :param annotation_choices: a list of parsing choices. The order is not important.
             Here is the explaination of each element:
@@ -239,10 +264,13 @@ class DocAnnotator(_AnnotatorBasic):
                 numerical (MONEY, NUMBER, ORDINAL, PERCENT),
                 and temporal (DATE, TIME, DURATION, SET) entities (12 classes).
             **'DepParseMWECompounds'**: use dep parsing to concatenate MWEs and compounds, for example, go to -> go_to.
-                                    If you want use this function, you have to set mwe_dep_types.
-                                    like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
-        :param pos_tag_label: the POS tag used in the output, default "POS", finally will become "[POS:...]"
-        :param ner_tag_label: the NER tag used in the output, default "NER", finally will become "[{self.ner_tag_label}:...]"
+                If you want use this function, you have to set mwe_dep_types.
+                like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
+            **SentenceSentiment**: add sentence sentiment to the sentence, if use, then 'sentiment' have to be added to
+                stanford corenlp client pipeline choices.
+        :param pos_tag_label: the POS tag used in the output
+        :param ner_tag_label: the NER tag used in the output
+        :param sentiment_tag_label: the sentiment tag used in the output
         :param compounding_sep_string: the separator string used to concatenate MWEs and compounds, default "[SEP]"
         :param token_sep_string: the separator string used to separate tokens, default " "
         """
@@ -250,6 +278,7 @@ class DocAnnotator(_AnnotatorBasic):
                          mwe_dep_types=mwe_dep_types,
                          pos_tag_label=pos_tag_label,
                          ner_tag_label=ner_tag_label,
+                         sentiment_tag_label=sentiment_tag_label,
                          compounding_sep_string=compounding_sep_string,
                          token_sep_string=token_sep_string
                          )
@@ -274,18 +303,22 @@ class DocAnnotator(_AnnotatorBasic):
         return sentences_processed, doc_ids
 
 
-class DocAnnotatorParallel(_AnnotatorBasic):
+class LineAnnotatorParallel(_AnnotatorBasic):
     def __init__(self,
                  annotation_choices: typing.Iterable[str],
                  mwe_dep_types: set,
                  pos_tag_label: str,
                  ner_tag_label: str,
+                 sentiment_tag_label: str,
                  compounding_sep_string: str,
                  token_sep_string: str
                  ):
         """
         parse the sentence with NER tagging and MWEs concatenated, etc
-        For example: Rickey Hall -> [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
+        For example: Rickey Hall ->
+        [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
+        Moreover, if sentiment is choosed, then the output will be:
+        [{self.sentiment_tag_label}:2] [{self.ner_tag_label}:PERSON]Rickey[{self.pos_tag_label}:NNP]_Hall[{self.pos_tag_label}:NNP]
         :param mwe_dep_types: a list of MWEs in Universal Dependencies v1: set(["mwe", "compound", "compound:prt"])
         :param annotation_choices: a list of parsing choices. The order is not important.
             Here is the explaination of each element:
@@ -299,10 +332,13 @@ class DocAnnotatorParallel(_AnnotatorBasic):
                 numerical (MONEY, NUMBER, ORDINAL, PERCENT),
                 and temporal (DATE, TIME, DURATION, SET) entities (12 classes).
             **'DepParseMWECompounds'**: use dep parsing to concatenate MWEs and compounds, for example, go to -> go_to.
-                                    If you want use this function, you have to set mwe_dep_types.
-                                    like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
-        :param pos_tag_label: the POS tag used in the output, default "POS", finally will become "[POS:...]"
-        :param ner_tag_label: the NER tag used in the output, default "NER", finally will become "[{self.ner_tag_label}:...]"
+                If you want use this function, you have to set mwe_dep_types.
+                like mwe_dep_types: set = set(["mwe", "compound", "compound:prt"])
+            **SentenceSentiment**: add sentence sentiment to the sentence, if use, then 'sentiment' have to be added to
+                stanford corenlp client pipeline choices.
+        :param pos_tag_label: the POS tag used in the output
+        :param ner_tag_label: the NER tag used in the output
+        :param sentiment_tag_label: the sentiment tag used in the output
         :param compounding_sep_string: the separator string used to concatenate MWEs and compounds, default "[SEP]"
         :param token_sep_string: the separator string used to separate tokens, default " "
         """
@@ -310,6 +346,7 @@ class DocAnnotatorParallel(_AnnotatorBasic):
                          mwe_dep_types=mwe_dep_types,
                          pos_tag_label=pos_tag_label,
                          ner_tag_label=ner_tag_label,
+                         sentiment_tag_label=sentiment_tag_label,
                          compounding_sep_string=compounding_sep_string,
                          token_sep_string=token_sep_string
                          )

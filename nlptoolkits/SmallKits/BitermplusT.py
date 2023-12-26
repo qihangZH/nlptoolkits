@@ -1,5 +1,4 @@
 import bitermplus as btm
-import numpy as np
 import pandas as pd
 
 

@@ -59,7 +59,7 @@ def train_tfidf_model_dictmod(text_list, path_output_dictionary=None, path_outpu
     return dictionary, tfidf_model
 
 
-def train_sentence_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, stopwords_set):
+def train_sentence_bigram_model(input_path, model_path, phrase_min_length, phrase_threshold, connector_words):
     """ Train a phrase model and save it to the disk.
 
     Arguments:
@@ -81,7 +81,7 @@ def train_sentence_bigram_model(input_path, model_path, phrase_min_length, phras
         min_count=phrase_min_length,
         scoring="default",
         threshold=phrase_threshold,
-        common_terms=stopwords_set,
+        connector_words=connector_words,
     )
     bigram_model.save(str(model_path))
     return bigram_model

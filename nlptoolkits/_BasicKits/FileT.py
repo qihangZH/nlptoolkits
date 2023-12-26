@@ -7,6 +7,7 @@ import re
 import tqdm
 import base64
 import gzip
+import typing
 from collections import defaultdict
 from . import _BasicFuncT
 
@@ -249,7 +250,7 @@ def l1_process_largefile(
         path_input_txt,
         path_output_txt,
         input_index_list,
-        path_output_index_txt,
+        path_output_index_txt: typing.Optional[str],
         process_line_func,
         chunk_size=100,
         start_iloc=None,
@@ -330,7 +331,7 @@ def l1_mp_process_largefile(
         path_input_txt,
         path_output_txt,
         input_index_list,
-        path_output_index_txt,
+        path_output_index_txt: typing.Optional[str],
         process_line_func,
         processes: int,
         chunk_size=100,

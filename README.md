@@ -38,9 +38,6 @@ IF any resource error: try:
 This version do not show so much errors.
 
 
-
-
-
 ### tesseract
 If you want to use OCR, then you have to make sure this app is already download and config in python.
 nlptoolkit contain a light function, but you could use PyMupdf(Fitz) or other methods.
@@ -63,7 +60,7 @@ properly or not, the server will be closed properly.
 Kill the process in force will cause the server not be closed properly and cause the port be occupied.
 
 If you really want to use a non-killed server, you can set the 
-```nlptoolkits.StanzaKits.CoreNLPServerPack.auto_doc_to_sentences_parser``` 's kwargs ```start_server``` argument from
+```nlptoolkits.StanzaKits.CoreNLPServerPack.auto_doc_to_sentences_annotator``` 's kwargs ```start_server``` argument from
 ```stanza.server.StartServer.FORCE_START``` to ```stanza.server.StartServer.TRY_START```, then the server will be
 run on non-killed server. But I do not recommend that.
 

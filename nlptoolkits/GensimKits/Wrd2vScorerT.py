@@ -380,7 +380,8 @@ class DocScorer:
     def __init__(self, path_current_dict,
                  path_trainw2v_sentences_dataset_txt,
                  path_trainw2v_sentences_dataset_index_txt,
-                 processes
+                 processes,
+                 charset_error_encoding
                  ):
         """
         Args:
@@ -406,7 +407,8 @@ class DocScorer:
         self.sent_id_file = path_trainw2v_sentences_dataset_index_txt
 
         self.doc_corpus, self.doc_ids, self.N_doc = \
-            _BasicKits.FileT.l1_sentence_to_doc_level_corpus(self.sent_corpus_file, self.sent_id_file)
+            _BasicKits.FileT.l1_sentence_to_doc_level_corpus(self.sent_corpus_file, self.sent_id_file,
+                                                             charset_error_encoding=charset_error_encoding)
 
         """create doc freq dict"""
         self.doc_freq_dict = _BasicKits.FileT.calculate_doc_freq_dict(self.doc_corpus)
