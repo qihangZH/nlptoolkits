@@ -14,7 +14,8 @@ def train_w2v_model(path_input_sentence_txt, path_output_model=None, *args, **kw
     """
     # pathlib.Path(path_output_model).parent.mkdir(parents=True, exist_ok=True)
     corpus_confcall = gensim.models.word2vec.PathLineSentences(
-        str(path_input_sentence_txt), max_sentence_length=10000000
+        # str(path_input_sentence_txt), max_sentence_length=10000000
+        str(path_input_sentence_txt)
     )
     model = gensim.models.Word2Vec(corpus_confcall, *args, **kwargs)
 

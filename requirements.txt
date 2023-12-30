@@ -4,7 +4,8 @@ pyarrow
 tqdm
 scikit_learn>=0.22.1
 stanza>=1.5
-gensim>=3.7.2
+# gensim>=3.7.2
+gensim>4.0.0
 pathos
 openai
 wordninja

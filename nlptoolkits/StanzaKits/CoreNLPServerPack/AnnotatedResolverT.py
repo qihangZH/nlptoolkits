@@ -5,6 +5,7 @@ import numpy as np
 import warnings
 
 from . import _GlobalArgs
+# import _GlobalArgs
 
 
 class _AnnotatedLineResolver:
@@ -162,7 +163,7 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
                  restruct_compounding_sep_string: str,
                  restruct_token_sep_string: str,
                  full_token_compose_restriction: typing.Optional[str],
-                 token_ner_tags_num_restriction: typing.Optional[int],
+                 token_remove_ner_tags_to_lessequal_then_num: typing.Optional[int],
                  remove_stopwords_set: typing.Optional[set],
                  remove_punctuations_set: typing.Optional[set],
                  remove_token_lessequal_then_length: typing.Optional[int],
@@ -192,7 +193,7 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
             'contains_number': the full token must contains number
             'contains_alphabet_and_number': the full token must contains alphabet and number
             ELSE, the full token will be ignore and passed.
-        :param token_ner_tags_num_restriction: int or None, the restriction of full token NER tags number, if None then do nothing
+        :param token_remove_ner_tags_to_lessequal_then_num: int or None, the restriction of full token NER tags number, if None then do nothing
             This option if for situation when several NERs are in one token: [ner:duration]_[ner:duration]
             Actually the first one delegate the meaning so we can remove the second one. Vice versa.
             <It is recommend to use 1>
@@ -274,9 +275,11 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
             )
 
         # token_ner_tags_num_restriction
-        if isinstance(token_ner_tags_num_restriction, int):
-            self.token_ner_tags_num_restriction = token_ner_tags_num_restriction
-        elif not token_ner_tags_num_restriction:
+        if isinstance(token_remove_ner_tags_to_lessequal_then_num, bool):
+            raise ValueError('token_ner_tags_num_restriction must be int or None')
+        elif isinstance(token_remove_ner_tags_to_lessequal_then_num, int):
+            self.token_ner_tags_num_restriction = token_remove_ner_tags_to_lessequal_then_num
+        elif not token_remove_ner_tags_to_lessequal_then_num:
             self.token_ner_tags_num_restriction = None
         else:
             raise ValueError('token_ner_tags_num_restriction must be int or None')
@@ -298,6 +301,8 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
             raise ValueError('remove_punctuations_set must be set or None')
 
         # remove_token_lessequal_then_length
+        if isinstance(remove_token_lessequal_then_length, bool):
+            raise ValueError('remove_token_lessequal_then_length must be int or None')
         if isinstance(remove_token_lessequal_then_length, int):
             self.remove_token_lessequal_then_length = remove_token_lessequal_then_length
         elif not remove_token_lessequal_then_length:
@@ -317,7 +322,7 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
                 iter(v)
 
                 if isinstance(v, str):
-                    if not v == self._tag_remove_conserve_word:
+                    if v != self._tag_remove_conserve_word:
                         raise ValueError(f'the values of remove_ner_options_dict must be '
                                          f'{self._tag_remove_conserve_word} or ArrayLike')
                     else:
@@ -326,6 +331,14 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
                 if not set([i.upper() for i in v]).issubset(_GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET):
                     warnings.warn(f'remove_ner_options_dict values SHOULD be in '
                                   f'{_GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET}, '
+                                  f'going on if you know what you are doing.')
+
+                if len(set([i.upper() for i in v]).intersection(_GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET)) != \
+                        len(set([i for i in v]).intersection(_GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET)):
+                    warnings.warn(f'Some of remove_ner_options_dict values ARE IN'
+                                  f'{_GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET}, '
+                                  f'BUT SOME ARE NOT IN SAME CASE AS it(may lower or camel, snake case, etc.'
+                                  f'Be aware, This class always run in CASE INSENSITIVE MODE,'
                                   f'going on if you know what you are doing.')
 
         elif not remove_ner_options_dict:
@@ -345,7 +358,7 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
                 iter(v)
 
                 if isinstance(v, str):
-                    if not v == self._tag_remove_conserve_word:
+                    if v != self._tag_remove_conserve_word:
                         raise ValueError(f'the values of remove_pos_options_dict must be '
                                          f'{self._tag_remove_conserve_word} or ArrayLike')
                     else:
@@ -354,6 +367,14 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
                 if not set([i.upper() for i in v]).issubset(_GlobalArgs.POS_PENN_TREE_BANK_TAGS_UPPER_SET):
                     warnings.warn(f'remove_pos_options_dict values SHOULD be in '
                                   f'{_GlobalArgs.POS_PENN_TREE_BANK_TAGS_UPPER_SET}, '
+                                  f'going on if you know what you are doing.')
+
+                if len(set([i.upper() for i in v]).intersection(_GlobalArgs.POS_PENN_TREE_BANK_TAGS_UPPER_SET)) != \
+                        len(set([i for i in v]).intersection(_GlobalArgs.POS_PENN_TREE_BANK_TAGS_UPPER_SET)):
+                    warnings.warn(f'Some of remove_pos_options_dict values ARE IN'
+                                  f'{_GlobalArgs.POS_PENN_TREE_BANK_TAGS_UPPER_SET}, '
+                                  f'BUT SOME ARE NOT IN SAME CASE AS it(may lower or camel, snake case, etc.'
+                                  f'Be aware, This class always run in CASE INSENSITIVE MODE,'
                                   f'going on if you know what you are doing.')
 
         elif not remove_pos_options_dict:
@@ -497,37 +518,43 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
         # -----------------------------------------
         # remove the token if it is full token and not meet the restriction
         # -----------------------------------------
-        _mask_m_list = list()
 
-        # make a initial matrix of ones
-        _mask_m_list.append(self._checker_ones_matrix(token_splitted_dict))
+        if not self.remove_ner_options_dict:
+            return self._checker_ones_matrix(token_splitted_dict)
 
-        for k, v in self.remove_ner_options_dict.items():
-            _mask_matrix = self._checker_ones_matrix(token_splitted_dict)
-            # from 0~max index to detect the token if be removed or not
-            for index in range(len(token_splitted_dict)):
-                token_splitted = token_splitted_dict[index]
+        else:
 
-                # if v is all
-                if v == self._tag_remove_conserve_word:
-                    # IF it is an NER tag, not None or ''
-                    if token_splitted['ner']:
-                        _mask_matrix[index:, :] = self.remove_ner_map_arr_dict[k]
+            _mask_m_list = list()
 
-                        _mask_m_list.append(_mask_matrix)
-                        continue
+            # make a initial matrix of ones
+            _mask_m_list.append(self._checker_ones_matrix(token_splitted_dict))
 
-                else:
-                    # ignore case
-                    if token_splitted['ner'].upper() in [i.upper() for i in v]:
-                        _mask_matrix[index:, :] = self.remove_ner_map_arr_dict[k]
+            for k, v in self.remove_ner_options_dict.items():
+                _mask_matrix = self._checker_ones_matrix(token_splitted_dict)
+                # from 0~max index to detect the token if be removed or not
+                for index in range(len(token_splitted_dict)):
+                    token_splitted = token_splitted_dict[index]
 
-                        _mask_m_list.append(_mask_matrix)
-                        continue
+                    # if v is all
+                    if v == self._tag_remove_conserve_word:
+                        # IF it is an NER tag, not None or ''
+                        if token_splitted['ner']:
+                            _mask_matrix[index:, :] = self.remove_ner_map_arr_dict[k]
 
-        _mask_matrix = functools.reduce(lambda x, y: x & y, _mask_m_list)
+                            _mask_m_list.append(_mask_matrix)
+                            continue
 
-        return _mask_matrix
+                    else:
+                        # ignore case
+                        if token_splitted['ner'].upper() in [i.upper() for i in v]:
+                            _mask_matrix[index:, :] = self.remove_ner_map_arr_dict[k]
+
+                            _mask_m_list.append(_mask_matrix)
+                            continue
+
+            _mask_matrix = functools.reduce(lambda x, y: x & y, _mask_m_list)
+
+            return _mask_matrix
 
     def remove_pos_checker(self, token_splitted_dict):
         """
@@ -537,33 +564,37 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
         # -----------------------------------------
         # remove the token if it is full token and not meet the restriction
         # -----------------------------------------
-        _mask_m_list = list()
 
-        # make a initial matrix of ones
-        _mask_m_list.append(self._checker_ones_matrix(token_splitted_dict))
+        if not self.remove_pos_options_dict:
+            return self._checker_ones_matrix(token_splitted_dict)
+        else:
+            _mask_m_list = list()
 
-        for k, v in self.remove_pos_options_dict.items():
-            _mask_matrix = self._checker_ones_matrix(token_splitted_dict)
-            # from 0~max index to detect the token if be removed or not
-            for index in range(len(token_splitted_dict)):
-                token_splitted = token_splitted_dict[index]
+            # make a initial matrix of ones
+            _mask_m_list.append(self._checker_ones_matrix(token_splitted_dict))
 
-                # if v is all
-                if v == self._tag_remove_conserve_word:
-                    # IF it is an POS tag, not None or ''
-                    if token_splitted['pos']:
-                        _mask_matrix[index, :] = self.remove_pos_map_arr_dict[k]
+            for k, v in self.remove_pos_options_dict.items():
+                _mask_matrix = self._checker_ones_matrix(token_splitted_dict)
+                # from 0~max index to detect the token if be removed or not
+                for index in range(len(token_splitted_dict)):
+                    token_splitted = token_splitted_dict[index]
 
-                else:
-                    # ignore case
-                    if token_splitted['pos'].upper() in [i.upper() for i in v]:
-                        _mask_matrix[index, :] = self.remove_pos_map_arr_dict[k]
+                    # if v is all
+                    if v == self._tag_remove_conserve_word:
+                        # IF it is an POS tag, not None or ''
+                        if token_splitted['pos']:
+                            _mask_matrix[index, :] = self.remove_pos_map_arr_dict[k]
 
-                _mask_m_list.append(_mask_matrix)
+                    else:
+                        # ignore case
+                        if token_splitted['pos'].upper() in [i.upper() for i in v]:
+                            _mask_matrix[index, :] = self.remove_pos_map_arr_dict[k]
 
-        _mask_matrix = functools.reduce(lambda x, y: x & y, _mask_m_list)
+                    _mask_m_list.append(_mask_matrix)
 
-        return _mask_matrix
+            _mask_matrix = functools.reduce(lambda x, y: x & y, _mask_m_list)
+
+            return _mask_matrix
 
     def annotated_tokens_checker(self, token_splitted_dict):
         """
@@ -621,8 +652,9 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
                 else:
                     token_splitted[field] = ''
 
-            restruct_token_splitted = f'{token_splitted["ner"]}{token_splitted["pos"]}' \
-                                      f'{token_splitted["original_text"]}'
+            restruct_token_splitted = f'{token_splitted["ner"]}' \
+                                      f'{token_splitted["original_text"]}' \
+                                      f'{token_splitted["pos"]}'
 
             restruct_token_splitted_list.append(
                 restruct_token_splitted
@@ -698,161 +730,158 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
         else:
             raise ValueError(f'clean_flag must be {_GlobalArgs.ANNOTATED_LINE_CLEANER_FLAGS.values()}')
 
+# class LineTextCleaner:
+#     """Clean the text parsed by CoreNLP (preprocessor)
+#     """
+#
+#     def __init__(self,
+#                  stopwords_set: set,
+#                  ner_keep_types_origin_list: typing.Optional[list] = None,
+#                  token_minlength: typing.Optional[int] = 2,
+#                  punctuations_set: set = set(["-lrb-", "-rrb-", "-lsb-", "-rsb-", "'s"]),
+#                  is_remove_no_alphabet_contains: bool = True,
+#                  ):
+#         """
+#         :param stopwords_set: stop word set to be remove
+#         :param ner_keep_types_origin_list: a name list corenlp NER types which should be keep,
+#                                             or will remove origin name and only keep NER types,
+#                                             should input None or list
+#         :param token_minlength: default 2 the minimal length of each token, else remove,
+#                                 remove all the tokens which length is less than this length
+#                                 if None then not remove
+#         :param punctuations_set: punctuation set to be remove, especially
+#         :param is_remove_no_alphabet_contains: is remove words(token) contains no alphabetic
+#
+#         """
+#         if not isinstance(stopwords_set, set):
+#             raise ValueError('stopwords_set must be set')
+#
+#         if not (
+#                 isinstance(ner_keep_types_origin_list, list) or
+#                 (ner_keep_types_origin_list is None)
+#         ):
+#             raise ValueError('ner_keep_types_origin_list must be list or None')
+#
+#         if not (
+#                 isinstance(token_minlength, int) or
+#                 (token_minlength is None)
+#         ):
+#             raise ValueError('token_minlength must be int or None')
+#
+#         if not isinstance(punctuations_set, set):
+#             raise ValueError('punctuations_set must be set')
+#
+#         if not isinstance(is_remove_no_alphabet_contains, bool):
+#             raise ValueError('is_removenum must be bool')
+#
+#         self.stopwords = stopwords_set
+#
+#         self.ner_keep_types_origin_list = ner_keep_types_origin_list if ner_keep_types_origin_list else list()
+#
+#         self.token_minlength = token_minlength
+#
+#         self.punctuations = punctuations_set if punctuations_set else set()
+#
+#         self.is_removenum = is_remove_no_alphabet_contains
+#
+#     def remove_ner(self, line):
+#         """Remove the named entity and only leave the tag
+#
+#         Arguments:
+#             line {str} -- text processed_data by the preprocessor
+#
+#         Returns:
+#             str -- text with NE replaced by NE tags,
+#             e.g. [NER:PERCENT]16_% becomes [NER:PERCENT]
+#         """
+#         # always make the line lower case
+#         line = line.lower()
+#         # remove ner for words of specific types:
+#         if self.ner_keep_types_origin_list:  # have a loop if it is not None
+#             for i in self.ner_keep_types_origin_list:
+#                 line = re.sub(rf"(\[ner:{i.lower()}\])(\S+)", r"\2", line, flags=re.IGNORECASE)
+#
+#         # update for deeper search, remove the entity name
+#         NERs = re.compile(r"(\[ner:\w+\])(\S+)", flags=re.IGNORECASE)
+#         line = re.sub(NERs, r"\1", line)
+#         return line
+#
+#     def remove_puct_num(self, line):
+#         """Remove tokens that are only numerics and puctuation marks
+#
+#         Arguments:
+#             line {str} -- text processed_data by the preprocessor
+#
+#         Returns:
+#             str -- text with stopwords, numerics, 1-letter words removed
+#         """
+#         tokens = line.strip().lower().split(" ")  # do not use nltk.tokenize here
+#         tokens = [re.sub(r"\[pos:.*?\]", "", t, flags=re.IGNORECASE) for t in tokens]
+#
+#         # these are tagged bracket and parenthesises
+#         if self.punctuations or self.stopwords:
+#             puncts_stops = (self.punctuations | self.stopwords)
+#             # filter out numerics and 1-letter words as recommend by
+#             # https://sraf.nd.edu/textual-analysis/resources/#StopWords
+#         else:
+#             puncts_stops = set()
+#
+#         def _lambda_filter_token_bool(t):
+#             """
+#             the judegement after the function is help to give
+#             """
+#             contain_alphabet = any(c.isalpha() for c in t) if self.is_removenum else True
+#             is_not_punctuation_stopwords = t not in puncts_stops
+#             is_biggerthan_minlength = len(t) >= self.token_minlength if self.token_minlength else True
+#
+#             return all([contain_alphabet, is_not_punctuation_stopwords, is_biggerthan_minlength])
+#
+#         tokens = filter(
+#             # lambda t: any(c.isalpha() for c in t)
+#             #           and (t not in puncts_stops)
+#             #           and (len(t) > 1),
+#             _lambda_filter_token_bool,
+#             tokens,
+#         )
+#         return " ".join(tokens)
+#
+#     def clean(self, line, index):
+#         """Main function that chains all filters together and applies to a string.
+#         """
+#         return (
+#             functools.reduce(
+#                 lambda obj, func: func(obj),
+#                 [self.remove_ner, self.remove_puct_num],
+#                 line,
+#             ),
+#             index,
+#         )
 
-class LineTextCleaner:
-    """Clean the text parsed by CoreNLP (preprocessor)
-    """
 
-    def __init__(self,
-                 stopwords_set: set,
-                 ner_keep_types_origin_list: typing.Optional[list] = None,
-                 token_minlength: typing.Optional[int] = 2,
-                 punctuations_set: set = set(["-lrb-", "-rrb-", "-lsb-", "-rsb-", "'s"]),
-                 is_remove_no_alphabet_contains: bool = True,
-                 ):
-        """
-        :param stopwords_set: stop word set to be remove
-        :param ner_keep_types_origin_list: a name list corenlp NER types which should be keep,
-                                            or will remove origin name and only keep NER types,
-                                            should input None or list
-        :param token_minlength: default 2 the minimal length of each token, else remove,
-                                remove all the tokens which length is less than this length
-                                if None then not remove
-        :param punctuations_set: punctuation set to be remove, especially
-        :param is_remove_no_alphabet_contains: is remove words(token) contains no alphabetic
-
-        """
-        if not isinstance(stopwords_set, set):
-            raise ValueError('stopwords_set must be set')
-
-        if not (
-                isinstance(ner_keep_types_origin_list, list) or
-                (ner_keep_types_origin_list is None)
-        ):
-            raise ValueError('ner_keep_types_origin_list must be list or None')
-
-        if not (
-                isinstance(token_minlength, int) or
-                (token_minlength is None)
-        ):
-            raise ValueError('token_minlength must be int or None')
-
-        if not isinstance(punctuations_set, set):
-            raise ValueError('punctuations_set must be set')
-
-        if not isinstance(is_remove_no_alphabet_contains, bool):
-            raise ValueError('is_removenum must be bool')
-
-        self.stopwords = stopwords_set
-
-        self.ner_keep_types_origin_list = ner_keep_types_origin_list if ner_keep_types_origin_list else list()
-
-        self.token_minlength = token_minlength
-
-        self.punctuations = punctuations_set if punctuations_set else set()
-
-        self.is_removenum = is_remove_no_alphabet_contains
-
-    def remove_ner(self, line):
-        """Remove the named entity and only leave the tag
-
-        Arguments:
-            line {str} -- text processed_data by the preprocessor
-
-        Returns:
-            str -- text with NE replaced by NE tags,
-            e.g. [NER:PERCENT]16_% becomes [NER:PERCENT]
-        """
-        # always make the line lower case
-        line = line.lower()
-        # remove ner for words of specific types:
-        if self.ner_keep_types_origin_list:  # have a loop if it is not None
-            for i in self.ner_keep_types_origin_list:
-                line = re.sub(rf"(\[ner:{i.lower()}\])(\S+)", r"\2", line, flags=re.IGNORECASE)
-
-        # update for deeper search, remove the entity name
-        NERs = re.compile(r"(\[ner:\w+\])(\S+)", flags=re.IGNORECASE)
-        line = re.sub(NERs, r"\1", line)
-        return line
-
-    def remove_puct_num(self, line):
-        """Remove tokens that are only numerics and puctuation marks
-
-        Arguments:
-            line {str} -- text processed_data by the preprocessor
-
-        Returns:
-            str -- text with stopwords, numerics, 1-letter words removed
-        """
-        tokens = line.strip().lower().split(" ")  # do not use nltk.tokenize here
-        tokens = [re.sub(r"\[pos:.*?\]", "", t, flags=re.IGNORECASE) for t in tokens]
-
-        # these are tagged bracket and parenthesises
-        if self.punctuations or self.stopwords:
-            puncts_stops = (self.punctuations | self.stopwords)
-            # filter out numerics and 1-letter words as recommend by
-            # https://sraf.nd.edu/textual-analysis/resources/#StopWords
-        else:
-            puncts_stops = set()
-
-        def _lambda_filter_token_bool(t):
-            """
-            the judegement after the function is help to give
-            """
-            contain_alphabet = any(c.isalpha() for c in t) if self.is_removenum else True
-            is_not_punctuation_stopwords = t not in puncts_stops
-            is_biggerthan_minlength = len(t) >= self.token_minlength if self.token_minlength else True
-
-            return all([contain_alphabet, is_not_punctuation_stopwords, is_biggerthan_minlength])
-
-        tokens = filter(
-            # lambda t: any(c.isalpha() for c in t)
-            #           and (t not in puncts_stops)
-            #           and (len(t) > 1),
-            _lambda_filter_token_bool,
-            tokens,
-        )
-        return " ".join(tokens)
-
-    def clean(self, line, index):
-        """Main function that chains all filters together and applies to a string.
-        """
-        return (
-            functools.reduce(
-                lambda obj, func: func(obj),
-                [self.remove_ner, self.remove_puct_num],
-                line,
-            ),
-            index,
-        )
-
-
-if __name__ == '__main__':
-    line_resolver = AnnotatedLineCleaner(
-        pos_tag_label='POS',
-        ner_tag_label='NER',
-        compounding_sep_string='[SEP]',
-        token_sep_string=' ',
-        sentiment_tag_label='SENTIMENT',
-        lower_case=True,
-        full_token_compose_restriction='contains_alphabet_or_number_only',
-        remove_stopwords_set=None,
-        remove_punctuations_set=set(['as']),
-        remove_token_lessequal_then_length=2,
-        remove_ner_options_dict={'removes_original_text': 'all'},
-        remove_pos_options_dict={'removes_original_text': ['NNP']},
-        clean_flag=1
-    )
-
-    demoline = """[SENTIMENT:Neutral] -[POS::] Dr.[POS:NNP][SEP][NER:PERSON]Martin[POS:NNP][SEP]Luther[POS:NNP][SEP]King[POS:NNP][SEP]Jr[POS:NNP][SEP]pop[POS:NN] on[POS:IN] by[POS:IN] any[POS:DT] of[POS:IN] we[POS:PRP$] location[POS:NNS] [NER:DATE]tomorrow[POS:NN] ,[POS:,] Wed.[POS:NNP][SEP]1/19[POS:NNP] ,[POS:,] as[POS:IN] we[POS:PRP] celebrate[POS:VBP] #NationalPopcornDay[POS:NNP] with[POS:IN] locally[POS:RB] grow[POS:VBN] popcorn[POS:NN] from[POS:IN] [NER:ORGANIZATION]Rickey[POS:NNP][SEP]&[POS:CC][SEP]Charlie[POS:NNP] 's[POS:POS] Popcorn[POS:NNP] ![POS:.]""".strip().replace(
-        '\n', '')
-
-    # ['ner', 'pos', 'original_text', 'index']
-    print(line_resolver.line_resolver(demoline))
-    print(line_resolver.line_resolver(demoline)['resolved_tokens'][12])
-
-    print(line_resolver.annotated_tokens_cleaner(
-        line_resolver.line_resolver(demoline)['resolved_tokens'][12],
-        removetype='punct'
-    )
-    )
+# if __name__ == '__main__':
+#     line_resolver = AnnotatedLineCleaner(
+#         pos_tag_label='POS',
+#         ner_tag_label='NER',
+#         compounding_sep_string='[SEP]',
+#         token_sep_string=' ',
+#         sentiment_tag_label='SENTIMENT',
+#         lower_case=True,
+#         restruct_compounding_sep_string='_',
+#         restruct_token_sep_string=' ',
+#         full_token_compose_restriction=None,
+#         token_remove_ner_tags_to_lessequal_then_num=None,
+#         remove_stopwords_set=None,
+#         remove_punctuations_set=None,
+#         remove_token_lessequal_then_length=None,
+#         remove_ner_options_dict=None,
+#         remove_pos_options_dict=None,
+#         clean_flag=1
+#     )
+#
+#     demoline = """[SENTIMENT:Neutral] -[POS::] Dr.[POS:NNP][SEP][NER:PERSON]Martin[POS:NNP][SEP][NER:PERSON]Luther[POS:NNP][SEP][NER:PERSON]King[POS:NNP][SEP]Jr[POS:NNP][SEP]pop[POS:NN] on[POS:IN] by[POS:IN] any[POS:DT] of[POS:IN] we[POS:PRP$] location[POS:NNS] [NER:DATE]tomorrow[POS:NN] ,[POS:,] Wed.[POS:NNP][SEP]1/19[POS:NNP] ,[POS:,] as[POS:IN] we[POS:PRP] celebrate[POS:VBP] #NationalPopcornDay[POS:NNP] with[POS:IN] locally[POS:RB] grow[POS:VBN] popcorn[POS:NN] from[POS:IN] [NER:ORGANIZATION]Rickey[POS:NNP][SEP]&[POS:CC][SEP]Charlie[POS:NNP] 's[POS:POS] Popcorn[POS:NNP] ![POS:.] 125[POS:POS]""".strip().replace(
+#         '\n', '')
+#
+#     print(line_resolver.clean(
+#         demoline, 1
+#     )
+#     )

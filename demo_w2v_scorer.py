@@ -81,16 +81,16 @@ if __name__ == '__main__':
         ),
         chunk_size=global_options.PARSE_CHUNK_SIZE,
         be_quite=True,
-        annotation_choices=['Lemmatize', 'NERtags', 'DepParseMWECompounds', 'POStags', 'SentenceSentiment'],
-        properties={
-            "ner.applyFineGrained": "false",
-            "annotators": "tokenize, ssplit, pos, lemma, ner, depparse, sentiment",
-        }
-        # annotation_choices=['Lemmatize', 'NERtags', 'DepParseMWECompounds', 'POStags'],
+        # annotation_choices=['Lemmatize', 'NERtags', 'DepParseMWECompounds', 'POStags', 'SentenceSentiment'],
         # properties={
         #     "ner.applyFineGrained": "false",
-        #     "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",
+        #     "annotators": "tokenize, ssplit, pos, lemma, ner, depparse, sentiment",
         # }
+        annotation_choices=['Lemmatize', 'NERtags', 'DepParseMWECompounds', 'POStags'],
+        properties={
+            "ner.applyFineGrained": "false",
+            "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",
+        }
     )
 
     # --------------------------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
         path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
         remove_stopwords_set=global_options.STOPWORDS,
-        token_ner_tags_num_restriction=1,
+        token_remove_ner_tags_to_lessequal_then_num=1,
         processes=os.cpu_count(),
         clean_flag=0
     )
@@ -148,10 +148,10 @@ if __name__ == '__main__':
             global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
         path_output_model=Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod"),
-        size=global_options.W2V_DIM,
+        vector_size=global_options.W2V_DIM,
         window=global_options.W2V_WINDOW,
         workers=global_options.N_CORES,
-        iter=global_options.W2V_ITER,
+        epochs=global_options.W2V_ITER,
     )
 
     result_dict = nlptoolkits.GensimKits.Wrd2vScorerT.l1_semi_supervise_w2v_dict(

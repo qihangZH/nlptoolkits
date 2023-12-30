@@ -174,7 +174,7 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
                              restruct_compounding_sep_string: str = "_",
                              restruct_token_sep_string: str = _GlobalArgs.DEFAULT_TOKEN_SEP_STRING,
                              full_token_compose_restriction: typing.Optional[str] = None,
-                             token_ner_tags_num_restriction: typing.Optional[int] = 1,
+                             token_remove_ner_tags_to_lessequal_then_num: typing.Optional[int] = 1,
                              remove_stopwords_set: typing.Optional[set] = None,
                              remove_punctuations_set: typing.Optional[set] = None,
                              remove_token_lessequal_then_length: typing.Optional[int] = None,
@@ -210,7 +210,7 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
         'contains_number': the full token must contains number
         'contains_alphabet_and_number': the full token must contains alphabet and number
         ELSE, the full token will be ignore and passed.
-    :param token_ner_tags_num_restriction: int or None, the restriction of full token NER tags number, if None then do nothing
+    :param token_remove_ner_tags_to_lessequal_then_num: int or None, the restriction of full token NER tags number, if None then do nothing
         This option if for situation when several NERs are in one token: [ner:duration]_[ner:duration]
         Actually the first one delegate the meaning so we can remove the second one. Vice versa.
         <It is recommend to use 1>
@@ -240,7 +240,7 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
         restruct_compounding_sep_string=restruct_compounding_sep_string,
         restruct_token_sep_string=restruct_token_sep_string,
         full_token_compose_restriction=full_token_compose_restriction,
-        token_ner_tags_num_restriction=token_ner_tags_num_restriction,
+        token_remove_ner_tags_to_lessequal_then_num=token_remove_ner_tags_to_lessequal_then_num,
         remove_stopwords_set=remove_stopwords_set,
         remove_punctuations_set=remove_punctuations_set,
         remove_token_lessequal_then_length=remove_token_lessequal_then_length,
