@@ -40,10 +40,10 @@ FLAG_ANNOTATED_LINE_CLEANER_SENTIMENT = ANNOTATED_LINE_CLEANER_FLAGS["sentiment_
 POS_PENN_TREE_BANK_TAGS_UPPER_SET = {
     'ADJP', 'ADVP', 'CC', 'CD', 'CONJP', 'DT', 'EX', 'FRAG', 'FW', 'IN', 'INTJ',
     'JJ', 'JJR', 'JJS', 'LS', 'LST', 'MD', 'NAC', 'NN', 'NNS', 'NNP', 'NNPS',
-    'NP', 'NX', 'PDT', 'POS', 'PP', 'PRN', 'PRP', 'PRPS', 'PRT', 'QP', 'RB',
+    'NP', 'NX', 'PDT', 'POS', 'PP', 'PRN', 'PRP', 'PRP$', 'PRPS', 'PRT', 'QP', 'RB',
     'RBR', 'RBS', 'RP', 'RRC', 'S', 'SBAR', 'SINV', 'SQ', 'SYM', 'TO', 'UCP',
     'UH', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'VP', 'WDT', 'WHADJP', 'WHADVP',
-    'WHNP', 'WHPP', 'WP', 'WPS', 'WRB', 'X', '.', ',', ':', ';', '?', '!', 'LRB', 'RRB', 'SQT', 'EQT',
+    'WHNP', 'WHPP', 'WP', 'WP$', 'WPS', 'WRB', 'X', '.', ',', ':', ';', '?', '!', 'LRB', 'RRB', 'SQT', 'EQT',
     # Additional punctuation and special characters
     "-LRB-", "-RRB-", "-LSB-", "-RSB-", "-LCB-", "-RCB-", "``", "''", "`", "'", '"', "(", ")", "[", "]", "{", "}",
     "HYPH", "'S"
@@ -64,7 +64,7 @@ POS_PENN_TREE_BANK_TAGS_PUNCT_UPPER_SET = {
 ALL_TAGS_FLAG = 'all'
 
 STANFORD_CORENLP_NER_TAGS_UPPER_SET = {
-    'PERSON', 'LOCATION', 'ORGANIZATION', 'MISC',    # Named entities
-    'MONEY', 'NUMBER', 'ORDINAL', 'PERCENT',         # Numerical entities
-    'DATE', 'TIME', 'DURATION', 'SET'                # Temporal entities
+    'PERSON', 'LOCATION', 'ORGANIZATION', 'MISC',  # Named entities
+    'MONEY', 'NUMBER', 'ORDINAL', 'PERCENT',  # Numerical entities
+    'DATE', 'TIME', 'DURATION', 'SET'  # Temporal entities
 }
