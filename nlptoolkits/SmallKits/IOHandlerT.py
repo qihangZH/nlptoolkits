@@ -207,6 +207,16 @@ def convert_teixml_to_single_line_str(tei_xml_path,
                                       suppress_warn: bool = False,
                                       **kwargs
                                       ):
+    """
+    :param tei_xml_path: the path of Tei-xml-path, is a format could be seen in https://tei-c.org/ for detail
+    :param tag: the tag which contain text you interested in, first level, should be ['text'] in default
+    :param subtags: second level tags, like p/s/head, etc
+    :param errors: the error handler of open file
+    :param sep: the separator of the result text
+    :param suppress_warn: is or not suppress the warn of sep letter
+    :param kwargs: the argument of bs4.BeautifulSoup
+    :return: a list of text
+    """
     if not suppress_warn:
         __sep_letter_warning()
 
@@ -379,7 +389,9 @@ def pdf_extract_partof(pdf_read_path, partofpdf_save_path,
         pdf_reader = PyPDF2.PdfReader(f)
 
         # Create a PDF writer object to save the extracted pages
-        pdf_writer = PyPDF2.PdfFileWriter()
+        """PyPDF2 3.0.0"""
+        # pdf_writer = PyPDF2.PdfFileWriter()
+        pdf_writer = PyPDF2.PdfWriter()
 
         # Loop through each page in the PDF and add the result_text to the string
         end_index = end_index if end_index else len(pdf_reader.pages)
@@ -388,7 +400,22 @@ def pdf_extract_partof(pdf_read_path, partofpdf_save_path,
             # page = pdf_reader.getPage(page_num)
             page = pdf_reader.pages[page_num]
             # result_text += page.extractText()
-            pdf_writer.addPage(page=page)
+            """PyPDF2 3.0.0"""
+            # pdf_writer.addPage(page=page)
+            pdf_writer.add_page(page=page)
 
         with open(partofpdf_save_path, 'wb') as temp_pdf_file:
             pdf_writer.write(temp_pdf_file)
+
+
+def count_pdf_pages(pdf_file_path):
+    """
+    count the pdf pages
+    Args:
+        pdf_file_path: the pdf file path
+    """
+    with open(pdf_file_path, 'rb') as f:
+        # Create a PDF file reader object
+        # pdf_reader = PyPDF2.PdfFileReader(f)
+        pdf_reader = PyPDF2.PdfReader(f)
+        return len(pdf_reader.pages)

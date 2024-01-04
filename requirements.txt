@@ -5,7 +5,7 @@ tqdm
 scikit_learn>=0.22.1
 stanza>=1.5
 # gensim>=3.7.2
-gensim>4.0.0
+gensim>=4.0.0
 pathos
 openai
 wordninja
@@ -15,7 +15,7 @@ html2text
 bitermplus
 bs4
 pypandoc
-PyPDF2
+PyPDF2>=3.0.0
 langdetect
 backoff
 ratelimit
