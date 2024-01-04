@@ -201,13 +201,13 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
         :param remove_punctuations_set: set or None, the punctuations set to be removed
         :param remove_token_lessequal_then_length: int or None, the tokens which length is less equal than this length will be removed
         :param remove_ner_options_dict: dict or None, the options of remove ner, if None then do nothing
-            The keys of dict must be in ['remove_tags', 'removes_original_text', 'remove_tags_and_original_text']
+            The keys of dict must be in ['removes_tags', 'removes_original_text', 'removes_tags_and_original_text']
             The values of dict SHOULD be in _GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET or _GlobalArgs.ALL_TAGS_FLAG
-            The usage example be: {'remove_tags': ['PERSON', 'LOCATION'], 'removes_original_text': 'all'}
+            The usage example be: {'removes_tags': ['PERSON', 'LOCATION'], 'removes_original_text': 'all'}
         :param remove_pos_options_dict: dict or None, the options of remove pos, if None then do nothing
-            The keys of dict must be in ['remove_tags', 'removes_original_text', 'remove_tags_and_original_text']
+            The keys of dict must be in ['removes_tags', 'removes_original_text', 'removes_tags_and_original_text']
             The values of dict SHOULD be in _GlobalArgs.POS_PENN_TREE_BANK_TAGS_UPPER_SET or _GlobalArgs.ALL_TAGS_FLAG
-            The usage example be: {'remove_tags': ['NN', 'NNS'], 'removes_original_text': 'all'}
+            The usage example be: {'removes_tags': ['NN', 'NNS'], 'removes_original_text': 'all'}
         :param clean_flag: int, the flag of clean->
             0 means only return cleaned line, or _GlobalArgs.ANNOTATED_LINE_CLEANER_CLEANEDLINE
             1 means only return sentiment or _GlobalArgs.ANNOTATED_LINE_CLEANER_SENTIMENT
@@ -246,18 +246,18 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
         }
 
         self.remove_ner_map_arr_dict = {
-            'remove_tags': ~(self.annotated_tokens_fields_arr == 'ner'),
+            'removes_tags': ~(self.annotated_tokens_fields_arr == 'ner'),
             'removes_original_text': ~(self.annotated_tokens_fields_arr == 'original_text'),
-            'remove_tags_and_original_text': ~np.logical_or(
+            'removes_tags_and_original_text': ~np.logical_or(
                 self.annotated_tokens_fields_arr == 'ner',
                 self.annotated_tokens_fields_arr == 'original_text'
             )
         }
 
         self.remove_pos_map_arr_dict = {
-            'remove_tags': ~(self.annotated_tokens_fields_arr == 'pos'),
+            'removes_tags': ~(self.annotated_tokens_fields_arr == 'pos'),
             'removes_original_text': ~(self.annotated_tokens_fields_arr == 'original_text'),
-            'remove_tags_and_original_text': ~np.logical_or(
+            'removes_tags_and_original_text': ~np.logical_or(
                 self.annotated_tokens_fields_arr == 'pos',
                 self.annotated_tokens_fields_arr == 'original_text'
             )
@@ -454,7 +454,7 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
 
                 if ner_count >= self.token_ner_tags_num_restriction:
                     # Break if find the ner tags num is bigger than the restriction inside the token
-                    _mask_matrix[index:, :] = self.remove_ner_map_arr_dict['remove_tags']
+                    _mask_matrix[index:, :] = self.remove_ner_map_arr_dict['removes_tags']
                     break
 
                 token_splitted = token_splitted_dict[index]

@@ -179,8 +179,8 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
                              remove_punctuations_set: typing.Optional[set] = None,
                              remove_token_lessequal_then_length: typing.Optional[int] = None,
                              remove_ner_options_dict: typing.Optional[dict] = {'removes_original_text': 'all'},
-                             remove_pos_options_dict: typing.Optional[dict] = {'remove_tags': 'all',
-                                                                               'remove_tags_and_original_text': _GlobalArgs.POS_PENN_TREE_BANK_TAGS_PUNCT_UPPER_SET
+                             remove_pos_options_dict: typing.Optional[dict] = {'removes_tags': 'all',
+                                                                               'removes_tags_and_original_text': _GlobalArgs.POS_PENN_TREE_BANK_TAGS_PUNCT_UPPER_SET
                                                                                },
                              clean_flag: int = _GlobalArgs.FLAG_ANNOTATED_LINE_CLEANER_CLEANEDLINE,
                              ):
@@ -218,13 +218,13 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
     :param remove_punctuations_set: set or None, the punctuations set to be removed
     :param remove_token_lessequal_then_length: int or None, the tokens which length is less equal than this length will be removed
     :param remove_ner_options_dict: dict or None, the options of remove ner, if None then do nothing
-        The keys of dict must be in ['remove_tags', 'removes_original_text', 'remove_tags_and_original_text']
+        The keys of dict must be in ['removes_tags', 'removes_original_text', 'removes_tags_and_original_text']
         The values of dict SHOULD be in _GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET or _GlobalArgs.ALL_TAGS_FLAG
-        The usage example be: {'remove_tags': ['PERSON', 'LOCATION'], 'removes_original_text': 'all'}
+        The usage example be: {'removes_tags': ['PERSON', 'LOCATION'], 'removes_original_text': 'all'}
     :param remove_pos_options_dict: dict or None, the options of remove pos, if None then do nothing
-        The keys of dict must be in ['remove_tags', 'removes_original_text', 'remove_tags_and_original_text']
+        The keys of dict must be in ['removes_tags', 'removes_original_text', 'removes_tags_and_original_text']
         The values of dict SHOULD be in _GlobalArgs.POS_PENN_TREE_BANK_TAGS_UPPER_SET or _GlobalArgs.ALL_TAGS_FLAG
-        The usage example be: {'remove_tags': ['NN', 'NNS'], 'removes_original_text': 'all'}
+        The usage example be: {'removes_tags': ['NN', 'NNS'], 'removes_original_text': 'all'}
     :param clean_flag: int, the flag of clean->
         0 means only return cleaned line, or _GlobalArgs.ANNOTATED_LINE_CLEANER_CLEANEDLINE
         1 means only return sentiment or _GlobalArgs.ANNOTATED_LINE_CLEANER_SENTIMENT
