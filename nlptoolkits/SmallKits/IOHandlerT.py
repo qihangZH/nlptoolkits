@@ -236,6 +236,9 @@ def convert_teixml_to_single_line_str(tei_xml_path,
 def convert_html_to_single_line_str(html_filepath, strike_tags: typing.Optional[list] = ["s", "strike", "del", "table"],
                                     html_partial=False, suppress_warn=False, errors='backslashreplace', **kwargs):
     """
+    The function is based on readability, which is a python package. read a html file to single line string.
+    WARNING: It do not read table in html in default, if you want to read table, you should remove the table tag
+    from strike_tags.
     Args:
         html_filepath: file path
         strike_tags: the tags of strike html tags, default ["s", "strike", "del", "table"]
