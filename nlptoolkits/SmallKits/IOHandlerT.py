@@ -122,7 +122,7 @@ def _ocr_pdf_to_text(pdf_file_path, start_index: int = 0, end_index: typing.Opti
 # GROBID-NEI-PDF->XML reader
 # --------------------------------------------------------------------------
 def _tei_xml_to_list(tei_xml_path,
-                     tag: typing.Union[list, str],
+                     tags: typing.Union[list, str],
                      subtags: typing.Optional[typing.Union[list, str]],
                      errors='backslashreplace',
                      **kwargs
@@ -131,19 +131,31 @@ def _tei_xml_to_list(tei_xml_path,
     read tei-format XML to list of text
     Args:
         tei_xml_path: the path of Tei-xml-path, is a format could be seen in https://tei-c.org/ for detail
-        tag: the tag which contain text you interested in, first level, should be ['text'] in default
+        tags: the tag which contain text you interested in, first level, should be ['text'] in default
         subtags: second level tags, like p/s/head, etc
 
     Returns: a list of text
 
     """
-    if isinstance(tag, list):
-        if len(tag) > 1:
-            warnings.warn('More then one tag will cause replicated result, you should known that')
-    elif isinstance(tag, str):
-        tag = [tag]
+    if not tags:
+        raise ValueError('The tag Could not be NoneLike')
+    if isinstance(tags, list):
+        # if len(tag) > 1:
+        #     warnings.warn('More then one tag will cause replicated result, you should known that')
+        pass
+    elif isinstance(tags, str):
+        tags = [tags]
     else:
-        raise ValueError('The tag either be string of list')
+        raise ValueError('The tag either be string or list')
+
+    # subtags check
+    if subtags:
+        if isinstance(subtags, list):
+            pass
+        elif isinstance(subtags, str):
+            subtags = [subtags]
+        else:
+            raise ValueError('The subtag either be string or list or NoneLike')
 
     encodetype = _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) \
         if not _BasicKits._BasicFuncT.find_file_encoding(tei_xml_path) is None else 'utf-8'
@@ -153,18 +165,34 @@ def _tei_xml_to_list(tei_xml_path,
 
     # Initialize a list to store <s> pairs from all <div> elements
     s_pairs_list = []
-    for t in tag:
-        div_elements = soup.find_all(t)
+    # for t in tag:
+    #     div_elements = soup.find_all(t)
+    #
+    #     for div in div_elements:
+    #         if subtags:
+    #
+    #             if isinstance(subtags, str):
+    #                 subtags = [subtags]
+    #
+    #             for st in subtags:
+    #                 s_elements = div.find_all(st)
+    #                 sentences = [s.get_text(strip=True) for s in s_elements]
+    #                 s_pairs_list.extend(sentences)
+    #         else:
+    #             sentences = div.get_text(strip=True)
+    #             s_pairs_list.append(sentences)
+    """new version use more general way to read the xml"""
+    div_elements = soup.find_all(tags)
 
-        for div in div_elements:
-            if subtags:
-                for st in subtags:
-                    s_elements = div.find_all(st)
-                    sentences = [s.get_text(strip=True) for s in s_elements]
-                    s_pairs_list.extend(sentences)
-            else:
-                sentences = div.get_text(strip=True)
-                s_pairs_list.append(sentences)
+    for div in div_elements:
+        if subtags:
+            for st in subtags:
+                s_elements = div.find_all(st)
+                sentences = [s.get_text(strip=True) for s in s_elements]
+                s_pairs_list.extend(sentences)
+        else:
+            sentences = div.get_text(strip=True)
+            s_pairs_list.append(sentences)
 
     return s_pairs_list
 
@@ -200,7 +228,7 @@ def convert_ocrpdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_i
 
 
 def convert_teixml_to_single_line_str(tei_xml_path,
-                                      tag: typing.Union[list, str] = ['text'],
+                                      tags: typing.Union[list, str] = ['text'],
                                       subtags: typing.Optional[typing.Union[list, str]] = None,
                                       errors='backslashreplace',
                                       sep: str = ' ',
@@ -209,7 +237,7 @@ def convert_teixml_to_single_line_str(tei_xml_path,
                                       ):
     """
     :param tei_xml_path: the path of Tei-xml-path, is a format could be seen in https://tei-c.org/ for detail
-    :param tag: the tag which contain text you interested in, first level, should be ['text'] in default
+    :param tags: the tag which contain text you interested in, first level, should be ['text'] in default
     :param subtags: second level tags, like p/s/head, etc
     :param errors: the error handler of open file
     :param sep: the separator of the result text
@@ -221,7 +249,7 @@ def convert_teixml_to_single_line_str(tei_xml_path,
         __sep_letter_warning()
 
     string_list = _tei_xml_to_list(tei_xml_path,
-                                   tag=tag,
+                                   tags=tags,
                                    subtags=subtags,
                                    errors=errors,
                                    **kwargs
@@ -252,6 +280,16 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: typing.Optional[
     """
     if not suppress_warn:
         __sep_letter_warning()
+
+    # check the input strike_tags
+    if not strike_tags:
+        pass
+    if isinstance(strike_tags, list):
+        pass
+    elif isinstance(strike_tags, str):
+        strike_tags = [strike_tags]
+    else:
+        raise ValueError('The tag either be string of list')
 
     encodetype = _BasicKits._BasicFuncT.find_file_encoding(html_filepath) \
         if not _BasicKits._BasicFuncT.find_file_encoding(html_filepath) is None else 'utf-8'
