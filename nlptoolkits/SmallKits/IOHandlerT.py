@@ -233,12 +233,12 @@ def convert_teixml_to_single_line_str(tei_xml_path,
     return result_text
 
 
-def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "strike", "del"],
+def convert_html_to_single_line_str(html_filepath, strike_tags: typing.Optional[list] = ["s", "strike", "del", "table"],
                                     html_partial=False, suppress_warn=False, errors='backslashreplace', **kwargs):
     """
     Args:
         html_filepath: file path
-        strike_tags: the tags of strike html tags, default ["s", "strike", "del"]
+        strike_tags: the tags of strike html tags, default ["s", "strike", "del", "table"]
         html_partial: return only the div of the document, don't wrap
                              in html and body tags. see readability.Document().summary
         suppress_warn: is or not suppress the warn of sep letter
@@ -264,11 +264,12 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: list = ["s", "st
     soup = bs4.BeautifulSoup(html_content, 'html.parser')
 
     # Find and remove all strikethrough text
-    try:
-        for strike_tag in soup(strike_tags):
-            strike_tag.decompose()
-    except:
-        warnings.warn('decompose of bs4 runs in error, automatically passed', ResourceWarning)
+    if strike_tags:
+        try:
+            for strike_tag in soup(strike_tags):
+                strike_tag.decompose()
+        except:
+            warnings.warn('decompose of bs4 runs in error, automatically passed', ResourceWarning)
 
     # Convert the modified HTML to text
     h = html2text.HTML2Text()
