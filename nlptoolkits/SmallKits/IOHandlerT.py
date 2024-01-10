@@ -450,6 +450,37 @@ def pdf_extract_partof(pdf_read_path, partofpdf_save_path,
             pdf_writer.write(temp_pdf_file)
 
 
+def pdfs_combine_to_one(pdfs_path_list, combined_pdf_path):
+    """
+    give a list of pdfs path, combine them to one pdf
+    :param pdfs_path_list: the list of pdfs path
+    :param combined_pdf_path: the path of combined pdf
+    :return: None
+    """
+    # Create a PDF writer object to save the combined pages
+    """PyPDF2 3.0.0"""
+    # pdf_writer = PyPDF2.PdfFileWriter()
+    pdf_writer = PyPDF2.PdfWriter()
+
+    for pdf_path in pdfs_path_list:
+        with open(pdf_path, 'rb') as f:
+            # Create a PDF file reader object
+            # pdf_reader = PyPDF2.PdfFileReader(f)
+            pdf_reader = PyPDF2.PdfReader(f)
+
+            # Loop through each page in the PDF and add the result_text to the string
+            for page_num in range(len(pdf_reader.pages)):
+                # page = pdf_reader.getPage(page_num)
+                page = pdf_reader.pages[page_num]
+                # result_text += page.extractText()
+                """PyPDF2 3.0.0"""
+                # pdf_writer.addPage(page=page)
+                pdf_writer.add_page(page=page)
+
+    with open(combined_pdf_path, 'wb') as temp_pdf_file:
+        pdf_writer.write(temp_pdf_file)
+
+
 def count_pdf_pages(pdf_file_path):
     """
     count the pdf pages
