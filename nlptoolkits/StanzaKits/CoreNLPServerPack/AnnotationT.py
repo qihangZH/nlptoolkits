@@ -364,22 +364,22 @@ class LineAnnotatorParallel(_AnnotatorBasic):
         """
         # if not nlptoolkits._BasicKits.check_server(corenlp_endpoint, timeout=2100000):
         #     raise ConnectionError(f'{corenlp_endpoint} is not running, reset the port and try again.')
-        wait_seconds = 10
-        while True:
-            try:
-                with CoreNLPClient(
-                        endpoint=corenlp_endpoint,
-                        start_server=stanza.server.StartServer.DONT_START,
-                        timeout=120000000
-                ) as client:
-                    doc_ann = client.annotate(doc)
+        # wait_seconds = 10
+        # while True:
+        #     try:
+        with CoreNLPClient(
+                endpoint=corenlp_endpoint,
+                start_server=stanza.server.StartServer.DONT_START,
+                timeout=120000000
+        ) as client:
+            doc_ann = client.annotate(doc)
 
-                    break
-
-            except Exception as e:
-                print(e, f'occurs, \nwait for {wait_seconds} seconds')
-                time.sleep(wait_seconds)
-                wait_seconds = wait_seconds * 1.2
+            #         break
+            #
+            # except Exception as e:
+            #     print(e, f'occurs, \nwait for {wait_seconds} seconds')
+            #     time.sleep(wait_seconds)
+            #     wait_seconds = wait_seconds * 1.2
 
         sentences_processed = []
         doc_sent_ids = []
