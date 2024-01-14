@@ -1,10 +1,11 @@
 import typing
 
 from . import BitermplusT
-from . import WordninjaT
-from . import LangDetectT
+from . import FuzzyMatchT
 from . import IOHandlerT
+from . import LangDetectT
 from . import LexRankT
+from . import WordninjaT
 
 import pathos
 import os

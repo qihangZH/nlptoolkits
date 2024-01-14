@@ -23,7 +23,7 @@ class SimilarityTfidf:
             text_list=self.doc_text_corpus_list
         )
 
-    @_BasicKits._BasicFuncT.timer_wrapper
+    @_BasicKits.DecoratorT.timer_wrapper
     def similarity_matrix(self, x_text_list, y_text_list, y_chunksize=None, model_output_prefix='sim',
                           dtype=np.float32):
         """

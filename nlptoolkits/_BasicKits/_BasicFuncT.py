@@ -1,7 +1,5 @@
-import functools
 import signal
 import socket
-import time
 import os
 import shutil
 import charset_normalizer
@@ -38,21 +36,6 @@ def check_server(url, timeout: int):
     finally:
         # close what ever happens
         sock.close()
-
-
-def timer_wrapper(func):
-    """Wrapper for function running timing"""
-
-    @functools.wraps(func)
-    def decorated(*args, **kwargs):
-        time_start = time.time()
-        result = func(*args, **kwargs)
-        time_end = time.time()
-        time_spend = time_end - time_start
-        print('%s cost time: %.5f s' % (func.__name__, time_spend))
-        return result
-
-    return decorated
 
 
 def delete_whole_dir(directory):

@@ -1,6 +1,6 @@
 numpy
 pandas
-pyarrow
+pyarrow>=14.0.0
 tqdm
 scikit_learn>=0.22.1
 stanza>=1.5
@@ -25,6 +25,9 @@ openpyxl
 sentence-transformers
 readability-lxml
 pdf2image
+rapidfuzz
+numba
+multiprocess
 # gensim>=3.7.2,<4.0.0
 # stanfordnlp==0.2.0
 # protobuf<3.20
