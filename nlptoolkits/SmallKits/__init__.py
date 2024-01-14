@@ -1,6 +1,7 @@
 import typing
 
 from . import BitermplusT
+from . import DirectoryT
 from . import FuzzyMatchT
 from . import IOHandlerT
 from . import LangDetectT
