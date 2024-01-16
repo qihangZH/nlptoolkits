@@ -64,6 +64,9 @@ If you really want to use a non-killed server, you can set the
 ```stanza.server.StartServer.FORCE_START``` to ```stanza.server.StartServer.TRY_START```, then the server will be
 run on non-killed server. But I do not recommend that.
 
+## java
+https://zhuanlan.zhihu.com/p/617251948
+
 ## references
 
 ### https://github.com/MS20190155/Measuring-Corporate-Culture-Using-Machine-Learning
