@@ -189,6 +189,39 @@ def calculate_doc_freq_dict(corpus):
     return doc_freq_dict
 
 
+def sentence_to_doc_level_list(
+        sent_corpus_list,
+        sent_id_list
+):
+    """
+    Construct document level corpus_list from sentence level corpus_list and write to disk.
+    Instead of writing to disk, return the corpus_list and doc_ids as a list.
+    The files are standard sentence level corpus_list and sentence ID file made from stanford-core-nlp.
+    :return: a tuple of a list of documents, a list of document IDs, and the number of documents
+    """
+    assert len(sent_corpus_list) == len(sent_id_list)
+
+    # doc id for each sentence
+    """old-version:"""
+    # doc_ids = [x.split("_")[0] for x in sent_IDs]
+    """new-version:"""
+    doc_ids_list = pd.Series(sent_id_list).str.extract(pat=r'^(.*)_[^_]*$',
+                                                       # pick the group which before the last underscore
+                                                       expand=False, flags=re.IGNORECASE).to_list()
+
+    # concat all text from the same doc
+    id_doc_dict = defaultdict(lambda: [])
+    for i, id in enumerate(doc_ids_list):
+        id_doc_dict[id].append(sent_corpus_list[i])
+    # create doc level doc_level_corpus_list
+    doc_level_sents_list = list(id_doc_dict.values())
+    doc_ids_list = list(id_doc_dict.keys())
+    assert len(doc_level_sents_list) == len(doc_ids_list)
+    N_doc = len(doc_level_sents_list)
+
+    return doc_level_sents_list, doc_ids_list, N_doc
+
+
 # --------------------------------------------------------------------------
 # l1 level functions/classes
 # --------------------------------------------------------------------------
@@ -213,22 +246,26 @@ def l1_sentence_to_doc_level_corpus(sent_corpus_file, sent_id_file,
     sent_IDs = file_to_list(sent_id_file, charset_error_encoding)
     assert len(sent_IDs) == len(sent_corpus)
 
-    # doc id for each sentence
-    """old-version:"""
-    # doc_ids = [x.split("_")[0] for x in sent_IDs]
-    """new-version:"""
-    doc_ids = pd.Series(sent_IDs).str.extract(pat=r'^(.*)_[^_]*$',  # pick the group which before the last underscore
-                                              expand=False, flags=re.IGNORECASE).to_list()
+    """new-version in 16/1/2024, use functionlized version"""
+    # # doc id for each sentence
+    # """old-version:"""
+    # # doc_ids = [x.split("_")[0] for x in sent_IDs]
+    # """new-version:"""
+    # doc_ids = pd.Series(sent_IDs).str.extract(pat=r'^(.*)_[^_]*$',  # pick the group which before the last underscore
+    #                                           expand=False, flags=re.IGNORECASE).to_list()
+    # 
+    # # concat all text from the same doc
+    # id_doc_dict = defaultdict(lambda: "")
+    # for i, id in enumerate(doc_ids):
+    #     id_doc_dict[id] += " " + sent_corpus[i]
+    # # create doc level corpus
+    # corpus = list(id_doc_dict.values())
+    # doc_ids = list(id_doc_dict.keys())
+    # assert len(corpus) == len(doc_ids)
+    # N_doc = len(corpus)
+    doc_level_sents_list, doc_ids, N_doc = sentence_to_doc_level_list(sent_corpus, sent_IDs)
 
-    # concat all text from the same doc
-    id_doc_dict = defaultdict(lambda: "")
-    for i, id in enumerate(doc_ids):
-        id_doc_dict[id] += " " + sent_corpus[i]
-    # create doc level corpus
-    corpus = list(id_doc_dict.values())
-    doc_ids = list(id_doc_dict.keys())
-    assert len(corpus) == len(doc_ids)
-    N_doc = len(corpus)
+    corpus = [' '.join(x) for x in doc_level_sents_list]
 
     if not (path_save_sent_corpus_file is None):
         with open(path_save_sent_corpus_file, 'w', encoding='utf-8') as f:
