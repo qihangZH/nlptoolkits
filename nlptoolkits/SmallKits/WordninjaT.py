@@ -27,7 +27,7 @@ def replace_sequence_letters_to_words_str(input_text):
         # r'((?:\b\w\b\s)+)',
         _lambda_replace,
         input_text,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE | re.DOTALL
     )
 
     return newtext
