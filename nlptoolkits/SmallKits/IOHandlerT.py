@@ -95,7 +95,10 @@ def _ocr_pdf_to_text(pdf_file_path, start_index: int = 0, end_index: typing.Opti
             page.save(temp_image_file_path, temp_image_suffix)
 
             # Prepare the command to run Tesseract and specify the output base for text (no extension)
-            command = ['tesseract', temp_image_file_path, re.search(r'^(.+)\.txt$', temp_text_file_path).groups()[0]]
+            command = ['tesseract', temp_image_file_path, re.search(r'^(.+)\.txt$',
+                                                                    temp_text_file_path,
+                                                                    flags=re.IGNORECASE | re.DOTALL
+                                                                    ).groups()[0]]
 
             # Run the command and wait for it to complete
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
@@ -222,7 +225,7 @@ def convert_ocrpdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_i
                                    )
 
     # Remove newline characters to make the result_text a single line
-    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE | re.DOTALL)
 
     return result_text
 
@@ -256,7 +259,7 @@ def convert_teixml_to_single_line_str(tei_xml_path,
                                    )
     result_text = sep.join(string_list)
     # remove all \s+ to ' '
-    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE | re.DOTALL)
 
     return result_text
 
@@ -317,7 +320,7 @@ def convert_html_to_single_line_str(html_filepath, strike_tags: typing.Optional[
     h.ignore_links = True
     result_text = h.handle(str(soup))
     # remove all \s+ to ' '
-    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE | re.DOTALL)
 
     return result_text
 
@@ -355,7 +358,7 @@ def convert_pdf_to_single_line_str(pdf_file_path, start_index: int = 0, end_inde
             result_text += page.extract_text()
 
     # Remove newline characters to make the result_text a single line
-    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE | re.DOTALL)
 
     return result_text
 
@@ -391,7 +394,7 @@ def convert_doc_to_single_line_str(doc_file_path, suppress_warn=False):
             result_text = text_file.read()
 
         # Remove newline characters to make the text a single line
-        result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+        result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE | re.DOTALL)
 
         if len(result_text) == 0:
             warnings.warn('Errors occurs for read Nothing from Libre office converted file', UserWarning)
@@ -413,7 +416,7 @@ def convert_rtf_to_single_line_str(rtf_file_path, suppress_warn=False):
     result_text = pypandoc.convert_file(rtf_file_path, 'plain', format='rtf')
 
     # Remove newline characters to make the text a single line
-    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE)
+    result_text = re.sub(r'\s+', ' ', result_text, flags=re.IGNORECASE | re.DOTALL)
 
     return result_text
 

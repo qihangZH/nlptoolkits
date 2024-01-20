@@ -71,7 +71,8 @@ class _AnnotatedLineResolver:
             splitted_dict[i] = dict()
 
             # first find NER tags(in the start of the fragment), we also have to escape the special characters
-            ner_match = re.search(rf"^\[{re.escape(self.ner_tag_label)}:(.+?)\]", fragment, flags=re.IGNORECASE)
+            ner_match = re.search(rf"^\[{re.escape(self.ner_tag_label)}:(.+?)\]", fragment,
+                                  flags=re.IGNORECASE | re.DOTALL)
             if ner_match:
                 splitted_dict[i]['ner'] = ner_match.group(1)
                 # get the end and start of match
@@ -85,7 +86,7 @@ class _AnnotatedLineResolver:
             # This tactic is use for non-greedy match, so that we can get the last match non-greedy
             pos_match = re.search(rf"(^.*)(?=\[{re.escape(self.pos_tag_label)}:(.+?)\]$)",
                                   fragment,
-                                  flags=re.IGNORECASE
+                                  flags=re.IGNORECASE | re.DOTALL
                                   )
             if pos_match:
                 splitted_dict[i]['pos'] = pos_match.group(2)
@@ -104,7 +105,9 @@ class _AnnotatedLineResolver:
         return splitted_dict
 
     def sentiment_resolver(self, token):
-        sentiment_match = re.search(rf"^\[{re.escape(self.sentiment_tag_label)}:(.+?)\]$", token, flags=re.IGNORECASE)
+        sentiment_match = re.search(rf"^\[{re.escape(self.sentiment_tag_label)}:(.+?)\]$",
+                                    token,
+                                    flags=re.IGNORECASE | re.DOTALL)
         if sentiment_match:
             return sentiment_match.group(1)
         else:
@@ -799,10 +802,10 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
 #         # remove ner for words of specific types:
 #         if self.ner_keep_types_origin_list:  # have a loop if it is not None
 #             for i in self.ner_keep_types_origin_list:
-#                 line = re.sub(rf"(\[ner:{i.lower()}\])(\S+)", r"\2", line, flags=re.IGNORECASE)
+#                 line = re.sub(rf"(\[ner:{i.lower()}\])(\S+)", r"\2", line, flags=re.IGNORECASE | re.DOTALL)
 #
 #         # update for deeper search, remove the entity name
-#         NERs = re.compile(r"(\[ner:\w+\])(\S+)", flags=re.IGNORECASE)
+#         NERs = re.compile(r"(\[ner:\w+\])(\S+)", flags=re.IGNORECASE | re.DOTALL)
 #         line = re.sub(NERs, r"\1", line)
 #         return line
 #
@@ -816,7 +819,7 @@ class AnnotatedLineCleaner(_AnnotatedLineResolver):
 #             str -- text with stopwords, numerics, 1-letter words removed
 #         """
 #         tokens = line.strip().lower().split(" ")  # do not use nltk.tokenize here
-#         tokens = [re.sub(r"\[pos:.*?\]", "", t, flags=re.IGNORECASE) for t in tokens]
+#         tokens = [re.sub(r"\[pos:.*?\]", "", t, flags=re.IGNORECASE | re.DOTALL) for t in tokens]
 #
 #         # these are tagged bracket and parenthesises
 #         if self.punctuations or self.stopwords:

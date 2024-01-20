@@ -207,7 +207,9 @@ def sentence_to_doc_level_list(
     """new-version:"""
     doc_ids_list = pd.Series(sent_id_list).str.extract(pat=r'^(.*)_[^_]*$',
                                                        # pick the group which before the last underscore
-                                                       expand=False, flags=re.IGNORECASE).to_list()
+                                                       expand=False,
+                                                       flags=re.IGNORECASE | re.DOTALL
+                                                       ).to_list()
 
     # concat all text from the same doc
     id_doc_dict = defaultdict(lambda: [])
@@ -252,7 +254,8 @@ def l1_sentence_to_doc_level_corpus(sent_corpus_file, sent_id_file,
     # # doc_ids = [x.split("_")[0] for x in sent_IDs]
     # """new-version:"""
     # doc_ids = pd.Series(sent_IDs).str.extract(pat=r'^(.*)_[^_]*$',  # pick the group which before the last underscore
-    #                                           expand=False, flags=re.IGNORECASE).to_list()
+    #                                           expand=False, flags=re.IGNORECASE | re.DOTALL
+    #                                           ).to_list()
     # 
     # # concat all text from the same doc
     # id_doc_dict = defaultdict(lambda: "")
