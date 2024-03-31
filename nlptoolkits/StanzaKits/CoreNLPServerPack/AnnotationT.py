@@ -1,8 +1,7 @@
-import time
 import stanza.server
 from stanza.server import CoreNLPClient
 import typing
-
+import time
 
 class _AnnotatorBasic:
 
@@ -311,7 +310,9 @@ class LineAnnotatorParallel(_AnnotatorBasic):
                  ner_tag_label: str,
                  sentiment_tag_label: str,
                  compounding_sep_string: str,
-                 token_sep_string: str
+                 token_sep_string: str,
+                 timeout: int,
+                 annotation_error: typing.Literal['raise', 'ignore', 'warn']
                  ):
         """
         parse the sentence with NER tagging and MWEs concatenated, etc
@@ -341,6 +342,8 @@ class LineAnnotatorParallel(_AnnotatorBasic):
         :param sentiment_tag_label: the sentiment tag used in the output
         :param compounding_sep_string: the separator string used to concatenate MWEs and compounds, default "[SEP]"
         :param token_sep_string: the separator string used to separate tokens, default " "
+        :param timeout: the timeout for each document task, milliseconds
+        :param annotation_error: the error handling method for annotation error, 'raise', 'ignore', 'warn'
         """
         super().__init__(annotation_choices=annotation_choices,
                          mwe_dep_types=mwe_dep_types,
@@ -350,6 +353,11 @@ class LineAnnotatorParallel(_AnnotatorBasic):
                          compounding_sep_string=compounding_sep_string,
                          token_sep_string=token_sep_string
                          )
+
+        self.timeout = timeout
+
+        self.annotation_error = annotation_error
+        assert self.annotation_error in ['raise', 'ignore', 'warn'], "annotation_error should be 'raise', 'ignore', 'warn'"
 
     def parse_line_to_sentences(self, doc, doc_id, corenlp_endpoint: str):
         """
@@ -370,9 +378,25 @@ class LineAnnotatorParallel(_AnnotatorBasic):
         with CoreNLPClient(
                 endpoint=corenlp_endpoint,
                 start_server=stanza.server.StartServer.DONT_START,
-                timeout=120000000
+                timeout=self.timeout
         ) as client:
-            doc_ann = client.annotate(doc)
+            _stime = time.time()
+            try:
+                doc_ann = client.annotate(doc)
+            except stanza.server.client.AnnotationException as ae:
+                if self.annotation_error == 'raise':
+                    raise ae
+                elif self.annotation_error == 'warn':
+                    print(f"{doc_id}: Annotation Exception, fail to annotate, therefore return None: {ae}")
+                    print(f'Annotation time: {time.time() - _stime} seconds')
+                    return "", str(doc_id) + "_" + str(0)
+
+                elif self.annotation_error == 'ignore':
+                    return "", str(doc_id) + "_" + str(0)
+                else:
+                    raise ValueError("annotation_error should be 'raise', 'ignore', 'warn'")
+            except Exception as e:
+                raise e
 
         sentences_processed = []
         doc_sent_ids = []

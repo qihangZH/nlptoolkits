@@ -50,7 +50,7 @@ POS_PENN_TREE_BANK_TAGS_UPPER_SET = {
 }
 
 POS_PENN_TREE_BANK_TAGS_PUNCT_UPPER_SET = {
-    '.', ',', ':', ';', '?', '!', 'LRB', 'RRB', 'SQT', 'EQT',
+    '.', ',', ':', ';', '?', '!', 'LRB', 'RRB', 'SQT', 'EQT', "NFP",
     # Additional punctuation and special characters
     "-LRB-", "-RRB-", "-LSB-", "-RSB-", "-LCB-", "-RCB-", "``", "''", "`", "'", '"', "(", ")", "[", "]", "{", "}",
     "HYPH", "'S"

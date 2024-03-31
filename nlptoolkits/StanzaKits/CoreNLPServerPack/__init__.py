@@ -34,6 +34,7 @@ def auto_doc_to_sentences_annotator(
             "ner.applyFineGrained": "false",
             "annotators": "tokenize, ssplit, pos, lemma, ner, depparse",
         },
+        annotation_error: typing.Literal['raise', 'ignore', 'warn'] = 'raise',
         **kwargs):
     """
     parse the sentence with NER tagging and MWEs concatenated, etc
@@ -78,10 +79,20 @@ def auto_doc_to_sentences_annotator(
     :param properties: the properties of stanfordnlp.server.CoreNLPClient, properties['annotators'] should contain
                         PIPELINE like 'tokenize', 'ssplit', 'pos', 'lemma', 'ner', 'depparse', 'sentiment', etc.
                         if loss some important components, the function will raise error.
+    :param annotation_error: the error handling method for annotation error, 'raise', 'ignore', 'warn', default 'raise'
     :param kwargs: the other arguments of stanfordnlp.server.CoreNLPClient
     """
     # supply for arguments
-    kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 12000000
+
+    # special condition for Parallel timeout
+    kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 1200000
+    _timeout_parallel = kwargs['timeout']
+    kwargs['timeout'] = kwargs['timeout'] * 10
+    # for the opened server, the timeout should be longer than the parallel timeout
+
+    # --- old version --- #
+    # kwargs['timeout'] = kwargs['timeout'] if 'timeout' in kwargs else 12000000
+
     kwargs['max_char_length'] = kwargs['max_char_length'] if 'max_char_length' in kwargs else 1000000
     kwargs['start_server'] = kwargs['start_server'] \
         if 'start_server' in kwargs else stanza.server.StartServer.FORCE_START
@@ -124,7 +135,9 @@ def auto_doc_to_sentences_annotator(
                 ner_tag_label=ner_tag_label,
                 sentiment_tag_label=sentiment_tag_label,
                 compounding_sep_string=compounding_sep_string,
-                token_sep_string=token_sep_string
+                token_sep_string=token_sep_string,
+                timeout=_timeout_parallel,
+                annotation_error=annotation_error
             )
             _BasicKits.FileT.l1_mp_process_largefile(
                 path_input_txt=path_input_txt,
