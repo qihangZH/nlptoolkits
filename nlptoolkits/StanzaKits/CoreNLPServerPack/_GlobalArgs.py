@@ -46,14 +46,14 @@ POS_PENN_TREE_BANK_TAGS_UPPER_SET = {
     'WHNP', 'WHPP', 'WP', 'WP$', 'WPS', 'WRB', 'X', '.', ',', ':', ';', '?', '!', 'LRB', 'RRB', 'SQT', 'EQT',
     # Additional punctuation and special characters
     "-LRB-", "-RRB-", "-LSB-", "-RSB-", "-LCB-", "-RCB-", "``", "''", "`", "'", '"', "(", ")", "[", "]", "{", "}",
-    "HYPH", "'S"
+    "HYPH", "'S", "NFP"
 }
 
 POS_PENN_TREE_BANK_TAGS_PUNCT_UPPER_SET = {
-    '.', ',', ':', ';', '?', '!', 'LRB', 'RRB', 'SQT', 'EQT', "NFP",
+    '.', ',', ':', ';', '?', '!', 'LRB', 'RRB', 'SQT', 'EQT',
     # Additional punctuation and special characters
     "-LRB-", "-RRB-", "-LSB-", "-RSB-", "-LCB-", "-RCB-", "``", "''", "`", "'", '"', "(", ")", "[", "]", "{", "}",
-    "HYPH", "'S"
+    "HYPH", "'S", "NFP"
 }
 
 # --------------------------------------------------------------------------
