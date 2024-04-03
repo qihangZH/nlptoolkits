@@ -25,7 +25,7 @@ def _chatcompletion_requester(
             messages=message_generate_func(prompt),
             **kwargs
         )
-    except openai.error.OpenAIError:
+    except openai.OpenAIError:
         raise
     except Exception:
         return [], True, True
