@@ -146,7 +146,7 @@ def chatcompletion_worker(
     """
 
     @backoff.on_exception(backoff.expo,
-                          (ratelimit.RateLimitException, openai.error.OpenAIError),
+                          (ratelimit.RateLimitException, openai.OpenAIError),
                           max_tries=backoff_max_tries)
     @ratelimit.limits(calls=ratelimit_call, period=ratelimit_period)
     def _lambda_backoff_chatcompletion_requester(*largs, **lkwargs):
