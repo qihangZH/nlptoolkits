@@ -7,7 +7,7 @@ stanza>=1.5
 # gensim>=3.7.2
 gensim>=4.0.0
 pathos
-openai
+openai>=1.0.0
 wordninja
 charset_normalizer
 setuptools

@@ -8,6 +8,9 @@ import ratelimit
 import backoff
 from .. import _BasicKits
 
+if int(openai.__version__[0]) < 1:
+    raise ImportError('OpenAI version should be 1.0.0 or higher')
+
 
 def _chatcompletion_requester(
         prompt: str,
@@ -15,14 +18,16 @@ def _chatcompletion_requester(
         stop_text: str,
         result_type: typing.Literal['raw', 'json'],
         message_generate_func: typing.Callable,
+        openai_client: openai.OpenAI,
         **kwargs
 ) -> (list, bool, bool):
     # first step, get data from chat.openai, However sometimes will meet errors.
 
     try:
-        completion = openai.ChatCompletion.create(
-            stop=[stop_text],
+        """v1.0+ -> update for new completion format"""
+        completion = openai_client.chat.completions.create(
             messages=message_generate_func(prompt),
+            stop=[stop_text],
             **kwargs
         )
     except openai.OpenAIError:
@@ -38,7 +43,9 @@ def _chatcompletion_requester(
     elif result_type == 'json':
 
         try:
-            result = dict(completion["choices"][0]["message"])
+            """v1.0+ -> update for new completion format"""
+            result = dict(completion.choices[0].message)
+            # result = dict(completion["choices"][0]["message"])
 
             if result["content"].endswith('...'):
                 raise ValueError('Max token return exceed, try another model or change your strategy(chunksize)')
@@ -155,7 +162,11 @@ def chatcompletion_worker(
     # --------------------------------------------------------------------------
     # Argument Prepare
     # --------------------------------------------------------------------------
-    openai.api_key = openai_apikey
+    """v1.0+ -> use client"""
+    # openai.api_key = openai_apikey
+
+    openai_client = openai.OpenAI(api_key=openai_apikey)
+
     # How does finalrst need completionlist's type? a one to one dict
     finalrst_completionlist_type_dict = {'df': 'json', 'raw': 'raw'}
 
@@ -187,6 +198,7 @@ def chatcompletion_worker(
                 # This place are different for this function actually got json
                 result_type=finalrst_completionlist_type_dict[result_type],
                 message_generate_func=message_generate_func,
+                openai_client=openai_client,
                 **kwargs
             )
 
@@ -205,6 +217,7 @@ def chatcompletion_worker(
                         # This place are different for this function actually got json
                         result_type=finalrst_completionlist_type_dict[result_type],
                         message_generate_func=message_generate_func,
+                        openai_client=openai_client,
                         **kwargs
                     )
                     sub_pred_list += _chatcompletion_dfjson_errorholder(
