@@ -196,7 +196,8 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
                                                                                'removes_tags_and_original_text': _GlobalArgs.POS_PENN_TREE_BANK_TAGS_PUNCT_UPPER_SET
                                                                                },
                              clean_flag: int = _GlobalArgs.FLAG_ANNOTATED_LINE_CLEANER_CLEANEDLINE,
-                             chunk_size=200000
+                             chunk_size=200000,
+                             start_iloc=None
                              ):
     """
     clean the entire corpus (output from CoreNLP)
@@ -244,6 +245,7 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
         1 means only return sentiment or _GlobalArgs.ANNOTATED_LINE_CLEANER_SENTIMENT
         To be more specific, see StanzaKits/CoreNLPServerPack/_GlobalArgs.py For detail.
     :param chunk_size: int, the chunk size of each process, default 200000
+    :param start_iloc: {int} -- line number to start from (index starts with 0)
     """
     line_clearner_cls = AnnotatedResolverT.AnnotatedLineCleaner(
         pos_tag_label=pos_tag_label,
@@ -273,6 +275,7 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
             path_output_index_txt=None,
             process_line_func=functools.partial(line_clearner_cls.clean),
             chunk_size=chunk_size,
+            start_iloc=start_iloc
         )
 
     else:
@@ -286,4 +289,5 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
             process_line_func=functools.partial(line_clearner_cls.clean),
             processes=processes,
             chunk_size=chunk_size,
+            start_iloc=start_iloc
         )
