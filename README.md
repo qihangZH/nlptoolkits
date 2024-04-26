@@ -67,6 +67,8 @@ run on non-killed server. But I do not recommend that.
 ## java
 https://zhuanlan.zhihu.com/p/617251948
 
+Java SE Development Kit 8u391 or EARLIER, or running the server will cause unintended error.
+
 ## references
 
 ### https://github.com/MS20190155/Measuring-Corporate-Culture-Using-Machine-Learning
