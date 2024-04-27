@@ -69,6 +69,8 @@ https://zhuanlan.zhihu.com/p/617251948
 
 Java SE Development Kit 8u391 or EARLIER, or running the server will cause unintended error.
 
+Consider your computer, maybe X64 is always better. Or the Corenlp will not run properly.
+
 ## references
 
 ### https://github.com/MS20190155/Measuring-Corporate-Culture-Using-Machine-Learning
