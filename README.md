@@ -67,7 +67,9 @@ run on non-killed server. But I do not recommend that.
 ## java
 https://zhuanlan.zhihu.com/p/617251948
 
-Java SE Development Kit 8u391 or EARLIER, or running the server will cause unintended error.
+Java SE Development Kit 8u391 or EARLIER, or running the server will cause unintended error
+
+(The server could not be closed automatically by Python).
 
 Consider your computer, maybe X64 is always better. Or the Corenlp will not run properly.
 
