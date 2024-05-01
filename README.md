@@ -10,6 +10,10 @@
 
 ## Requirement 
 
+See the requirements.txt for more info. 
+
+Venv should be set as python<=3.11
+
 ### Pytorch/Torch
 
 Some of the code, like Stanza, need Torch, however, it is always sensible for
