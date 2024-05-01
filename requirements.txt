@@ -23,7 +23,8 @@ torch
 scipy
 openpyxl
 sentence-transformers
-readability-lxml
+readability-lxml>=0.8.1
+lxml<=4.9.3
 pdf2image
 rapidfuzz
 numba
