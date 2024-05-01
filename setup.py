@@ -9,4 +9,5 @@ setup(
     description="nlp tool kits for accounting research",
     long_description=open('README.md').read(),
     url="https://github.com/qihangZH/nlptoolkits",
+    package_data={'': ['*.txt', '*.md']}
 )

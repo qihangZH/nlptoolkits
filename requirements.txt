@@ -20,7 +20,7 @@ langdetect
 backoff
 ratelimit
 torch
-scipy
+scipy<=1.12.0
 openpyxl
 sentence-transformers
 readability-lxml>=0.8.1
