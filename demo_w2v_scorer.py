@@ -1,5 +1,5 @@
 """initialize the project and insure the project can run"""
-import global_options
+import __glob_opts
 from pathlib import Path
 import os
 import pandas as pd
@@ -15,33 +15,33 @@ if __name__ == '__main__':
 
     print("""REFRESHING THE PROJECT FOLDERS,PLEASE WAIT...""")
     # delete the directory if they already exist
-    for outputdir in [global_options.PROCESSED_DATA_FOLDER,
-                      global_options.MODEL_FOLDER,
-                      global_options.OUTPUT_FOLDER
+    for outputdir in [__glob_opts.PROCESSED_DATA_FOLDER,
+                      __glob_opts.MODEL_FOLDER,
+                      __glob_opts.OUTPUT_FOLDER
 
                       ]:
         nlptoolkits.delete_whole_dir(directory=outputdir)
 
     """root level dir make"""
-    Path(global_options.PROCESSED_DATA_FOLDER).mkdir(parents=False, exist_ok=True)
-    Path(global_options.MODEL_FOLDER).mkdir(parents=False, exist_ok=True)
-    Path(global_options.OUTPUT_FOLDER).mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.PROCESSED_DATA_FOLDER).mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.MODEL_FOLDER).mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.OUTPUT_FOLDER).mkdir(parents=False, exist_ok=True)
 
     """model dir make"""
-    Path(global_options.MODEL_FOLDER, "phrases").mkdir(parents=False, exist_ok=True)
-    Path(global_options.MODEL_FOLDER, "w2v").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.MODEL_FOLDER, "phrases").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.MODEL_FOLDER, "w2v").mkdir(parents=False, exist_ok=True)
 
     """processed data dir make"""
-    Path(global_options.PROCESSED_DATA_FOLDER, "parsed").mkdir(parents=False, exist_ok=True)
-    Path(global_options.PROCESSED_DATA_FOLDER, "unigram").mkdir(parents=False, exist_ok=True)
-    Path(global_options.PROCESSED_DATA_FOLDER, "bigram").mkdir(parents=False, exist_ok=True)
-    Path(global_options.PROCESSED_DATA_FOLDER, "trigram").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.PROCESSED_DATA_FOLDER, "parsed").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.PROCESSED_DATA_FOLDER, "unigram").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.PROCESSED_DATA_FOLDER, "bigram").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.PROCESSED_DATA_FOLDER, "trigram").mkdir(parents=False, exist_ok=True)
 
     """output result dir make"""
-    Path(global_options.OUTPUT_FOLDER, "dict").mkdir(parents=False, exist_ok=True)
-    Path(global_options.OUTPUT_FOLDER, "scores").mkdir(parents=False, exist_ok=True)
-    Path(global_options.OUTPUT_FOLDER, "scores", "temp").mkdir(parents=False, exist_ok=True)
-    Path(global_options.OUTPUT_FOLDER, "scores", "word_contributions").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.OUTPUT_FOLDER, "dict").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.OUTPUT_FOLDER, "scores").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.OUTPUT_FOLDER, "scores", "temp").mkdir(parents=False, exist_ok=True)
+    Path(__glob_opts.OUTPUT_FOLDER, "scores", "word_contributions").mkdir(parents=False, exist_ok=True)
 
     print("""...DONE""")
 
@@ -65,21 +65,21 @@ if __name__ == '__main__':
 
     """Arguments"""
     nlptoolkits.StanzaKits.CoreNLPServerPack.auto_doc_to_sentences_annotator(
-        endpoint=global_options.ADDRESS_CORENLP,
-        memory=global_options.RAM_CORENLP,
-        processes=global_options.N_CORES,
-        path_input_txt=Path(global_options.INPUT_DATA_FOLDER, "tweets_origin.txt"),
+        endpoint=__glob_opts.ADDRESS_CORENLP,
+        memory=__glob_opts.RAM_CORENLP,
+        processes=__glob_opts.N_CORES,
+        path_input_txt=Path(__glob_opts.INPUT_DATA_FOLDER, "tweets_origin.txt"),
         input_index_list=nlptoolkits.SmallKits.IOHandlerT.file_to_list(
-            Path(global_options.INPUT_DATA_FOLDER, "ids_origin.txt"),
-            charset_error_encoding=global_options.DEFAULT_ENCODING
+            Path(__glob_opts.INPUT_DATA_FOLDER, "ids_origin.txt"),
+            charset_error_encoding=__glob_opts.DEFAULT_ENCODING
         ),
         path_output_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"
         ),
         path_output_index_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
+            __glob_opts.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
         ),
-        chunk_size=global_options.PARSE_CHUNK_SIZE,
+        chunk_size=__glob_opts.PARSE_CHUNK_SIZE,
         be_quite=True,
         # annotation_choices=['Lemmatize', 'NERtags', 'DepParseMWECompounds', 'POStags', 'SentenceSentiment'],
         # properties={
@@ -99,9 +99,9 @@ if __name__ == '__main__':
 
     # clean the parsed text (remove POS tags, stopwords, etc.) ----------------
     nlptoolkits.StanzaKits.CoreNLPServerPack.auto_clean_annotated_txt(
-        path_in_parsed_txt=Path(global_options.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
-        path_out_cleaned_txt=Path(global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
-        remove_stopwords_set=global_options.STOPWORDS,
+        path_in_parsed_txt=Path(__glob_opts.PROCESSED_DATA_FOLDER, "parsed", "documents.txt"),
+        path_out_cleaned_txt=Path(__glob_opts.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
+        remove_stopwords_set=__glob_opts.STOPWORDS,
         token_remove_ner_tags_to_lessequal_then_num=1,
         processes=os.cpu_count(),
         clean_flag=0
@@ -110,15 +110,15 @@ if __name__ == '__main__':
     # train and apply a phrase model to detect 2-word phrases ----------------
     nlptoolkits.GensimKits.BigramT.sentence_bigram_fit_transform_txt(
         path_input_clean_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"
         ),
         path_output_transformed_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"
         ),
-        path_output_model_mod=Path(global_options.MODEL_FOLDER, "phrases", "bigram.mod"),
-        phrase_min_length=global_options.PHRASE_MIN_COUNT,
-        connection_words=global_options.STOPWORDS,
-        threshold=global_options.PHRASE_THRESHOLD,
+        path_output_model_mod=Path(__glob_opts.MODEL_FOLDER, "phrases", "bigram.mod"),
+        phrase_min_length=__glob_opts.PHRASE_MIN_COUNT,
+        connection_words=__glob_opts.STOPWORDS,
+        threshold=__glob_opts.PHRASE_THRESHOLD,
         scoring="original_scorer"
     )
 
@@ -127,14 +127,14 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------------------------------
 
     nlptoolkits.GensimKits.BigramT.sentence_bigram_fit_transform_txt(
-        path_input_clean_txt=Path(global_options.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"),
+        path_input_clean_txt=Path(__glob_opts.PROCESSED_DATA_FOLDER, "bigram", "documents.txt"),
         path_output_transformed_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
-        path_output_model_mod=Path(global_options.MODEL_FOLDER, "phrases", "trigram.mod"),
-        phrase_min_length=global_options.PHRASE_MIN_COUNT,
-        connection_words=global_options.STOPWORDS,
-        threshold=global_options.PHRASE_THRESHOLD,
+        path_output_model_mod=Path(__glob_opts.MODEL_FOLDER, "phrases", "trigram.mod"),
+        phrase_min_length=__glob_opts.PHRASE_MIN_COUNT,
+        connection_words=__glob_opts.STOPWORDS,
+        threshold=__glob_opts.PHRASE_THRESHOLD,
         scoring="original_scorer"
     )
 
@@ -145,20 +145,20 @@ if __name__ == '__main__':
     print("Training w2v model...")
     nlptoolkits.GensimKits._Models.train_w2v_model(
         path_input_sentence_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
-        path_output_model=Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod"),
-        vector_size=global_options.W2V_DIM,
-        window=global_options.W2V_WINDOW,
-        workers=global_options.N_CORES,
-        epochs=global_options.W2V_ITER,
+        path_output_model=Path(__glob_opts.MODEL_FOLDER, "w2v", "w2v.mod"),
+        vector_size=__glob_opts.W2V_DIM,
+        window=__glob_opts.W2V_WINDOW,
+        workers=__glob_opts.N_CORES,
+        epochs=__glob_opts.W2V_ITER,
     )
 
     result_dict = nlptoolkits.GensimKits.Wrd2vScorerT.l1_semi_supervise_w2v_dict(
-        path_input_w2v_model=str(Path(global_options.MODEL_FOLDER, "w2v", "w2v.mod")),
-        seed_words_dict=global_options.SEED_WORDS,
-        restrict_vocab_per=global_options.DICT_RESTRICT_VOCAB,
-        model_dims=global_options.N_WORDS_DIM
+        path_input_w2v_model=str(Path(__glob_opts.MODEL_FOLDER, "w2v", "w2v.mod")),
+        seed_words_dict=__glob_opts.SEED_WORDS,
+        restrict_vocab_per=__glob_opts.DICT_RESTRICT_VOCAB,
+        model_dims=__glob_opts.N_WORDS_DIM
     )
 
     # --------------------------------------------------------------------------------------------------
@@ -168,37 +168,37 @@ if __name__ == '__main__':
     # output the dictionary
     nlptoolkits._BasicKits.FileT.write_dict_to_csv(
         culture_dict=result_dict,
-        file_name=str(Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv")),
+        file_name=str(Path(__glob_opts.OUTPUT_FOLDER, "dict", "expanded_dict.csv")),
     )
-    print(f'Dictionary saved at {str(Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv"))}')
+    print(f'Dictionary saved at {str(Path(__glob_opts.OUTPUT_FOLDER, "dict", "expanded_dict.csv"))}')
 
     scorer_class = nlptoolkits.GensimKits.Wrd2vScorerT.DocScorer(
-        path_current_dict=pathlib.Path(global_options.OUTPUT_FOLDER, "dict", "expanded_dict.csv"),
+        path_current_dict=pathlib.Path(__glob_opts.OUTPUT_FOLDER, "dict", "expanded_dict.csv"),
         path_trainw2v_sentences_dataset_txt=pathlib.Path(
-            global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
         path_trainw2v_sentences_dataset_index_txt=pathlib.Path(
-            global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt"
         ),
-        processes=global_options.N_CORES,
-        charset_error_encoding=global_options.DEFAULT_ENCODING
+        processes=__glob_opts.N_CORES,
+        charset_error_encoding=__glob_opts.DEFAULT_ENCODING
     )
 
     """however, you do not need this part"""
     scorer_class.pickle_doc_freq(
-        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_freq.pickle")
+        pathlib.Path(__glob_opts.OUTPUT_FOLDER, "scores", "temp", "doc_freq.pickle")
     )
 
     scorer_class.pickle_doc_level_ids(
-        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "doc_ids.pickle")
+        pathlib.Path(__glob_opts.OUTPUT_FOLDER, "scores", "temp", "doc_ids.pickle")
     )
 
     scorer_class.pickle_doc_level_corpus(
-        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "temp", "corpus_doc_level.pickle")
+        pathlib.Path(__glob_opts.OUTPUT_FOLDER, "scores", "temp", "corpus_doc_level.pickle")
     )
 
     scorer_class.score_tf_df().to_csv(
-        pathlib.Path(global_options.OUTPUT_FOLDER, "scores", "scores_TF.csv"), index=False
+        pathlib.Path(__glob_opts.OUTPUT_FOLDER, "scores", "scores_TF.csv"), index=False
     )
     methods = ["TFIDF", "WFIDF"]
     for method in methods:
@@ -210,7 +210,7 @@ if __name__ == '__main__':
         score.to_csv(
             str(
                 pathlib.Path(
-                    global_options.OUTPUT_FOLDER,
+                    __glob_opts.OUTPUT_FOLDER,
                     "scores",
                     "scores_{}.csv".format(method),
                 )
@@ -220,7 +220,7 @@ if __name__ == '__main__':
         # save word contributions
         contribution.to_csv(
             pathlib.Path(
-                global_options.OUTPUT_FOLDER,
+                __glob_opts.OUTPUT_FOLDER,
                 "scores",
                 "word_contributions",
                 "word_contribution_{}.csv".format(method),

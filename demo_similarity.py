@@ -1,16 +1,16 @@
 from nlptoolkits import GensimKits
-import global_options
+import __glob_opts
 from pathlib import Path
 
 if __name__ == '__main__':
     democls = GensimKits.Similarity.SimilarityTfidf(
         path_sentences_dataset_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
+            __glob_opts.PROCESSED_DATA_FOLDER, "trigram", "documents.txt"
         ),
         path_sentences_dataset_index_txt=Path(
-            global_options.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
+            __glob_opts.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt",
         ),
-        charset_error_encoding=global_options.DEFAULT_ENCODING
+        charset_error_encoding=__glob_opts.DEFAULT_ENCODING
     )
 
     print(democls.similarity_matrix(democls.doc_text_corpus_list[:3111],
