@@ -77,6 +77,16 @@ Java SE Development Kit 8u391 or EARLIER, or running the server will cause unint
 
 Consider your computer, maybe X64 is always better. Or the Corenlp will not run properly.
 
+## docker
+
+If use docker on windows, always download prerelease version for memory issues.
+
+see: https://github.com/docker/for-win/issues/12944
+
+```powershell
+wsl --update --pre-release
+```
+
 ## references
 
 ### https://github.com/MS20190155/Measuring-Corporate-Culture-Using-Machine-Learning
