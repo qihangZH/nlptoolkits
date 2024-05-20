@@ -87,6 +87,11 @@ see: https://github.com/docker/for-win/issues/12944
 wsl --update --pre-release
 ```
 
+## W2v notice
+
+Notice that the TF/TFIDF/WFIDF in this code is ***NOT WEIGHTED*** by document length!
+If need please do it by yourself!
+
 ## references
 
 ### https://github.com/MS20190155/Measuring-Corporate-Culture-Using-Machine-Learning
@@ -99,7 +104,6 @@ wsl --update --pre-release
    from https://github.com/MS20190155/Measuring-Corporate-Culture-Using-Machine-Learning
 4. The reference codes do not have LICENCE now, if any update the reference LICENSE, this repo will follow on. However,
    this code's structure and inner is mostly different from origin code.
-
 5. LexRankT code was copy from https://github.com/crabcamp/lexrank, where they work same, and the
    License is set as 
 
