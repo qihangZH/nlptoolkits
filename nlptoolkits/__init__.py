@@ -3,6 +3,7 @@ from . import GensimKits
 from . import OpenAIKits
 from . import SmallKits
 from . import StanzaKits
+from . import FirmLevelRiskKits
 
 from . import resources
 
