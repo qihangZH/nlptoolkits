@@ -9,24 +9,24 @@ from ..StanzaKits import CoreNLPServerPack
 from .. import resources
 
 
-# def cleaner_remove_token_lessequal_then_length(
-#         texture: str,
-#         token_sep_string: str = CoreNLPServerPack._GlobalArgs.DEFAULT_TOKEN_SEP_STRING,
-#         remove_token_lessequal_then_length: typing.Optional[int] = 1
-# ):
-#     if remove_token_lessequal_then_length is not None:
-#
-#         token_list = texture.split(token_sep_string)
-#
-#         rst_l = []
-#         for s in token_list:
-#             if len(s) > remove_token_lessequal_then_length:
-#                 rst_l.append(s)
-#         return token_sep_string.join(
-#             rst_l
-#         )
-#     else:
-#         return texture
+def cleaner_remove_token_lessequal_then_length(
+        texture: str,
+        token_sep_string: str = CoreNLPServerPack._GlobalArgs.DEFAULT_TOKEN_SEP_STRING,
+        remove_token_lessequal_then_length: typing.Optional[int] = 1
+):
+    if remove_token_lessequal_then_length is not None:
+
+        token_list = texture.split(token_sep_string)
+
+        rst_l = []
+        for s in token_list:
+            if len(s) > remove_token_lessequal_then_length:
+                rst_l.append(s)
+        return token_sep_string.join(
+            rst_l
+        )
+    else:
+        return texture
 
 
 def naive_nltk_annotator(
@@ -129,6 +129,8 @@ class NgramDataPreprocessor:
 
         self.restruct_compounding_sep_string = restruct_compounding_sep_string
         self.restruct_token_sep_string = restruct_token_sep_string
+        self.remove_ner_options_dict = remove_ner_options_dict
+        self.remove_pos_options_dict = remove_pos_options_dict
 
         self.corenlp_cleaner_dict = {
             'pos_tag_label': pos_tag_label,
@@ -160,18 +162,44 @@ class NgramDataPreprocessor:
     """read the list of sentences"""
 
     def clean_annotated_texture_list(self,
-                                     texture_list,
+                                     texture_list: typing.List[str],
                                      processes: int,
+                                     final_remove_token_lessequal_then_length: typing.Optional[int] = None
                                      ) -> typing.List[str]:
+        """
+        The main cleaner to clean texture list to texture that available for Hassan et.al(2019) and DictionaryT
+        :param texture_list: the list of texture, typing.List[str]
+        :param processes: numbers of processes, int,
+        :param final_remove_token_lessequal_then_length: different from remove_token_lessequal_then_length
+            it finally removes all words, substrings after Annotator Cleaner usage. It could clean some
+            of the words like 'a' in a_apple(If you choose to split them),
+            for original cleaner could not clean the short phrases in a big NER phrase.
+        Returns: list of cleaned texture
+
+        """
+
+        if ((self.remove_ner_options_dict != {'removes_tags': 'all'}) or
+            (self.remove_pos_options_dict != {'removes_tags': 'all'})) and \
+                (final_remove_token_lessequal_then_length is not None):
+            warnings.warn("""
+            ner and pos remove option in cleaning func should be  'removes_tags': 'all'
+            if final_remove_token_lessequal_then_length set to integer(not None). else it will not work as estimated.
+            """)
 
         assert isinstance(texture_list, list), 'the texture_list must be list!'
 
         def _sent_cleaner(s):
-            return self.line_clearner_cls.line_annotated_tokens_cleaner(
+            _t = self.line_clearner_cls.line_annotated_tokens_cleaner(
                 re.sub(r'\s+',
                        self.restruct_token_sep_string,
                        s,
                        flags=re.IGNORECASE | re.DOTALL)
+            )
+
+            return cleaner_remove_token_lessequal_then_length(
+                _t,
+                token_sep_string=self.restruct_token_sep_string,
+                remove_token_lessequal_then_length=final_remove_token_lessequal_then_length
             )
 
         print('Cleaning the annotated data...')
