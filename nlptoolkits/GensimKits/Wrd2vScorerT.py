@@ -167,12 +167,14 @@ def deduplicate_keywords(word2vec_model, expanded_words, seed_words):
     return expanded_words
 
 
-def score_one_document_tf(document, expanded_words, list_of_list=False):
+def score_one_document_tf(document, expanded_words, list_of_list=False, vague=False):
     """score a single document using term freq, the dimensions are sorted alphabetically
 
     Arguments:
         document {str} -- a document
         expanded_words {dict[str, set(str)]} -- an expanded dictionary
+        vague {bool} -- Default False, is or not identify the words match if it part-satisfy(
+            if the expanded word IN(substring) of any of splitted word)
 
     Keyword Arguments:
         list_of_list {bool} -- whether the document is splitted (default: {False})
@@ -188,7 +190,13 @@ def score_one_document_tf(document, expanded_words, list_of_list=False):
     c = Counter(document)
     for pair in c.items():
         for dimension, words in expanded_words.items():
-            if pair[0] in words:
+            # update for vague
+            if vague:
+                _matched_flag = any([w in pair[0] for w in words])
+            else:
+                _matched_flag = pair[0] in words
+
+            if _matched_flag:
                 dimension_count[dimension] += pair[1]
     # use ordereddict to maintain order of count for each dimension
     dimension_count = OrderedDict(sorted(dimension_count.items(), key=lambda t: t[0]))
@@ -197,7 +205,7 @@ def score_one_document_tf(document, expanded_words, list_of_list=False):
     return result
 
 
-def tf_scorer(documents, document_ids, expanded_words, n_core=1):
+def tf_scorer(documents, document_ids, expanded_words, n_core=1, vague=False):
     """score using term freq for documents, the dimensions are sorted alphabetically
 
     Arguments:
@@ -207,13 +215,15 @@ def tf_scorer(documents, document_ids, expanded_words, n_core=1):
 
     Keyword Arguments:
         n_core {int} -- number of CPU cores (default: {1})
+        vague {bool} -- Default False, is or not identify the words match if it part-satisfy(
+            if the expanded word IN(substring) of any of splitted word)
 
     Returns:
         pandas.DataFrame -- a dataframe with columns: Doc_ID, dim1, dim2, ..., document_length
     """
     if n_core > 1:
         count_one_document_partial = partial(
-            score_one_document_tf, expanded_words=expanded_words, list_of_list=False
+            score_one_document_tf, expanded_words=expanded_words, list_of_list=False, vague=vague
         )
 
         with pathos.multiprocessing.Pool(processes=n_core,
@@ -226,7 +236,7 @@ def tf_scorer(documents, document_ids, expanded_words, n_core=1):
         results = []
         for i, doc in enumerate(documents):
             results.append(
-                score_one_document_tf(doc, expanded_words, list_of_list=False)
+                score_one_document_tf(doc, expanded_words, list_of_list=False, vague=vague)
             )
     df = pd.DataFrame(
         results, columns=sorted(list(expanded_words.keys())) + ["document_length"]
@@ -244,6 +254,7 @@ def tf_idf_scorer(
         method="TFIDF",
         word_weights=None,
         normalize=False,
+        vague=False
 ):
     """Calculate tf-idf score for documents
 
@@ -262,6 +273,8 @@ def tf_idf_scorer(
             (default: {TFIDF})
         normalize {bool} -- normalized the L2 norm to one for each document (default: {False})
         word_weights {{word:weight}} -- a dictionary of word weights (e.g. similarity weights) (default: None)
+        vague {bool} -- Default False, is or not identify the words match if it part-satisfy(
+            if the expanded word IN(substring) of any splitted word)
 
     Returns:
         [df] -- a dataframe with columns: Doc_ID, dim1, dim2, ..., document_length
@@ -278,7 +291,14 @@ def tf_idf_scorer(
         c = Counter(document)
         for pair in c.items():
             for dimension, words in expanded_words.items():
-                if pair[0] in words:
+                # update for vague
+                if vague:
+                    _matched_flag = any([w in pair[0] for w in words])
+                else:
+                    _matched_flag = pair[0] in words
+
+                if _matched_flag:
+                    # if pair[0] in words:
                     if method == "WFIDF":
                         w_ij = (1 + math.log(pair[1])) * math.log(
                             N_doc / df_dict[pair[0]]
@@ -472,7 +492,7 @@ class DocScorer:
         ) as out_f:
             pickle.dump(copy.deepcopy(self.doc_freq_dict), out_f)
 
-    def score_tf_df(self):
+    def score_tf_df(self, vague=False):
         """
         :return : score_df
         """
@@ -481,13 +501,14 @@ class DocScorer:
             document_ids=self.doc_ids,
             expanded_words=self.current_dict,
             n_core=self.mp_threads,
+            vague = vague
         )
 
         return score_df
 
     """Scorer at doc level"""
 
-    def score_tfidf_dfdf(self, method, normalize=False):
+    def score_tfidf_dfdf(self, method, normalize=False, vague=False):
         """Score documents using tf-idf and its variations
 
         :param method :
@@ -513,6 +534,7 @@ class DocScorer:
                 word_weights=self.word_sim_weights,
                 method=method,
                 normalize=normalize,
+                vague=vague
             )
 
             # save word contributions

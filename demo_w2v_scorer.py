@@ -205,6 +205,7 @@ if __name__ == '__main__':
         score, contribution = scorer_class.score_tfidf_dfdf(
             method=method,
             normalize=False,
+            vague=False
         )
 
         score.to_csv(
