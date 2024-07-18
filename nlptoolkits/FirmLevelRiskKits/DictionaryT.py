@@ -99,8 +99,15 @@ class NgramDictionaryBuilder:
 
     def _clean_dict_training_texture_list(self,
                                           texture_list,
-                                          processes: int,
+                                          processes: int
                                           ) -> typing.List[str]:
+        """
+        The pre-work cleaner to clean texture list to texture that available for Hassan et.al(2019) and DictionaryT
+        It do not have a final cleaner for it actually is not recommend to use outside for it is a limited cleaner.
+        :param texture_list: the list of texture, typing.List[str]
+        :param processes: numbers of processes, int
+        Returns: list of cleaned texture
+        """
 
         assert isinstance(texture_list, list), 'the texture_list must be list!'
 
@@ -140,7 +147,8 @@ class NgramDictionaryBuilder:
             n: int = 2,
             scorer: typing.Literal['tf', 'tfidf'] = 'tfidf',
             remove_ngram_postags_combinations: typing.Optional[list] = _Resources.library_remove_bigram_combinations,
-            remove_ngram_contain_any_words_list: typing.Optional[list] = _Resources.library_remove_single_words_lower
+            remove_ngram_contain_any_words_list: typing.Optional[list] = _Resources.library_remove_single_words_lower,
+            final_remove_token_lessequal_then_length: typing.Optional[int] = None
     ):
         """
         :param corenlp_annotated_texture: a list of sentences to be processed, every one will be auto cleaned by arguments initialized
@@ -190,20 +198,30 @@ class NgramDictionaryBuilder:
         for _d in self._after_line_resolver_cls.line_resolver(
                 texture
         )['resolved_tokens']:
-            texture_list.extend(
-                [
-                    _subd['original_text']
-                    for _subd in _d.values()
-                ]
-            )
 
-            """It should be mention that the pos are always set to lower for better checkin"""
-            postags_list.extend(
-                [
+            for _subd in _d.values():
+                texture_list.append(
+                    _subd['original_text']
+                )
+
+                """It should be mention that the pos are always set to lower for better checkin"""
+                postags_list.append(
                     _subd['pos'].lower()
-                    for _subd in _d.values()
-                ]
-            )
+                )
+
+        """Add on: remove all texture that original text is less than the min length of final restriction"""
+        _removed_texture_list = []
+        _removed_postags_list = []
+        if final_remove_token_lessequal_then_length is not None:
+            assert len(texture_list) == len(postags_list)
+            for i in range(len(texture_list)):
+                if len(texture_list[i]) > final_remove_token_lessequal_then_length:
+                    _removed_texture_list.append(texture_list[i])
+                    _removed_postags_list.append(postags_list[i])
+
+            texture_list = _removed_texture_list
+            postags_list = _removed_postags_list
+
 
         ngram_texture_list = list(nltk.ngrams(texture_list, n=n))
         ngram_postags_list = list(nltk.ngrams(postags_list, n=n))
