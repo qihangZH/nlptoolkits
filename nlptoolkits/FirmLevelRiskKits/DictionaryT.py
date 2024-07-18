@@ -231,12 +231,12 @@ class NgramDictionaryBuilder:
 
         if scorer == 'tf':
             bigram_score_dict = {
-                w: ngram_texture_list.count(w) / len(ngram_texture_list)
+                w: ngram_texture_list.count(w)
                 for w in tqdm.tqdm(set(ngram_texture_list))
             }
         elif scorer == 'tfidf':
             bigram_score_dict = {
-                w: ngram_texture_list.count(w)
+                w: ngram_texture_list.count(w) / len(ngram_texture_list)
                 for w in tqdm.tqdm(set(ngram_texture_list))
             }
         else:
