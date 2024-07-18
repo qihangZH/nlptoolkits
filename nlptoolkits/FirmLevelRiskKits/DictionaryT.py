@@ -10,6 +10,7 @@ import re
 import pathos
 import tqdm
 from .. import _BasicKits
+from .. import resources
 
 
 class NgramDictionaryBuilder:
@@ -24,7 +25,7 @@ class NgramDictionaryBuilder:
                  lower_case: bool = True,
                  full_token_compose_restriction: typing.Optional[str] = 'contains_alphabet_only',
                  token_remove_ner_tags_to_lessequal_then_num: typing.Optional[int] = 1,
-                 remove_stopwords_set: typing.Optional[set] = None,
+                 remove_stopwords_set: typing.Optional[set] = resources.SET_STOPWORDS,
                  remove_punctuations_set: typing.Optional[set] = None,
                  remove_token_lessequal_then_length: typing.Optional[int] = 1,
                  remove_ner_options_dict: typing.Optional[dict] = {'removes_tags': 'all'},
@@ -54,7 +55,8 @@ class NgramDictionaryBuilder:
             <It is recommend to use 1>
         :param remove_stopwords_set: set or None, the stopwords set to be removed
         :param remove_punctuations_set: set or None, the punctuations set to be removed
-        :param remove_token_lessequal_then_length: int or None, the tokens which length is less equal than this length will be removed
+        :param remove_token_lessequal_then_length: int or None, the tokens which length is less equal than this length will be removed,
+            the token total length included all sub-words inside a NER phrases
         :param remove_ner_options_dict: dict or None, the options of remove ner, if None then do nothing
             The keys of dict must be in ['removes_tags', 'removes_original_text', 'removes_tags_and_original_text']
             The values of dict SHOULD be in CoreNLPServerPack._GlobalArgs.STANFORD_CORENLP_NER_TAGS_UPPER_SET or CoreNLPServerPack._GlobalArgs.ALL_TAGS_FLAG

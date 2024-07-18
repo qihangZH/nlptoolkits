@@ -6,6 +6,27 @@ import pathos
 import tqdm
 from .. import _BasicKits
 from ..StanzaKits import CoreNLPServerPack
+from .. import resources
+
+
+# def cleaner_remove_token_lessequal_then_length(
+#         texture: str,
+#         token_sep_string: str = CoreNLPServerPack._GlobalArgs.DEFAULT_TOKEN_SEP_STRING,
+#         remove_token_lessequal_then_length: typing.Optional[int] = 1
+# ):
+#     if remove_token_lessequal_then_length is not None:
+#
+#         token_list = texture.split(token_sep_string)
+#
+#         rst_l = []
+#         for s in token_list:
+#             if len(s) > remove_token_lessequal_then_length:
+#                 rst_l.append(s)
+#         return token_sep_string.join(
+#             rst_l
+#         )
+#     else:
+#         return texture
 
 
 def naive_nltk_annotator(
@@ -36,7 +57,7 @@ class NgramDataPreprocessor:
                  restruct_token_sep_string: str = " ",
                  full_token_compose_restriction: typing.Optional[str] = 'contains_alphabet_only',
                  token_remove_ner_tags_to_lessequal_then_num: typing.Optional[int] = 1,
-                 remove_stopwords_set: typing.Optional[set] = None,
+                 remove_stopwords_set: typing.Optional[set] = resources.SET_STOPWORDS,
                  remove_punctuations_set: typing.Optional[set] = None,
                  remove_token_lessequal_then_length: typing.Optional[int] = 1,
                  remove_ner_options_dict: typing.Optional[dict] = {'removes_tags': 'all'},
