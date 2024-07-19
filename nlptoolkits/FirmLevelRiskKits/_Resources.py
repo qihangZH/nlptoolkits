@@ -1,5 +1,5 @@
 
-library_remove_bigram_combinations = [
+library_remove_postags_bigram_combinations = [
     # Pronoun-Pronoun (PRP-PRP, PRP$-PRP$, PRP-PRP$, PRP$-PRP)
     ('PRP', 'PRP'), ('PRP$', 'PRP$'), ('PRP', 'PRP$'), ('PRP$', 'PRP'),
 
@@ -49,9 +49,9 @@ library_remove_bigram_combinations = [
     ('DT', 'WRB')
 ]
 
-library_remove_bigram_combinations_lower = [
+library_remove_postags_bigram_combinations_lower = [
             tuple([s.lower() for s in tp])
-            for tp in library_remove_bigram_combinations
+            for tp in library_remove_postags_bigram_combinations
         ]
 
 library_remove_single_words_lower = ["i", "ive", "youve", "weve", "im", "youre", "were", "id", "youd", "wed", "thats",

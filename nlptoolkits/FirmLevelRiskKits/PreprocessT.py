@@ -4,6 +4,7 @@ import warnings
 import nltk
 import pathos
 import tqdm
+import functools
 from .. import _BasicKits
 from ..StanzaKits import CoreNLPServerPack
 from .. import resources
@@ -231,17 +232,63 @@ class NgramDataPreprocessor:
                                        path_out_cleaned_txt,
                                        processes: int,
                                        chunk_size=200000,
-                                       start_iloc=None
+                                       start_iloc=None,
+                                       final_remove_token_lessequal_then_length: typing.Optional[int] = None
                                        ) -> None:
         """
         Use this alias to quickly replicate the same data of the class
         by other CoreNLP annotated data instead write new code and cause possible errors
         """
-        CoreNLPServerPack.auto_clean_annotated_txt(
-            path_in_parsed_txt=path_in_parsed_txt,
-            path_out_cleaned_txt=path_out_cleaned_txt,
-            processes=processes,
-            chunk_size=chunk_size,
-            start_iloc=start_iloc,
-            **self.corenlp_cleaner_dict
-        )
+
+        # CoreNLPServerPack.auto_clean_annotated_txt(
+        #     path_in_parsed_txt=path_in_parsed_txt,
+        #     path_out_cleaned_txt=path_out_cleaned_txt,
+        #     processes=processes,
+        #     chunk_size=chunk_size,
+        #     start_iloc=start_iloc,
+        #     **self.corenlp_cleaner_dict
+        # )
+
+        if ((self.remove_ner_options_dict != {'removes_tags': 'all'}) or
+            (self.remove_pos_options_dict != {'removes_tags': 'all'})) and \
+                (final_remove_token_lessequal_then_length is not None):
+            warnings.warn("""
+            ner and pos remove option in cleaning func should be  'removes_tags': 'all'
+            if final_remove_token_lessequal_then_length set to integer(not None). else it will not work as estimated.
+            """)
+
+        def _line_index_cleaner(line, index):
+            new_line, index = self.line_clearner_cls.clean(line, index)
+
+            return cleaner_remove_token_lessequal_then_length(
+                new_line,
+                token_sep_string=self.restruct_token_sep_string,
+                remove_token_lessequal_then_length=final_remove_token_lessequal_then_length
+            ), index
+
+        if processes > 1:
+            _BasicKits.FileT.l1_process_largefile(
+                path_input_txt=path_in_parsed_txt,
+                path_output_txt=path_out_cleaned_txt,
+                input_index_list=[
+                    str(i) for i in range(_BasicKits.FileT._line_counter(path_in_parsed_txt))
+                ],  # fake IDs (do not need IDs for this function).
+                path_output_index_txt=None,
+                process_line_func=functools.partial(_line_index_cleaner),
+                chunk_size=chunk_size,
+                start_iloc=start_iloc
+            )
+
+        else:
+            _BasicKits.FileT.l1_mp_process_largefile(
+                path_input_txt=path_in_parsed_txt,
+                path_output_txt=path_out_cleaned_txt,
+                input_index_list=[
+                    str(i) for i in range(_BasicKits.FileT._line_counter(path_in_parsed_txt))
+                ],  # fake IDs (do not need IDs for this function).
+                path_output_index_txt=None,
+                process_line_func=functools.partial(_line_index_cleaner),
+                processes=processes,
+                chunk_size=chunk_size,
+                start_iloc=start_iloc
+            )

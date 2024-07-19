@@ -146,7 +146,7 @@ class NgramDictionaryBuilder:
             corenlp_annotated_texture: typing.Union[str, typing.List[str]],
             n: int = 2,
             scorer: typing.Literal['tf', 'tfidf'] = 'tfidf',
-            remove_ngram_postags_combinations: typing.Optional[list] = _Resources.library_remove_bigram_combinations,
+            remove_ngram_postags_combinations: typing.Optional[list] = _Resources.library_remove_postags_bigram_combinations,
             remove_ngram_contain_any_words_list: typing.Optional[list] = _Resources.library_remove_single_words_lower,
             final_remove_token_lessequal_then_length: typing.Optional[int] = None
     ):
@@ -161,7 +161,7 @@ class NgramDictionaryBuilder:
 
         assert scorer in ['tf', 'tfidf'], 'scorer are not in selectable choices!'
 
-        if n != 2 and remove_ngram_postags_combinations == _Resources.library_remove_bigram_combinations:
+        if n != 2 and remove_ngram_postags_combinations == _Resources.library_remove_postags_bigram_combinations:
             warnings.warn('Default Bigram remove postag combination maybe meaningless if N!=2', UserWarning)
 
         # we always lower the tags
