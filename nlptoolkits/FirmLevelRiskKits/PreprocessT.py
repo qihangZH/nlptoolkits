@@ -31,18 +31,39 @@ def cleaner_remove_token_lessequal_then_length(
 
 
 def naive_nltk_annotator(
-        document_list,
-        restruct_token_sep_string: str = CoreNLPServerPack._GlobalArgs.DEFAULT_TOKEN_SEP_STRING,
+        document_list: typing.List[str],
+        processes: int,
+        restruct_token_sep_string: str = CoreNLPServerPack._GlobalArgs.DEFAULT_TOKEN_SEP_STRING
 ):
     warnings.warn("This function could only support the basic annotate needs. "
                   "It could be not reliable for complicate tasks, "
                   "I recommend to use AnnotationT.LineAnnotatorParallel/AnnotationT.LineAnnotator instead",
                   DeprecationWarning)
 
-    return [
-        restruct_token_sep_string.join(nltk.tokenize.word_tokenize(s))
-        for s in document_list
-    ]
+    def _worker(s):
+        return restruct_token_sep_string.join(nltk.tokenize.word_tokenize(s))
+
+    if processes <= 1:
+
+        return [
+            restruct_token_sep_string.join(nltk.tokenize.word_tokenize(s))
+            for s in document_list
+        ]
+    else:
+
+        _result_sent_l = []
+
+        with pathos.multiprocessing.Pool(
+                initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator,
+                processes=processes
+        ) as pool:
+            for rsts in tqdm.tqdm(
+                    pool.imap(_worker, document_list),
+                    total=len(document_list)
+            ):
+                _result_sent_l.append(rsts)
+
+        return _result_sent_l
 
 
 class NgramDataPreprocessor:
