@@ -14,12 +14,11 @@ import collections
 class NgramScorer:
 
     def __init__(self,
-                 processes: int,
                  token_sep_string: str = CoreNLPServerPack._GlobalArgs.DEFAULT_TOKEN_SEP_STRING,
                  n: int = 2,
                  window_size: int = 20
                  ):
-        self.processes = processes
+        # self.processes = processes
         self.token_sep_string = token_sep_string
         self._N = n
         self.window_size = window_size
@@ -98,7 +97,7 @@ class NgramScorer:
             for sk in subject_word_set_dict.keys():
                 _result_dict[f'topic_subject_score_{tk}_{sk}'] = 0
 
-        for i, window in enumerate(windows):
+        for window in windows:
 
             # Find middle topic_ngram and check whether a "political" topic_ngram
             middle_topic_ngram = window[self.windows_center]
@@ -106,13 +105,13 @@ class NgramScorer:
             # should be
             for tk, tvaluedict in topic_ngram_weighted_map_dict.items():
 
-                topic_ngram_tuple_list = list(tvaluedict.keys())
+                # topic_ngram_tuple_list = list(tvaluedict.keys())
+                #
+                # topic_ngram_weighted_list = list(tvaluedict.values())
 
-                topic_ngram_weighted_list = list(tvaluedict.values())
-
-                if middle_topic_ngram not in topic_ngram_tuple_list:
+                if middle_topic_ngram not in tvaluedict:
                     continue
-                topic_ngram_weighted = topic_ngram_weighted_list[i]
+                topic_ngram_weighted = tvaluedict[middle_topic_ngram]
 
                 # Create word list for easy and quick access
                 window_words = set([y for x in window for y in x])
@@ -124,7 +123,7 @@ class NgramScorer:
                     # If yes, check whether risk synonym in window
 
                     # binary transformation
-                    if sk in set(binary_transformation_subjects):
+                    if sk in binary_transformation_subjects:
                         topic_ngram_subject_count = (len([word for word in window_words if word in svalue]) > 0)
                         _result_dict[
                             f'topic_subject_score_{tk}_{sk}'] += topic_ngram_subject_count * topic_ngram_weighted
@@ -200,14 +199,23 @@ class NgramScorer:
 
         _rst_l = []
 
-        with pathos.multiprocessing.Pool(
-                initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator,
-                processes=self.processes
-        ) as pool:
-            for rsts in tqdm.tqdm(
-                    pool.imap(_worker, texture_list),
-                    total=len(texture_list)
-            ):
-                _rst_l.append(rsts)
+        # if self.processes <= 1:
 
-        return _rst_l
+        return [
+            _worker(texture)
+            for texture in tqdm.tqdm(texture_list)
+        ]
+
+        # else:
+        #
+        #     with pathos.multiprocessing.Pool(
+        #             initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator,
+        #             processes=self.processes
+        #     ) as pool:
+        #         for rsts in tqdm.tqdm(
+        #                 pool.imap(_worker, texture_list),
+        #                 total=len(texture_list)
+        #         ):
+        #             _rst_l.append(rsts)
+        #
+        #     return _rst_l
