@@ -1,5 +1,6 @@
 import datetime
 import itertools
+import math
 import os
 import pathos
 import pandas as pd
@@ -34,24 +35,37 @@ def _line_counter(a_file):
 # l0 level functions/classes
 # --------------------------------------------------------------------------
 
-def file_to_list(a_file, charset_error_encoding):
+def file_to_list(a_file, charset_error_encoding,
+                 start_index: typing.Optional[int] = None, end_index: typing.Optional[int] = None
+                 ):
     """Read a text file to a list, each line is an element
     
-    Arguments:
-        a_file {str or path} -- path to the file
-        charset_error_encoding {str} -- the encoding of the file if charset find nothing, default is utf-8
-    
-    Returns:
-        [str] -- list of lines in the input_data file, can be empty
+    :param a_file: {str or path} -- path to the file
+    :param charset_error_encoding: {str} -- the encoding of the file if charset find nothing, default is utf-8
+    :param start_index: {typing.Optional[int]} None or int bigger than 0. the start index
+    :param end_index: {typing.Optional[int]} None or int bigger than 0. the end index
+            The start and end of index works like slice in python. you may get likely result to use
+            result[start_index: end_index]. If None for start_index, then result[: end_index]
+    :return: [str] -- list of lines in the input_data file, can be empty
     """
+    int_start_index = start_index if isinstance(start_index, int) and start_index else -math.inf
+    int_end_index = end_index if isinstance(end_index, int) and end_index else math.inf
+
     # doc_encoding = 'utf-8'
     doc_encoding = _BasicFuncT.find_file_encoding(a_file) \
         if _BasicFuncT.find_file_encoding(a_file) else charset_error_encoding
 
     file_content = []
     with open(a_file, "rb") as f:
-        for l in f:
-            file_content.append(l.decode(encoding=doc_encoding).strip())
+        # for l in f:
+        #     file_content.append(l.decode(encoding=doc_encoding).strip())
+        if (not start_index) and (not end_index):
+            for l in f:
+                file_content.append(l.decode(encoding=doc_encoding).strip())
+        else:
+            for i, l in enumerate(f):
+                if (i >= int_start_index) and (i < int_end_index):
+                    file_content.append(l.decode(encoding=doc_encoding).strip())
     return file_content
 
 
