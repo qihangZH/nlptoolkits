@@ -36,7 +36,8 @@ def _line_counter(a_file):
 # --------------------------------------------------------------------------
 
 def file_to_list(a_file, charset_error_encoding,
-                 start_index: typing.Optional[int] = None, end_index: typing.Optional[int] = None
+                 start_index: typing.Optional[int] = None, end_index: typing.Optional[int] = None,
+                 close_charset: bool = False
                  ):
     """Read a text file to a list, each line is an element
     
@@ -46,26 +47,37 @@ def file_to_list(a_file, charset_error_encoding,
     :param end_index: {typing.Optional[int]} None or int bigger than 0. the end index
             The start and end of index works like slice in python. you may get likely result to use
             result[start_index: end_index]. If None for start_index, then result[: end_index]
+    :param close_charset: is or not do not use the charset, for it may consume so many resources
     :return: [str] -- list of lines in the input_data file, can be empty
     """
-    int_start_index = start_index if isinstance(start_index, int) and start_index else -math.inf
-    int_end_index = end_index if isinstance(end_index, int) and end_index else math.inf
+    int_start_index = start_index if start_index is not None else 0
+    int_end_index = end_index if end_index is not None else None
 
-    # doc_encoding = 'utf-8'
-    doc_encoding = _BasicFuncT.find_file_encoding(a_file) \
-        if _BasicFuncT.find_file_encoding(a_file) else charset_error_encoding
+    assert int_start_index >= 0, "start_index must bigger than 0 or be None!"
+    if isinstance(int_end_index, int):
+        assert int_end_index >= 0, "end_index must bigger than 0 or be None!"
+
+    if close_charset:
+        doc_encoding = charset_error_encoding
+    else:
+        doc_encoding = _BasicFuncT.find_file_encoding(a_file) or charset_error_encoding
 
     file_content = []
     with open(a_file, "rb") as f:
-        # for l in f:
-        #     file_content.append(l.decode(encoding=doc_encoding).strip())
-        if (not start_index) and (not end_index):
-            for l in f:
-                file_content.append(l.decode(encoding=doc_encoding).strip())
-        else:
-            for i, l in enumerate(f):
-                if (i >= int_start_index) and (i < int_end_index):
-                    file_content.append(l.decode(encoding=doc_encoding).strip())
+        try:
+            # Skip lines until start_index
+            for _ in range(int_start_index):
+                next(f)
+
+            # Read lines until end_index or EOF
+            for i, line in enumerate(f):
+                if int_end_index is not None:
+                    if i >= (int_end_index - int_start_index):
+                        break
+                file_content.append(line.decode(encoding=doc_encoding).strip())
+        except StopIteration:
+            pass
+
     return file_content
 
 
