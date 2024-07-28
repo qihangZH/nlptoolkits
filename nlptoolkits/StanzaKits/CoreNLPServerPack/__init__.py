@@ -266,19 +266,6 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
         clean_flag=clean_flag
     )
     if processes > 1:
-        _BasicKits.FileT.l1_process_largefile(
-            path_input_txt=path_in_parsed_txt,
-            path_output_txt=path_out_cleaned_txt,
-            input_index_list=[
-                str(i) for i in range(_BasicKits.FileT._line_counter(path_in_parsed_txt))
-            ],  # fake IDs (do not need IDs for this function).
-            path_output_index_txt=None,
-            process_line_func=functools.partial(line_clearner_cls.clean),
-            chunk_size=chunk_size,
-            start_iloc=start_iloc
-        )
-
-    else:
         _BasicKits.FileT.l1_mp_process_largefile(
             path_input_txt=path_in_parsed_txt,
             path_output_txt=path_out_cleaned_txt,
@@ -288,6 +275,20 @@ def auto_clean_annotated_txt(path_in_parsed_txt,
             path_output_index_txt=None,
             process_line_func=functools.partial(line_clearner_cls.clean),
             processes=processes,
+            chunk_size=chunk_size,
+            start_iloc=start_iloc
+        )
+
+    else:
+
+        _BasicKits.FileT.l1_process_largefile(
+            path_input_txt=path_in_parsed_txt,
+            path_output_txt=path_out_cleaned_txt,
+            input_index_list=[
+                str(i) for i in range(_BasicKits.FileT._line_counter(path_in_parsed_txt))
+            ],  # fake IDs (do not need IDs for this function).
+            path_output_index_txt=None,
+            process_line_func=functools.partial(line_clearner_cls.clean),
             chunk_size=chunk_size,
             start_iloc=start_iloc
         )

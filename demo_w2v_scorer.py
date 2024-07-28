@@ -103,7 +103,7 @@ if __name__ == '__main__':
         path_out_cleaned_txt=Path(__glob_opts.PROCESSED_DATA_FOLDER, "unigram", "documents.txt"),
         remove_stopwords_set=__glob_opts.STOPWORDS,
         token_remove_ner_tags_to_lessequal_then_num=1,
-        processes=os.cpu_count(),
+        processes=__glob_opts.N_CORES,
         clean_flag=0
     )
 
@@ -118,6 +118,9 @@ if __name__ == '__main__':
         path_output_model_mod=Path(__glob_opts.MODEL_FOLDER, "phrases", "bigram.mod"),
         phrase_min_length=__glob_opts.PHRASE_MIN_COUNT,
         connection_words=__glob_opts.STOPWORDS,
+        processes=1,
+        chunk_size=200000,
+        start_iloc=None,
         threshold=__glob_opts.PHRASE_THRESHOLD,
         scoring="original_scorer"
     )
@@ -134,6 +137,9 @@ if __name__ == '__main__':
         path_output_model_mod=Path(__glob_opts.MODEL_FOLDER, "phrases", "trigram.mod"),
         phrase_min_length=__glob_opts.PHRASE_MIN_COUNT,
         connection_words=__glob_opts.STOPWORDS,
+        processes=1,
+        chunk_size=200000,
+        start_iloc=None,
         threshold=__glob_opts.PHRASE_THRESHOLD,
         scoring="original_scorer"
     )
@@ -141,6 +147,16 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------------------------------
     # # train the word2vec model
     # --------------------------------------------------------------------------------------------------
+
+    '''
+    NOTICE, if seed and hashfxn do not set in train_w2v_model, and if workers do not set to 1
+    then the RESULT COULD BE UNSTABLE!
+    seed should be set as a number like 42 while hashfxn can be set by _Model.gen_gensim_hash
+    IGNORE it if you expect random result or your corpus is huge enough.
+    see here for problem:
+    https://stackoverflow.com/questions/34831551/ensure-the-gensim-generate-the-same-word2vec-model-for-different-runs-on-the-sam
+    '''
+
     print(datetime.datetime.now())
     print("Training w2v model...")
     nlptoolkits.GensimKits._Models.train_w2v_model(
@@ -150,8 +166,10 @@ if __name__ == '__main__':
         path_output_model=Path(__glob_opts.MODEL_FOLDER, "w2v", "w2v.mod"),
         vector_size=__glob_opts.W2V_DIM,
         window=__glob_opts.W2V_WINDOW,
-        workers=__glob_opts.N_CORES,
+        workers=1,
         epochs=__glob_opts.W2V_ITER,
+        seed=42,
+        hashfxn=nlptoolkits.GensimKits._Models.gen_gensim_hash
     )
 
     result_dict = nlptoolkits.GensimKits.Wrd2vScorerT.l1_semi_supervise_w2v_dict(

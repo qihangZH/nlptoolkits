@@ -287,7 +287,7 @@ class NgramDataPreprocessor:
                 remove_token_lessequal_then_length=final_remove_token_lessequal_then_length
             ), index
 
-        if processes > 1:
+        if processes <= 1:
             _BasicKits.FileT.l1_process_largefile(
                 path_input_txt=path_in_parsed_txt,
                 path_output_txt=path_out_cleaned_txt,
