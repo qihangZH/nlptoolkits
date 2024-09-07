@@ -198,7 +198,6 @@ if __name__ == '__main__':
         path_trainw2v_sentences_dataset_index_txt=pathlib.Path(
             __glob_opts.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt"
         ),
-        processes=__glob_opts.N_CORES,
         charset_error_encoding=__glob_opts.DEFAULT_ENCODING
     )
 

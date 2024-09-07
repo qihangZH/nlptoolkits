@@ -182,6 +182,11 @@ def score_one_document_tf(document, expanded_words, list_of_list=False, vague=Fa
     Returns:
         [int] -- a list of : dim1, dim2, ... , document_length
     """
+    warnings.warn(
+        'score_one_document_tf/tf_scorer/DocScorer.score_tf_df '
+        'DO NOT WEIGHTED BY document length! User have to do it manually if NEED!',
+        FutureWarning)
+
     if list_of_list is False:
         document = document.split()
     dimension_count = OrderedDict()
@@ -205,7 +210,7 @@ def score_one_document_tf(document, expanded_words, list_of_list=False, vague=Fa
     return result
 
 
-def tf_scorer(documents, document_ids, expanded_words, n_core=1, vague=False):
+def tf_scorer(documents, document_ids, expanded_words, vague=False):
     """score using term freq for documents, the dimensions are sorted alphabetically
 
     Arguments:
@@ -221,23 +226,25 @@ def tf_scorer(documents, document_ids, expanded_words, n_core=1, vague=False):
     Returns:
         pandas.DataFrame -- a dataframe with columns: Doc_ID, dim1, dim2, ..., document_length
     """
-    if n_core > 1:
-        count_one_document_partial = partial(
-            score_one_document_tf, expanded_words=expanded_words, list_of_list=False, vague=vague
+    # if n_core > 1:
+    #     count_one_document_partial = partial(
+    #         score_one_document_tf, expanded_words=expanded_words, list_of_list=False, vague=vague
+    #     )
+    #
+    #     with pathos.multiprocessing.Pool(processes=n_core,
+    #                                      initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator
+    #                                      ) as pool:
+    #
+    #         results = list(pool.map(count_one_document_partial, documents))
+    #
+    # else:
+
+    results = []
+    for i, doc in enumerate(documents):
+        results.append(
+            score_one_document_tf(doc, expanded_words, list_of_list=False, vague=vague)
         )
 
-        with pathos.multiprocessing.Pool(processes=n_core,
-                                         initializer=_BasicKits._BasicFuncT.processes_interrupt_initiator
-                                         ) as pool:
-
-            results = list(pool.map(count_one_document_partial, documents))
-
-    else:
-        results = []
-        for i, doc in enumerate(documents):
-            results.append(
-                score_one_document_tf(doc, expanded_words, list_of_list=False, vague=vague)
-            )
     df = pd.DataFrame(
         results, columns=sorted(list(expanded_words.keys())) + ["document_length"]
     )
@@ -280,6 +287,11 @@ def tf_idf_scorer(
         [df] -- a dataframe with columns: Doc_ID, dim1, dim2, ..., document_length
         [contribution] -- a dict of total contribution (sum of scores in the corpus) for each word
     """
+    warnings.warn(
+        'tf_idf_scorer/DocScorer.score_tfidf_dfdf '
+        'DO NOT WEIGHTED BY document length! User have to do it manually if NEED!',
+        FutureWarning)
+
     print("Scoring using {}".format(method))
     contribution = defaultdict(int)
     results = []
@@ -424,7 +436,6 @@ class DocScorer:
     def __init__(self, path_current_dict,
                  path_trainw2v_sentences_dataset_txt,
                  path_trainw2v_sentences_dataset_index_txt,
-                 processes,
                  charset_error_encoding
                  ):
         """
@@ -432,10 +443,8 @@ class DocScorer:
             path_current_dict: path of current trained dict, already finished
             path_trainw2v_sentences_dataset_txt: path of the dataset to train the word2vec model
             path_trainw2v_sentences_dataset_index_txt: path of the dataset's IDS to train the word2vec model
-            processes: Ncores to run
+            charset_error_encoding: charset error encoding, like 'utf-8'
         """
-
-        self.mp_threads = processes
 
         self.current_dict_path = str(path_current_dict)
 
@@ -500,8 +509,7 @@ class DocScorer:
             documents=self.doc_corpus,
             document_ids=self.doc_ids,
             expanded_words=self.current_dict,
-            n_core=self.mp_threads,
-            vague = vague
+            vague=vague
         )
 
         return score_df
