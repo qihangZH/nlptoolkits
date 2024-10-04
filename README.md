@@ -87,6 +87,11 @@ see: https://github.com/docker/for-win/issues/12944
 wsl --update --pre-release
 ```
 
+## GROBID
+
+you may install a grobid-docker, but,
+the version should less than 0.8.0, we test it on 0.7.1. Higher version may meet issues.
+
 ## W2v notice
 
 Notice that the TF/TFIDF/WFIDF in this code is ***NOT WEIGHTED*** by document length!
