@@ -495,3 +495,24 @@ def count_pdf_pages(pdf_file_path):
         # pdf_reader = PyPDF2.PdfFileReader(f)
         pdf_reader = PyPDF2.PdfReader(f)
         return len(pdf_reader.pages)
+
+
+def is_pdf_valid(pdf_file_path):
+    """
+    check the pdf is valid or not
+    Args:
+        pdf_file_path: 
+
+    Returns:
+
+    """
+    with open(pdf_file_path, 'rb') as f:
+        try:
+            pdf = PyPDF2.PdfReader(f)
+            info = pdf.metadata
+            if info:
+                return True
+            else:
+                return False
+        except Exception as e:
+            return False
