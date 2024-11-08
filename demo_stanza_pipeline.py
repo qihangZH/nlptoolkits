@@ -14,7 +14,7 @@ if __name__ == "__main__":
         "Lastly, the fifth document. Did you know that pandas are native to China? They love bamboo!"
     ]
     replic_docs = []
-    for i in range(5000):
+    for i in range(10):
         replic_docs += documents
     # documents = nk.SmallKits.IOHandlerT.file_to_list('./input_data/tweets_origin.txt')
 
@@ -24,3 +24,9 @@ if __name__ == "__main__":
                                        )
 
     print(pcls.raw_sentences)
+
+    print(pcls.attr_sentences('sentiment'))
+
+    print(pcls.attr_sentences_words('text'))
+
+    print(pcls.attr_sentences_tokens('text'))

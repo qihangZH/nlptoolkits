@@ -144,12 +144,34 @@ class PipeLineAnnotator:
         Args:
             attr: attribute of words insides sentences in: https://stanfordnlp.github.io/stanza/data_objects.html#word
 
-        Returns: list of sentences and their attrs
+        Returns: list of words in sentences and their attrs
 
         """
         return [
             [
-                getattr(s, attr)
+                [
+                    getattr(w, attr)
+                    for w in s.words
+                ]
+                for s in self.parsed_docs[idx].sentences
+            ]
+            for idx in range(len(self.parsed_docs))
+        ]
+
+    def attr_sentences_tokens(self, attr: str):
+        """
+        Args:
+            attr: attribute of words insides sentences in: https://stanfordnlp.github.io/stanza/data_objects.html
+            # word
+        Returns: list of tokens in sentences and their attrs
+
+        """
+        return [
+            [
+                [
+                    getattr(w, attr)
+                    for w in s.tokens
+                ]
                 for s in self.parsed_docs[idx].sentences
             ]
             for idx in range(len(self.parsed_docs))
