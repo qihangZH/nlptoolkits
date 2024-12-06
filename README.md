@@ -92,6 +92,18 @@ wsl --update --pre-release
 you may install a grobid-docker, but,
 the version should less than 0.8.0, we test it on 0.7.1. Higher version may meet issues.
 
+## NEW: Omniparse
+
+A powerful, GPU supported, parser tool. 
+
+Which can powerfully parse the pdf, docx, and other files. Also mpeg, or video files.
+
+You may need to install the omniparse docker, and config the omniparse in the code.
+
+See Here:
+
+https://github.com/adithya-s-k/omniparse
+
 ## W2v notice
 
 Notice that the TF/TFIDF/WFIDF in this code is ***NOT WEIGHTED*** by document length!
