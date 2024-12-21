@@ -9,6 +9,7 @@ import nltk.tokenize
 import re
 import pathos
 import tqdm
+from collections import Counter
 from .. import _BasicKits
 from .. import resources
 
@@ -145,121 +146,120 @@ class NgramDictionaryBuilder:
             self,
             corenlp_annotated_texture: typing.Union[str, typing.List[str]],
             n: int = 2,
-            scorer: typing.Literal['tf', 'tfidf'] = 'tfidf',
-            remove_ngram_postags_combinations: typing.Optional[list] = _Resources.library_remove_postags_bigram_combinations,
+            scorer: typing.Literal['tf', 'count'] = 'tf',
+            remove_ngram_postags_combinations: typing.Optional[
+                list] = _Resources.library_remove_postags_bigram_combinations,
             remove_ngram_contain_any_words_list: typing.Optional[list] = _Resources.library_remove_single_words_lower,
-            final_remove_token_lessequal_then_length: typing.Optional[int] = None
+            final_remove_token_lessequal_then_length: typing.Optional[int] = None,
+            texture_split_by: typing.Literal['sentence', 'all'] = 'all'
     ):
         """
-        :param corenlp_annotated_texture: a list of sentences to be processed, every one will be auto cleaned by arguments initialized
-        :param n: the N-grams' N, for example, if 2, then it will be bi-gram, 3 will be tri-gram
-        :param scorer: the scorer to give a score of each N-gram, could be 'tf' or 'tfidf'
-        :param remove_ngram_postags_combinations: the combination of N-grams pos-tags to remove from the dictionary if match.
-            The default,
-        :param remove_ngram_contain_any_words_list: remvoe the N-gram pairs if one of them contains any of the words
+        Args:
+            corenlp_annotated_texture: The annotated texture,
+                it could be a list of sentences(documents) or a string of document
+            n: numbers of n-gram, bigrams default
+            scorer: tf or count, the score of n-gram. tf mean weighted by total number of n-grams
+            remove_ngram_postags_combinations: the postags combinations to be removed, like ('PRP', 'PRP')
+            remove_ngram_contain_any_words_list: the words to be removed, like ['i', 'ive', 'youve']
+            final_remove_token_lessequal_then_length: the final remove token length less equal than this length
+            texture_split_by: split the texture by sentence or all to count the n-gram scores
+
+        Returns:
+
         """
+        def _lambda_texture_bigramdict_builder(texture, remove_ngram_postags_comb_lower,
+                                               remove_ngram_contain_anywordsl_lower):
+            if not isinstance(texture, (str, list)):
+                raise ValueError('Input texture must be a string or list of sentences.')
+            if not texture:
+                return 0, {}
 
-        assert scorer in ['tf', 'tfidf'], 'scorer are not in selectable choices!'
+            if isinstance(texture, list):
+                texture = self.token_sep_string.join(texture)
 
-        if n != 2 and remove_ngram_postags_combinations == _Resources.library_remove_postags_bigram_combinations:
-            warnings.warn('Default Bigram remove postag combination maybe meaningless if N!=2', UserWarning)
-
-        # we always lower the tags
-        remove_ngram_postags_combinations_lower = [
-            tuple([s.lower() for s in tp])
-            for tp in remove_ngram_postags_combinations
-        ] if remove_ngram_postags_combinations else []
-
-        remove_ngram_contain_any_words_list_lower = [
-            s.lower()
-            for s in remove_ngram_contain_any_words_list
-        ] if remove_ngram_contain_any_words_list else []
-
-        if isinstance(corenlp_annotated_texture, list):
             texture = self.token_sep_string.join(
-                corenlp_annotated_texture)
-
-        elif isinstance(corenlp_annotated_texture, str):
-            texture = corenlp_annotated_texture
-        else:
-            raise ValueError(
-                'texture should be either string or list of sentences(The sentences itself will be concat)'
+                self._clean_dict_training_texture_list([texture], processes=self.processes)
             )
 
-        # use the cleaner to clean the texture(always keep POS tags, if have)
-        texture = self.token_sep_string.join(
-            self._clean_dict_training_texture_list([texture], processes=self.processes)
-        )
+            texture_list, postags_list = [], []
+            for _d in self._after_line_resolver_cls.line_resolver(texture)['resolved_tokens']:
+                for _subd in _d.values():
+                    texture_list.append(_subd['original_text'])
+                    postags_list.append(_subd['pos'].lower())
 
-        texture_list = []
-        postags_list = []
+            if final_remove_token_lessequal_then_length:
+                try:
+                    texture_list, postags_list = zip(*[
+                        (t, p) for t, p in zip(texture_list, postags_list)
+                        if len(t) > final_remove_token_lessequal_then_length
+                    ])
+                except Exception:
+                    return 0, {}
 
-        # extract both texture and pos tags
-        for _d in self._after_line_resolver_cls.line_resolver(
-                texture
-        )['resolved_tokens']:
+            ngram_texture_list = list(nltk.ngrams(texture_list, n=n))
+            ngram_postags_list = list(nltk.ngrams(postags_list, n=n))
 
-            for _subd in _d.values():
-                texture_list.append(
-                    _subd['original_text']
+            if remove_ngram_postags_comb_lower or remove_ngram_contain_anywordsl_lower:
+                ngram_texture_list = [
+                    ngram_texture_list[i]
+                    for i in range(len(ngram_postags_list))
+                    if ngram_postags_list[i] not in remove_ngram_postags_comb_lower and
+                       not set(w.lower() for w in ngram_texture_list[i]).intersection(
+                           remove_ngram_contain_anywordsl_lower)
+                ]
+
+            tl = len(ngram_texture_list)
+            if scorer == 'count':
+                bg_score_dict = dict(Counter(ngram_texture_list))
+            elif scorer == 'tf':
+                bg_score_dict = {w: count / tl for w, count in Counter(ngram_texture_list).items()}
+            else:
+                raise ValueError(f"Invalid scorer '{scorer}'. Must be either 'tf' or 'count'.")
+
+            return tl, bg_score_dict
+
+        assert scorer in ['tf', 'count'], 'Scorer must be "tf" or "count".'
+
+        remove_ngram_postags_combinations_lower = [
+            tuple(s.lower() for s in tp) for tp in (remove_ngram_postags_combinations or [])
+        ]
+        remove_ngram_contain_any_words_list_lower = [
+            s.lower() for s in (remove_ngram_contain_any_words_list or [])
+        ]
+
+        print('Building bigram dictionary...')
+
+        if texture_split_by == 'all':
+            texture_len, bigram_score_dict = _lambda_texture_bigramdict_builder(
+                corenlp_annotated_texture,
+                remove_ngram_postags_combinations_lower,
+                remove_ngram_contain_any_words_list_lower
+            )
+            return bigram_score_dict
+
+        elif texture_split_by == 'sentence':
+            if not isinstance(corenlp_annotated_texture, list):
+                raise ValueError('Input must be a list of sentences if texture_split_by="sentence".')
+
+            combined_dict = Counter()
+            sentence_lengths = []
+
+            for _sentence in tqdm.tqdm(corenlp_annotated_texture):
+                tl, bg_dict = _lambda_texture_bigramdict_builder(
+                    _sentence,
+                    remove_ngram_postags_combinations_lower,
+                    remove_ngram_contain_any_words_list_lower
                 )
+                combined_dict.update(bg_dict)
+                sentence_lengths.append(tl)
 
-                """It should be mention that the pos are always set to lower for better checkin"""
-                postags_list.append(
-                    _subd['pos'].lower()
-                )
+            if scorer == 'tf':
+                total_len = sum(sentence_lengths)
+                if total_len == 0:
+                    return {}
+                combined_dict = {k: v / total_len for k, v in combined_dict.items()}
 
-        """Add on: remove all texture that original text is less than the min length of final restriction"""
-        _removed_texture_list = []
-        _removed_postags_list = []
-        if final_remove_token_lessequal_then_length is not None:
-            assert len(texture_list) == len(postags_list)
-            for i in range(len(texture_list)):
-                if len(texture_list[i]) > final_remove_token_lessequal_then_length:
-                    _removed_texture_list.append(texture_list[i])
-                    _removed_postags_list.append(postags_list[i])
+            return dict(combined_dict)
 
-            texture_list = _removed_texture_list
-            postags_list = _removed_postags_list
-
-
-        ngram_texture_list = list(nltk.ngrams(texture_list, n=n))
-        ngram_postags_list = list(nltk.ngrams(postags_list, n=n))
-
-        if remove_ngram_postags_combinations_lower or remove_ngram_contain_any_words_list_lower:
-
-            _cleaned_ngram_texture_list = []
-
-            assert len(ngram_texture_list) == len(ngram_postags_list)
-            # remove all combinations that postags match the removal:
-            for i in range(len(ngram_postags_list)):
-                if (ngram_postags_list[i] in remove_ngram_postags_combinations_lower) or \
-                        (
-                                # if any of N-grams same as remove words list(go lower)
-                                not
-                                set(
-                                    [w.lower() for w in list(ngram_texture_list[i])]
-                                ).isdisjoint(
-                                    remove_ngram_contain_any_words_list_lower
-                                )
-                        ):
-                    pass
-                else:
-                    _cleaned_ngram_texture_list.append(ngram_texture_list[i])
-
-            ngram_texture_list = _cleaned_ngram_texture_list
-
-        if scorer == 'tf':
-            bigram_score_dict = {
-                w: ngram_texture_list.count(w)
-                for w in tqdm.tqdm(set(ngram_texture_list))
-            }
-        elif scorer == 'tfidf':
-            bigram_score_dict = {
-                w: ngram_texture_list.count(w) / len(ngram_texture_list)
-                for w in tqdm.tqdm(set(ngram_texture_list))
-            }
         else:
-            raise
-
-        return bigram_score_dict
+            raise ValueError(f'Invalid texture_split_by value "{texture_split_by}". Must be "all" or "sentence".')

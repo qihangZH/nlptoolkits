@@ -68,6 +68,10 @@ If you really want to use a non-killed server, you can set the
 ```stanza.server.StartServer.FORCE_START``` to ```stanza.server.StartServer.TRY_START```, then the server will be
 run on non-killed server. But I do not recommend that.
 
+stanford corenlp could be check more from: https://stanfordnlp.github.io/CoreNLP/ner.html
+Default NER has 12 classes.
+
+
 ## java
 https://zhuanlan.zhihu.com/p/617251948
 
