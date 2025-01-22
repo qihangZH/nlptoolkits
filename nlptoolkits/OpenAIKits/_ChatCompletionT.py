@@ -5,6 +5,7 @@ import pandas as pd
 import tqdm
 import typing
 import ratelimit
+import re
 import backoff
 from .. import _BasicKits
 
@@ -50,7 +51,15 @@ def _chatcompletion_requester(
             if result["content"].endswith('...'):
                 raise ValueError('Max token return exceed, try another model or change your strategy(chunksize)')
 
-            prediction_json_list = json.loads(result["content"], strict=False)
+            # NOTE: sometimes if you require JSON mode, it may return in "JSON code mode", so must check and pick texture inside the json code window
+            match = re.search(r'```json(.*?)```', result["content"], re.DOTALL)
+
+            if match:
+                json_content = match.group(1).strip()
+            else:
+                json_content = result["content"]
+
+            prediction_json_list = json.loads(json_content, strict=False)
 
             # Check is Json Format suitable for return dataframe
             is_dataframe_format_error = not _BasicKits._BasicFuncT.check_is_list_of_dicts(prediction_json_list)
