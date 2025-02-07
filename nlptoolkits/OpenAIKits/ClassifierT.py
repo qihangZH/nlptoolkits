@@ -23,6 +23,7 @@ def classify_single_task_res(
         dataframe_format_error: typing.Literal['skip', 'raise'] = 'raise',
         dataframe_deficiency_error: typing.Literal['warn', 'ignore', 'raise'] = 'raise',
         is_dataframe_errors_onebyone_retry: bool = False,
+        base_url: typing.Optional[str] = None,
         **kwargs):
     """
     Remember-> If you want to make a response which have no any choices, make choice Null
@@ -49,6 +50,8 @@ def classify_single_task_res(
     :param is_dataframe_errors_onebyone_retry: Do retry one by one when meets error? It will start when
             the code find format/deficiency errors in loop, and retry again, whatever your error-dealing method
             is.
+    :param base_url: If you choose different service other than openai, like gemini or deekseek, then change here.
+        Use None or other Nonetype input if you do not have other service provider.
     :param kwargs: any other parameters of openai.ChatCompletion.create
     :return:which contains the id/classify result
     """
@@ -93,6 +96,7 @@ def classify_single_task_res(
         dataframe_format_error=dataframe_format_error,
         dataframe_deficiency_error=dataframe_deficiency_error,
         is_dataframe_errors_onebyone_retry=is_dataframe_errors_onebyone_retry,
+        base_url=base_url,
         **kwargs
     )
 
@@ -114,6 +118,7 @@ def classify_multi_task_dictres(
         dataframe_format_error: typing.Literal['skip', 'raise'] = 'raise',
         dataframe_deficiency_error: typing.Literal['warn', 'ignore', 'raise'] = 'raise',
         is_dataframe_errors_onebyone_retry: bool = False,
+        base_url: typing.Optional[str] = None,
         **kwargs) -> tuple:
     """
     Remember-> If you want to make a response which have no any choices, make choice Null
@@ -141,6 +146,8 @@ def classify_multi_task_dictres(
     :param is_dataframe_errors_onebyone_retry: Do retry one by one when meets error? It will start when
             the code find format/deficiency errors in loop, and retry again, whatever your error-dealing method
             is.
+    :param base_url: If you choose different service other than openai, like gemini or deekseek, then change here.
+        Use None or other Nonetype input if you do not have other service provider.
     :param kwargs: any other parameters of openai.ChatCompletion.create
     :return: a tuple contains dictionary of (Question i mapping to exact info,
                                             result contains the id/classify result)
@@ -204,5 +211,6 @@ def classify_multi_task_dictres(
         dataframe_format_error=dataframe_format_error,
         dataframe_deficiency_error=dataframe_deficiency_error,
         is_dataframe_errors_onebyone_retry=is_dataframe_errors_onebyone_retry,
+        base_url=base_url,
         **kwargs
     )

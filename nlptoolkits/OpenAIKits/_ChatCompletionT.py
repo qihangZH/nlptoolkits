@@ -130,6 +130,7 @@ def chatcompletion_worker(
         dataframe_format_error: typing.Literal['skip', 'raise'],
         dataframe_deficiency_error: typing.Literal['warn', 'ignore', 'raise'],
         is_dataframe_errors_onebyone_retry: bool,
+        base_url: typing.Optional[str],
         **kwargs):
     """
     The main worker to get result from openai ChatGpt, Wrapped on several components to get result.
@@ -157,6 +158,8 @@ def chatcompletion_worker(
     :param is_dataframe_errors_onebyone_retry: Do retry one by one when meets error? It will start when
             the code find format/deficiency errors in loop, and retry again, whatever your error-dealing method
             is.
+    :param base_url: If you choose different service other than openai, like gemini or deekseek, then change here.
+        Use None or other Nonetype input if you do not have other service provider.
     :param kwargs: any other parameters of openai.ChatCompletion.create
     :return:which contains the id/classify result
     """
@@ -174,7 +177,10 @@ def chatcompletion_worker(
     """v1.0+ -> use client"""
     # openai.api_key = openai_apikey
 
-    openai_client = openai.OpenAI(api_key=openai_apikey)
+    if base_url:
+        openai_client = openai.OpenAI(api_key=openai_apikey, base_url=base_url)
+    else:
+        openai_client = openai.OpenAI(api_key=openai_apikey)
 
     # How does finalrst need completionlist's type? a one to one dict
     finalrst_completionlist_type_dict = {'df': 'json', 'raw': 'raw'}
