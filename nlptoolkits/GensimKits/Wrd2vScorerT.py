@@ -3,8 +3,6 @@ import pickle
 import warnings
 import math
 from collections import Counter, OrderedDict, defaultdict
-from functools import partial
-import pathos
 from operator import itemgetter
 import numpy as np
 import pandas as pd
@@ -12,7 +10,6 @@ import tqdm
 from sklearn import preprocessing
 import gensim
 import typing
-# import basic funcs
 from .. import _BasicKits
 
 """
@@ -167,7 +164,7 @@ def deduplicate_keywords(word2vec_model, expanded_words, seed_words):
     return expanded_words
 
 
-def score_one_document_tf(document, expanded_words, list_of_list=False, vague=False):
+def score_one_document_tf(document, expanded_words, is_scale_by_totalwords: bool, list_of_list=False, vague=False):
     """score a single document using term freq, the dimensions are sorted alphabetically
 
     Arguments:
@@ -175,17 +172,18 @@ def score_one_document_tf(document, expanded_words, list_of_list=False, vague=Fa
         expanded_words {dict[str, set(str)]} -- an expanded dictionary
         vague {bool} -- Default False, is or not identify the words match if it part-satisfy(
             if the expanded word IN(substring) of any of splitted word)
-
+        is_scale_by_totalwords {bool} -- is or not scale the output other than totalwords to
+            <X * 1/totalwords>
     Keyword Arguments:
         list_of_list {bool} -- whether the document is splitted (default: {False})
 
     Returns:
         [int] -- a list of : dim1, dim2, ... , document_length
     """
-    warnings.warn(
-        'score_one_document_tf/tf_scorer/DocScorer.score_tf_df '
-        'DO NOT WEIGHTED BY document length! User have to do it manually if NEED!',
-        FutureWarning)
+    # warnings.warn(
+    #     'score_one_document_tf/tf_scorer/DocScorer.score_tf_df '
+    #     'DO NOT WEIGHTED BY document length! User have to do it manually if NEED!',
+    #     FutureWarning)
 
     if list_of_list is False:
         document = document.split()
@@ -205,19 +203,32 @@ def score_one_document_tf(document, expanded_words, list_of_list=False, vague=Fa
                 dimension_count[dimension] += pair[1]
     # use ordereddict to maintain order of count for each dimension
     dimension_count = OrderedDict(sorted(dimension_count.items(), key=lambda t: t[0]))
+
+    # old version
+    """
     result = list(dimension_count.values())
     result.append(len(document))
+    """
+    # new version
+    result = list(dimension_count.values())
+    _document_len = len(document)
+    if is_scale_by_totalwords:
+        result = [i / _document_len for i in result]
+    result.append(_document_len)
+
     return result
 
 
-def tf_scorer(documents, document_ids, expanded_words, vague=False):
+def tf_scorer(documents, document_ids, expanded_words, is_scale_by_totalwords: bool, vague=False,
+              ):
     """score using term freq for documents, the dimensions are sorted alphabetically
 
     Arguments:
         documents {[str]} -- list of documents
         document_ids {[str]} -- list of document IDs
         expanded_words {dict[str, set(str)]} -- dictionary for scoring
-
+        is_scale_by_totalwords {bool} -- is or not scale the output other than totalwords to
+            <X * 1/totalwords>
     Keyword Arguments:
         n_core {int} -- number of CPU cores (default: {1})
         vague {bool} -- Default False, is or not identify the words match if it part-satisfy(
@@ -242,7 +253,7 @@ def tf_scorer(documents, document_ids, expanded_words, vague=False):
     results = []
     for i, doc in enumerate(documents):
         results.append(
-            score_one_document_tf(doc, expanded_words, list_of_list=False, vague=vague)
+            score_one_document_tf(doc, expanded_words, is_scale_by_totalwords, list_of_list=False, vague=vague)
         )
 
     df = pd.DataFrame(
@@ -258,20 +269,21 @@ def tf_idf_scorer(
         expanded_words,
         df_dict,
         N_doc,
+        is_scale_by_totalwords: bool,
         method="TFIDF",
         word_weights=None,
         normalize=False,
         vague=False
 ):
     """Calculate tf-idf score for documents
-
     Arguments:
         documents {[str]} -- list of documents (strings)
         document_ids {[str]} -- list of document ids
         expanded_words {{dim: set(str)}}} -- dictionary
         df_dict {{str: int}} -- a dict of {word:freq} that provides document frequencey of words
         N_doc {int} -- number of documents
-
+        is_scale_by_totalwords {bool} -- is or not scale the output other than totalwords to
+            <X * 1/totalwords>
     Keyword Arguments:
         method {str} --
             TFIDF: conventional tf-idf
@@ -287,10 +299,10 @@ def tf_idf_scorer(
         [df] -- a dataframe with columns: Doc_ID, dim1, dim2, ..., document_length
         [contribution] -- a dict of total contribution (sum of scores in the corpus) for each word
     """
-    warnings.warn(
-        'tf_idf_scorer/DocScorer.score_tfidf_dfdf '
-        'DO NOT WEIGHTED BY document length! User have to do it manually if NEED!',
-        FutureWarning)
+    # warnings.warn(
+    #     'tf_idf_scorer/DocScorer.score_tfidf_dfdf '
+    #     'DO NOT WEIGHTED BY document length! User have to do it manually if NEED!',
+    #     FutureWarning)
 
     print("Scoring using {}".format(method))
     contribution = defaultdict(int)
@@ -339,7 +351,17 @@ def tf_idf_scorer(
             sorted(dimension_count.items(), key=lambda t: t[0])
         )
         result = list(dimension_count.values())
+
+        # old version
+        """
         result.append(len(document))
+        """
+        # new version
+        _document_len = len(document)
+        if is_scale_by_totalwords:
+            result = [i / _document_len for i in result]
+        result.append(_document_len)
+
         results.append(result)
     results = np.array(results)
     # normalize the length of tf-idf vector
@@ -436,7 +458,8 @@ class DocScorer:
     def __init__(self, path_current_dict,
                  path_trainw2v_sentences_dataset_txt,
                  path_trainw2v_sentences_dataset_index_txt,
-                 charset_error_encoding
+                 charset_error_encoding,
+                 is_scale_by_totalwords: bool
                  ):
         """
         Args:
@@ -465,6 +488,14 @@ class DocScorer:
 
         """create doc freq dict"""
         self.doc_freq_dict = _BasicKits.FileT.calculate_doc_freq_dict(self.doc_corpus)
+
+        self.is_scale_by_totalwords = is_scale_by_totalwords
+
+        if not self.is_scale_by_totalwords:
+            warnings.warn('NOTICE: The is_scale_by_totalwords is set to False, '
+                          'which means your result will not be scaled by document length, '
+                          'IF this is not you wish, set is_scale_by_totalwords=True'
+                          )
 
     """pickle the data"""
 
@@ -509,6 +540,7 @@ class DocScorer:
             documents=self.doc_corpus,
             document_ids=self.doc_ids,
             expanded_words=self.current_dict,
+            is_scale_by_totalwords=self.is_scale_by_totalwords,
             vague=vague
         )
 
@@ -539,6 +571,7 @@ class DocScorer:
                 expanded_words=self.current_dict,
                 df_dict=self.doc_freq_dict,
                 N_doc=self.N_doc,
+                is_scale_by_totalwords=self.is_scale_by_totalwords,
                 word_weights=self.word_sim_weights,
                 method=method,
                 normalize=normalize,

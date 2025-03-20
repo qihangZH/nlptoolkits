@@ -1,4 +1,5 @@
 """initialize the project and insure the project can run"""
+import warnings
 import __glob_opts
 from pathlib import Path
 import os
@@ -190,6 +191,9 @@ if __name__ == '__main__':
     )
     print(f'Dictionary saved at {str(Path(__glob_opts.OUTPUT_FOLDER, "dict", "expanded_dict.csv"))}')
 
+    warnings.warn('NOTE: is_scale_by_totalwords=True is used in the following code, '
+                  'If you intend to scale your result by total doc length you have to do so')
+
     scorer_class = nlptoolkits.GensimKits.Wrd2vScorerT.DocScorer(
         path_current_dict=pathlib.Path(__glob_opts.OUTPUT_FOLDER, "dict", "expanded_dict.csv"),
         path_trainw2v_sentences_dataset_txt=pathlib.Path(
@@ -198,7 +202,8 @@ if __name__ == '__main__':
         path_trainw2v_sentences_dataset_index_txt=pathlib.Path(
             __glob_opts.PROCESSED_DATA_FOLDER, "parsed", "document_sent_ids.txt"
         ),
-        charset_error_encoding=__glob_opts.DEFAULT_ENCODING
+        charset_error_encoding=__glob_opts.DEFAULT_ENCODING,
+        is_scale_by_totalwords=True,
     )
 
     """however, you do not need this part"""
