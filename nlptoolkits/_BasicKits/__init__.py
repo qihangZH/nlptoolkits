@@ -3,3 +3,4 @@ from . import _BasicFuncT
 from . import DecoratorT
 from . import FileT
 from . import MatrixLikeT
+from . import RegexT
