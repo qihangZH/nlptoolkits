@@ -167,6 +167,7 @@ class NgramDictionaryBuilder:
         Returns:
 
         """
+
         def _lambda_texture_bigramdict_builder(texture, remove_ngram_postags_comb_lower,
                                                remove_ngram_contain_anywordsl_lower):
             if not isinstance(texture, (str, list)):
@@ -209,14 +210,15 @@ class NgramDictionaryBuilder:
                 ]
 
             tl = len(ngram_texture_list)
-            if scorer == 'count':
-                bg_score_dict = dict(Counter(ngram_texture_list))
-            elif scorer == 'tf':
-                bg_score_dict = {w: count / tl for w, count in Counter(ngram_texture_list).items()}
-            else:
-                raise ValueError(f"Invalid scorer '{scorer}'. Must be either 'tf' or 'count'.")
+            # if scorer == 'count':
+            #     bg_score_dict = dict(Counter(ngram_texture_list))
+            # elif scorer == 'tf':
+            #     bg_score_dict = {w: count / tl for w, count in Counter(ngram_texture_list).items()}
+            # else:
+            #     raise ValueError(f"Invalid scorer '{scorer}'. Must be either 'tf' or 'count'.")
 
-            return tl, bg_score_dict
+            # return tl, bg_score_dict
+            return tl, dict(Counter(ngram_texture_list))
 
         assert scorer in ['tf', 'count'], 'Scorer must be "tf" or "count".'
 
@@ -230,19 +232,25 @@ class NgramDictionaryBuilder:
         print('Building bigram dictionary...')
 
         if texture_split_by == 'all':
-            texture_len, bigram_score_dict = _lambda_texture_bigramdict_builder(
+            # texture_len, bigram_score_dict = _lambda_texture_bigramdict_builder(
+            #     corenlp_annotated_texture,
+            #     remove_ngram_postags_combinations_lower,
+            #     remove_ngram_contain_any_words_list_lower
+            # )
+            # return bigram_score_dict
+            total_len, combined_dict = _lambda_texture_bigramdict_builder(
                 corenlp_annotated_texture,
                 remove_ngram_postags_combinations_lower,
                 remove_ngram_contain_any_words_list_lower
             )
-            return bigram_score_dict
 
         elif texture_split_by == 'sentence':
             if not isinstance(corenlp_annotated_texture, list):
                 raise ValueError('Input must be a list of sentences if texture_split_by="sentence".')
 
             combined_dict = Counter()
-            sentence_lengths = []
+            # sentence_lengths = []
+            total_len = 0
 
             for _sentence in tqdm.tqdm(corenlp_annotated_texture):
                 tl, bg_dict = _lambda_texture_bigramdict_builder(
@@ -251,15 +259,29 @@ class NgramDictionaryBuilder:
                     remove_ngram_contain_any_words_list_lower
                 )
                 combined_dict.update(bg_dict)
-                sentence_lengths.append(tl)
+                # sentence_lengths.append(tl)
+                total_len += tl
 
-            if scorer == 'tf':
-                total_len = sum(sentence_lengths)
-                if total_len == 0:
-                    return {}
-                combined_dict = {k: v / total_len for k, v in combined_dict.items()}
+            # total_len = sum(sentence_lengths)
 
-            return dict(combined_dict)
+            # if scorer == 'tf':
+            #     total_len = sum(sentence_lengths)
+            #     if total_len == 0:
+            #         return {}
+            #     combined_dict = {k: v / total_len for k, v in combined_dict.items()}
+            #
+            # return dict(combined_dict)
 
         else:
             raise ValueError(f'Invalid texture_split_by value "{texture_split_by}". Must be "all" or "sentence".')
+
+        if scorer == 'tf':
+            if total_len == 0:
+                combined_dict = dict()
+            combined_dict = {k: v / total_len for k, v in combined_dict.items()}
+        elif scorer == 'count':
+            pass
+        else:
+            raise ValueError(f"Invalid scorer '{scorer}'. Must be either 'tf' or 'count'.")
+
+        return total_len, dict(combined_dict)
