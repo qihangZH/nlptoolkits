@@ -1,5 +1,7 @@
 import json
 import warnings
+from typing import Optional
+
 import openai
 import pandas as pd
 import tqdm
@@ -16,7 +18,7 @@ if int(openai.__version__[0]) < 1:
 def _chatcompletion_requester(
         prompt: str,
         prompt_task_num: int,
-        stop_text: str,
+        stop_text: typing.Optional[str],
         result_type: typing.Literal['raw', 'json'],
         message_generate_func: typing.Callable,
         openai_client: openai.OpenAI,
@@ -26,11 +28,18 @@ def _chatcompletion_requester(
 
     try:
         """v1.0+ -> update for new completion format"""
-        completion = openai_client.chat.completions.create(
-            messages=message_generate_func(prompt),
-            stop=[stop_text],
-            **kwargs
-        )
+        # for some models, like GPT-5, stop is not supported, so we have to check it
+        if stop_text:
+            completion = openai_client.chat.completions.create(
+                messages=message_generate_func(prompt),
+                stop=[stop_text],
+                **kwargs
+            )
+        else:
+            completion = openai_client.chat.completions.create(
+                messages=message_generate_func(prompt),
+                **kwargs
+            )
     except openai.OpenAIError:
         raise
     except Exception:
@@ -121,7 +130,7 @@ def chatcompletion_worker(
         identifier_col: str,
         openai_apikey: str,
         chunksize: typing.Optional[int],
-        stop_text: str,
+        stop_text: Optional[str],
         message_generate_func: typing.Callable,
         ratelimit_call: int,
         ratelimit_period: int,
@@ -143,7 +152,8 @@ def chatcompletion_worker(
     :param identifier_col: the col which takes the id func to know the each observations
     :param openai_apikey: the api key of openai
     :param chunksize: how many input to put in per session, default None
-    :param stop_text: stop text which indicate the endpoint to save out, default '#S_#T#O#P_#'
+    :param stop_text: stop text which indicate the endpoint to save out, default '#S_#T#O#P_#',
+        if None then do not pass this parameter to Openai.(GPT 5.0+ will not use this parameter)
     :param message_generate_func: the message generate function, input prompt and return a message,
             the argument showed in https://platform.openai.com/docs/api-reference/chat/create
             The function input ONLY the prompt like lambda prompt: [...message]

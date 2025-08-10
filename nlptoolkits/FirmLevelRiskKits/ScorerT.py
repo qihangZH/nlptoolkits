@@ -18,6 +18,12 @@ class NgramScorer:
                  n: int = 2,
                  window_size: int = 20
                  ):
+        """
+        Args:
+            token_sep_string: str the token separator string
+            n: int the n in n-gram
+            window_size: not radius but the whole window size(before and after)
+        """
         # self.processes = processes
         self.token_sep_string = token_sep_string
         self._N = n
